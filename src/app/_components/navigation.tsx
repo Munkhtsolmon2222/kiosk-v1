@@ -10,10 +10,10 @@ export function Navigation() {
 
   return (
     <div>
-      <header className="w-full bg-white shadow-md fixed top-0 z-50">
+      <header className="w-full h-20 bg-white shadow-md fixed top-0 z-50">
         <div className="container mx-auto flex items-center p-2">
           {/* Logo */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-start gap-2">
             <img
               src="https://erchuudiindelguur.mn/wp-content/uploads/2024/10/Image_20250206182011-1.png"
               alt="Logo"
