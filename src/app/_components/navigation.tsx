@@ -31,7 +31,7 @@ export function Navigation() {
         </div>
       </header>
       <aside
-        className={`fixed left-0 top-0 h-full bg-gray-900 text-white transition-all ${
+        className={`fixed left-0 top-0 h-full bg-[#ab3030] text-white transition-all ${
           isOpen ? "w-64" : "w-20"
         }`}
       >
