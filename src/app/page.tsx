@@ -9,11 +9,9 @@ export default function Home() {
     queryFn: async () => {
       const consumerKey = process.env.NEXT_PUBLIC_WC_CONSUMER_KEY;
       const consumerSecret = process.env.NEXT_PUBLIC_WC_CONSUMER_SECRET;
-
       if (!consumerKey || !consumerSecret) {
         throw new Error("WooCommerce API keys are missing");
       }
-
       const response = await fetch(
         `https://erchuudiindelguur.mn/wp-json/wc/v3/products?per_page=10&page=1`,
         {
