@@ -32,7 +32,7 @@ export default function ProductCard({ product }: any) {
       console.log(product?.description);
       setSanitizedDescription(DOMPurify.sanitize(product?.description));
     }
-  }, []);
+  }, [product]);
   return (
     <Dialog
       onOpenChange={(isOpen) => {
@@ -40,7 +40,7 @@ export default function ProductCard({ product }: any) {
       }}
     >
       <DialogTrigger asChild>
-        <div className="flex justify-center mt-10">
+        <div className="flex w-60 justify-center mt-10">
           <div className="w-60 h-auto bg-[#f1f1f1] rounded-2xl p-4">
             {images?.slice(0, 1).map((image: any, index: any) => (
               <img
@@ -62,6 +62,17 @@ export default function ProductCard({ product }: any) {
         {page === 1 ? (
           // Page 1: Product Details
           <>
+            <div className="flex justify-end">
+              <DialogClose asChild>
+                <Button
+                  variant="outline"
+                  className="text-center text-white p-2 bg-[#ab3030] w-10 rounded-sm"
+                >
+                  X
+                </Button>
+              </DialogClose>
+            </div>
+
             <Swiper
               spaceBetween={10}
               slidesPerView={1}
@@ -124,7 +135,7 @@ export default function ProductCard({ product }: any) {
               </Button>
             </div>
           </>
-        ) : (
+        ) : page === 2 ? (
           // Page 2: Additional Content
           <>
             <DialogHeader>
@@ -181,8 +192,69 @@ export default function ProductCard({ product }: any) {
               >
                 Буцах
               </Button>
-              <Button className="text-2xl px-8 py-4 bg-blue-500 text-white">
+              <Button
+                onClick={() => setPage(3)}
+                className="text-2xl px-8 py-4 bg-blue-500 text-white"
+              >
                 Сагсанд хийх
+              </Button>
+            </div>
+          </>
+        ) : (
+          <>
+            <DialogHeader>
+              <DialogTitle className="text-3xl font-bold">
+                Нэмэлт мэдээлэл
+              </DialogTitle>
+            </DialogHeader>
+
+            <div className="text-xl mt-4 px-4 w-full text-center">
+              <p className="text-gray-600 mt-4">
+                Энэ бүтээгдэхүүний дэлгэрэнгүй мэдээлэл энд байрлана. Та өөрийн
+                сонголтоо хийж, захиалгаа баталгаажуулна уу.
+              </p>
+            </div>
+            <Swiper
+              spaceBetween={10}
+              slidesPerView={1}
+              loop={true}
+              pagination={{ clickable: true }}
+              navigation={true}
+              modules={[Pagination, Navigation]}
+              autoplay={{
+                delay: 2000,
+                disableOnInteraction: false, // Keeps autoplay active even after user interaction
+              }}
+              className="w-full"
+            >
+              {images.map((image: any, index: any) => (
+                <SwiperSlide key={index}>
+                  <img
+                    src={image.src}
+                    alt={`Product Image ${index + 1}`}
+                    className="rounded-lg w-[822px] h-[514px] object-cover"
+                  />
+                </SwiperSlide>
+              ))}
+            </Swiper>
+
+            <div className=" border-4 border-[#ab3030] mx-auto px-8 flex gap-10 py-2 rounded-[15px] ">
+              <button onClick={minusCount} className="text-5xl text-[#ab3030] ">
+                -
+              </button>
+              <span className="text-5xl text-[#ab3030] ">{orderProducts}</span>
+              <button onClick={plusCount} className="text-5xl text-[#ab3030] ">
+                +
+              </button>
+            </div>
+
+            <div className="flex justify-between mt-10 w-2/3 mx-auto">
+              <Button
+                variant="outline"
+                className="text-2xl px-8 py-4"
+                onClick={() => setPage(2)}
+              >
+                Буцах
               </Button>
             </div>
           </>

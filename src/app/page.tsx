@@ -2,8 +2,11 @@
 
 import { useQuery } from "@tanstack/react-query";
 import ProductCard from "./_components/product";
+import { AiFillSetting } from "react-icons/ai";
+import { useState } from "react";
 
 export default function Home() {
+  const [setting, setSetting] = useState(false);
   const { data, error, isLoading } = useQuery({
     queryKey: ["products"], // ✅ Now uses an object
     queryFn: async () => {
@@ -33,7 +36,7 @@ export default function Home() {
   if (error) return <div>Error: {error.message}</div>;
 
   return (
-    <div className="mt-44 ml-60">
+    <div className="mt-44 ml-64">
       {data.length === 0 ? (
         <p>No products found.</p>
       ) : (
@@ -43,6 +46,10 @@ export default function Home() {
           ))}
         </div>
       )}
+      <button onClick={() => setSetting((per) => !per)}>
+        <AiFillSetting />
+      </button>
+      {setting ? <div>hello bitch</div> : ""}
     </div>
   );
 }
