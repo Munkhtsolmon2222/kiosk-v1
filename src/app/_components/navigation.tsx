@@ -5,7 +5,6 @@ import { useState } from "react";
 export function Navigation() {
   const [mainCategory, setMainCategory] = useState("male");
   const [subCategory, setSubCategory] = useState("condoms"); // initial subcategory
-  console.log(mainCategory, subCategory);
 
   return (
     <div>
