@@ -23,7 +23,14 @@ const images = [
 
 export default function ProductCard() {
   const [page, setPage] = useState(1); // Track the current page
-
+  const [orderProducts, setOrderProducts] = useState(0);
+  const plusCount = () => {
+    setOrderProducts(orderProducts + 1);
+  };
+  const minusCount = () => {
+    setOrderProducts(orderProducts > 1 ? orderProducts - 1 : 1);
+  };
+  console.log(orderProducts);
   return (
     <Dialog
       onOpenChange={(isOpen) => {
@@ -147,9 +154,13 @@ export default function ProductCard() {
             </Swiper>
 
             <div className=" border-4 border-[#ab3030] mx-auto px-8 flex gap-10 py-2 rounded-[15px] ">
-              <button className="text-5xl text-[#ab3030] ">-</button>
-              <span className="text-5xl text-[#ab3030] ">12</span>
-              <button className="text-5xl text-[#ab3030] ">+</button>
+              <button onClick={minusCount} className="text-5xl text-[#ab3030] ">
+                -
+              </button>
+              <span className="text-5xl text-[#ab3030] ">{orderProducts}</span>
+              <button onClick={plusCount} className="text-5xl text-[#ab3030] ">
+                +
+              </button>
             </div>
 
             <div className="flex justify-between mt-10 w-2/3 mx-auto">

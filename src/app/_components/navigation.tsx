@@ -14,15 +14,11 @@ export function Navigation() {
         <div className="container mx-auto flex items-center justify-between px-4 py-4 max-w-full">
           {/* Logo */}
           <div className="flex items-center justify-start">
-            <img
-              src="https://erchuudiindelguur.mn/wp-content/uploads/2024/10/Image_20250206182011-1.png"
-              alt="Logo"
-              className="h-20"
-            />
+            <img src="./jpg.jpg" alt="Logo" className="h-25" />
           </div>
 
           {/* Top Navigation Links */}
-          <nav className="hidden md:flex gap-10 text-red-700 font-bold">
+          <nav className="hidden md:flex gap-10  text-red-700 font-bold">
             <button
               onClick={() => setMainCategory("male")}
               className="text-[20px]"
