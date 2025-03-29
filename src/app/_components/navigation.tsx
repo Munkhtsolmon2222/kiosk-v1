@@ -1,77 +1,114 @@
 "use client";
 
 import { useState } from "react";
-import { Search, ChevronDown } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Home, Info, Briefcase, Phone, Menu, X } from "lucide-react";
+
 export function Navigation() {
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [isOpen, setIsOpen] = useState(true);
+  const [mainCategory, setMainCategory] = useState("male");
+  const [subCategory, setSubCategory] = useState("condoms"); // initial subcategory
+  console.log(mainCategory, subCategory);
 
   return (
     <div>
-      <header className="w-full h-32 bg-white shadow-md fixed right-20 top-0 z-50">
-        <div className="container mx-auto flex items-center p-2">
+      {/* Header Section */}
+      <header className="w-full h-32 bg-white shadow-md fixed right-10 left-0 top-0 z-50">
+        <div className="container mx-auto flex items-center justify-between px-4 py-4 max-w-full">
           {/* Logo */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center justify-start">
             <img
               src="https://erchuudiindelguur.mn/wp-content/uploads/2024/10/Image_20250206182011-1.png"
               alt="Logo"
-              className="h-20 w-[600px]"
+              className="h-20"
             />
           </div>
-          {/* Navigation Links */}
-          <nav className="flex gap-10 text-red-700 font-bold w-fit mx-auto">
-            {/* Dropdown for "БҮТЭЭГДЭХҮҮН" */}
-            <button className="text-[20px]">Eregtei</button>
-            <button className="text-[20px]">Emegtei</button>
-            <button className="text-[20px]">Emegtei</button>
-            <button className="text-[20px]">Emegtei</button>
+
+          {/* Top Navigation Links */}
+          <nav className="hidden md:flex gap-10 text-red-700 font-bold">
+            <button
+              onClick={() => setMainCategory("male")}
+              className="text-[20px]"
+            >
+              Эрэгтэй
+            </button>
+            <button
+              onClick={() => setMainCategory("female")}
+              className="text-[20px]"
+            >
+              Эмэгтэй
+            </button>
+            <button
+              onClick={() => setMainCategory("couples")}
+              className="text-[20px]"
+            >
+              Хосуудад
+            </button>
+            <button
+              onClick={() => setMainCategory("partyGame")}
+              className="text-[20px]"
+            >
+              Парти тоглоом
+            </button>
           </nav>
         </div>
       </header>
-      <aside
-        className={`fixed left-0 top-0 h-full bg-[#ab3030] text-white transition-all ${
-          isOpen ? "w-64" : "w-20"
-        }`}
-      >
-        {/* Toggle Button */}
-        <div className="flex items-center justify-center p-4">
-          <Button
-            variant="ghost"
-            className="text-white"
-            onClick={() => setIsOpen(!isOpen)}
-          >
-            {isOpen ? <X size={24} /> : <Menu size={24} />}
-          </Button>
-        </div>
 
-        {/* Navigation Links */}
+      {/* Sidebar Section */}
+      <aside
+        className={`fixed top-32 left-0 h-full bg-[#ab3030] text-white transition-all w-64`}
+      >
+        {/* Sidebar Navigation Links */}
         <nav className="flex flex-col gap-6 p-4">
-          <a
-            href="#"
-            className="flex items-center gap-4 p-3 hover:bg-gray-800 rounded"
-          >
-            category
-          </a>
-          <a
-            href="#"
-            className="flex items-center gap-4 p-3 hover:bg-gray-800 rounded"
-          >
-            category
-          </a>
-          <a
-            href="#"
-            className="flex items-center gap-4 p-3 hover:bg-gray-800 rounded"
-          >
-            category
-          </a>
-          <a
-            href="#"
-            className="flex items-center gap-4 p-3 hover:bg-gray-800 rounded"
-          >
-            category
-          </a>
+          {mainCategory === "male" ? (
+            <div>
+              {/* Subcategory for Male */}
+              <div>
+                <button
+                  onClick={() => setSubCategory("condoms")}
+                  className="flex items-center gap-4 p-3 hover:bg-gray-800 rounded"
+                >
+                  Бэлгэвч
+                </button>
+                {subCategory === "condoms" && (
+                  <div className="mt-2 text-sm  ">
+                    Бэлгэвчний төрөл болон дэлгэрэнгүй мэдээлэл
+                  </div>
+                )}
+              </div>
+              <div>
+                <button
+                  onClick={() => setSubCategory("penis")}
+                  className="flex items-center gap-4 p-3 hover:bg-gray-800 rounded"
+                >
+                  Шодой
+                </button>
+                {subCategory === "penis" && (
+                  <div className="mt-2 text-sm ">
+                    Шодойтой холбоотой мэдээлэл
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : mainCategory === "female" ? (
+            <a
+              href="#"
+              className="flex items-center gap-4 p-3 hover:bg-gray-800 rounded"
+            >
+              Эмэгтэй
+            </a>
+          ) : mainCategory === "couples" ? (
+            <a
+              href="#"
+              className="flex items-center gap-4 p-3 hover:bg-gray-800 rounded"
+            >
+              Хосуудад
+            </a>
+          ) : (
+            <a
+              href="#"
+              className="flex items-center gap-4 p-3 hover:bg-gray-800 rounded"
+            >
+              Парти тоглоом
+            </a>
+          )}
         </nav>
       </aside>
     </div>
