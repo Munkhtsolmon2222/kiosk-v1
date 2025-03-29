@@ -13,7 +13,7 @@ import { Swiper, SwiperSlide } from "swiper/react";
 import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
-import { Navigation, Pagination } from "swiper/modules";
+import { Autoplay, Navigation, Pagination } from "swiper/modules";
 import DOMPurify from "dompurify";
 
 export default function ProductCard({ product }: any) {
@@ -68,7 +68,11 @@ export default function ProductCard({ product }: any) {
               loop={true}
               pagination={{ clickable: true }}
               navigation={true}
-              modules={[Pagination, Navigation]}
+              modules={[Pagination, Navigation, Autoplay]}
+              autoplay={{
+                delay: 2000,
+                disableOnInteraction: false, // Keeps autoplay active even after user interaction
+              }}
               className="w-full"
             >
               {images?.map((image: any, index: any) => (
@@ -93,7 +97,7 @@ export default function ProductCard({ product }: any) {
                     <span className="text-gray-500 line-through text-2xl block">
                       24,900₮
                     </span>{" "}
-                    19,900₮
+                    19,900₮``
                   </p>
                 </div>
               </DialogTitle>
@@ -142,12 +146,16 @@ export default function ProductCard({ product }: any) {
               pagination={{ clickable: true }}
               navigation={true}
               modules={[Pagination, Navigation]}
+              autoplay={{
+                delay: 2000,
+                disableOnInteraction: false, // Keeps autoplay active even after user interaction
+              }}
               className="w-full"
             >
-              {images.map((src: any, index: any) => (
+              {images.map((image: any, index: any) => (
                 <SwiperSlide key={index}>
                   <img
-                    src={src}
+                    src={image.src}
                     alt={`Product Image ${index + 1}`}
                     className="rounded-lg w-[822px] h-[514px] object-cover"
                   />
