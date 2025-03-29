@@ -146,7 +146,7 @@ export default function ProductCard({ product }: any) {
               modules={[Pagination, Navigation]}
               className="w-full"
             >
-              {images.map((src, index) => (
+              {images.map((src: any, index: any) => (
                 <SwiperSlide key={index}>
                   <img
                     src={src}

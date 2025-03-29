@@ -1,55 +1,47 @@
 "use client";
-import { useEffect, useState } from "react";
+
+import { useQuery } from "@tanstack/react-query";
 import ProductCard from "./_components/product";
 
 export default function Home() {
-  const [products, setProducts] = useState([]);
-  const [error, setError] = useState(null);
-  const consumerKey = "ck_d8c09aa4161ba973413d2bf799538bc1f578cd7e";
-  const consumerSecret = "cs_394951181832519dcf98ab0d10b6515552e31019";
-  useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        let allProducts: any = [];
-        let page = 1;
-        let perPage = 10; // Number of products per page
+  const { data, error, isLoading } = useQuery({
+    queryKey: ["products"], // ✅ Now uses an object
+    queryFn: async () => {
+      const consumerKey = process.env.NEXT_PUBLIC_WC_CONSUMER_KEY;
+      const consumerSecret = process.env.NEXT_PUBLIC_WC_CONSUMER_SECRET;
 
-        const res = await fetch(
-          `https://erchuudiindelguur.mn/wp-json/wc/v3/products?per_page=${perPage}&page=${page}`,
-          {
-            headers: {
-              Authorization:
-                "Basic " + btoa(`${consumerKey}:${consumerSecret}`),
-            },
-          }
-        );
-
-        if (!res.ok) throw new Error("Failed to fetch products");
-
-        const data = await res.json();
-
-        allProducts = [...allProducts, ...data];
-        page++; // Move to the next page
-
-        setProducts(allProducts); // Set all products after fetching all pages
-      } catch (e: any) {
-        setError(e.message);
+      if (!consumerKey || !consumerSecret) {
+        throw new Error("WooCommerce API keys are missing");
       }
-    };
 
-    fetchProducts();
-  }, []);
+      const response = await fetch(
+        `https://erchuudiindelguur.mn/wp-json/wc/v3/products?per_page=10&page=1`,
+        {
+          headers: {
+            Authorization: "Basic " + btoa(`${consumerKey}:${consumerSecret}`),
+          },
+        }
+      );
 
-  if (error) return <div>Error: {error}</div>;
-  console.log(products);
+      if (!response.ok) {
+        throw new Error(`Error ${response.status}: ${response.statusText}`);
+      }
+
+      return response.json();
+    },
+  });
+
+  if (isLoading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error.message}</div>;
+
   return (
-    <div className="mt-44 ml-60 ">
-      {products.length === 0 ? (
-        <p>Loading products...</p>
+    <div className="mt-44 ml-60">
+      {data.length === 0 ? (
+        <p>No products found.</p>
       ) : (
         <div className="grid gap-3 grid-cols-2">
-          {products.map((product: any, index: any) => (
-            <ProductCard key={index} product={product} />
+          {data.map((product: any) => (
+            <ProductCard key={product.id} product={product} />
           ))}
         </div>
       )}
