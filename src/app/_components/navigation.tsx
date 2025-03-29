@@ -53,7 +53,7 @@ export function Navigation() {
 
       {/* Sidebar Section */}
       <aside
-        className={`fixed top-32 left-0 h-full bg-[#ab3030] text-white transition-all w-64`}
+        className={`fixed top-32 left-0 h-full bg-[#ab3030] text-white transition-all w-56`}
       >
         {/* Sidebar Navigation Links */}
         <nav className="flex flex-col gap-6 p-4">
@@ -68,7 +68,7 @@ export function Navigation() {
                   Бэлгэвч
                 </button>
                 {subCategory === "condoms" && (
-                  <div className="mt-2 text-sm  ">
+                  <div className="mt-2 ml-3 text-[10px] ">
                     Бэлгэвчний төрөл болон дэлгэрэнгүй мэдээлэл
                   </div>
                 )}
@@ -81,7 +81,7 @@ export function Navigation() {
                   Шодой
                 </button>
                 {subCategory === "penis" && (
-                  <div className="mt-2 text-sm ">
+                  <div className="mt-2 ml-3 text-[10px] ">
                     Шодойтой холбоотой мэдээлэл
                   </div>
                 )}
