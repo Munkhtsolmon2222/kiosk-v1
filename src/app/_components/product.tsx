@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -14,15 +14,12 @@ import "swiper/css";
 import "swiper/css/navigation";
 import "swiper/css/pagination";
 import { Navigation, Pagination } from "swiper/modules";
+import DOMPurify from "dompurify";
 
-const images = [
-  "https://res.cloudinary.com/dv7ytfkgc/image/upload/v1737701571/gzkoigbdymm368tfujjr.jpg",
-  "https://res.cloudinary.com/dv7ytfkgc/image/upload/v1737547269/dhz8qebpvfcknigmiu9g.webp",
-  "https://res.cloudinary.com/dv7ytfkgc/image/upload/v1737540473/mld7ftnlvzyat8bqz3dx.png",
-];
-
-export default function ProductCard() {
+export default function ProductCard({ product }: any) {
   const [page, setPage] = useState(1); // Track the current page
+  const [sanitizedDescription, setSanitizedDescription] = useState<any>("");
+  const images = product?.images;
   const [orderProducts, setOrderProducts] = useState(0);
   const plusCount = () => {
     setOrderProducts(orderProducts + 1);
@@ -31,6 +28,14 @@ export default function ProductCard() {
     setOrderProducts(orderProducts > 1 ? orderProducts - 1 : 1);
   };
   console.log(orderProducts);
+  console.log(product?.description);
+  console.log(sanitizedDescription);
+  useEffect(() => {
+    if (product) {
+      console.log(product?.description);
+      setSanitizedDescription(DOMPurify.sanitize(product?.description));
+    }
+  }, []);
   return (
     <Dialog
       onOpenChange={(isOpen) => {
@@ -39,14 +44,17 @@ export default function ProductCard() {
     >
       <DialogTrigger asChild>
         <div className="flex justify-center mt-10">
-          <div className="w-72 h-auto bg-[#f1f1f1] rounded-2xl p-4">
-            <img
-              src="./1.jpg"
-              alt="Aaviin Baraa"
-              className="w-20 h-20 object-cover mx-auto rounded-full"
-            />
-            <h2 className="text-[#ab3030] text-center mt-4">Aaviin Baraa</h2>
-            <h3 className="text-black text-center mt-2">₮100'000</h3>
+          <div className="w-60 h-auto bg-[#f1f1f1] rounded-2xl p-4">
+            {images?.slice(0, 1).map((image: any, index: any) => (
+              <img
+                src={image.src}
+                alt="Aaviin Baraa"
+                className="w-20 h-20 object-cover mx-auto rounded-full"
+              />
+            ))}
+
+            <h2 className="text-[#ab3030] text-center mt-4">{product?.name}</h2>
+            <h3 className="text-black text-center mt-2">{product?.price}</h3>
             <h5 className="text-[#5dc477] text-center mt-1">Бэлэн</h5>
           </div>
         </div>
@@ -65,10 +73,10 @@ export default function ProductCard() {
               modules={[Pagination, Navigation]}
               className="w-full"
             >
-              {images.map((src, index) => (
+              {images?.map((image: any, index: any) => (
                 <SwiperSlide key={index}>
                   <img
-                    src={src}
+                    src={image.src}
                     alt={`Product Image ${index + 1}`}
                     className="rounded-lg w-[822px] h-[514px] object-cover"
                   />
@@ -79,10 +87,8 @@ export default function ProductCard() {
             <DialogHeader className="mt-6">
               <DialogTitle className="text-4xl font-bold flex justify-between p-4">
                 <div>
-                  <p className="text-2xl text-gray-500">Код: 123456</p>
-                  <p className="text-4xl font-bold">
-                    Maxime pariatur minus delectus Жишээ Бараа
-                  </p>
+                  <p className="text-2xl text-gray-500">Код: {product?.id}</p>
+                  <p className="text-4xl font-bold">{product?.name}</p>
                 </div>
                 <div className="text-center">
                   <p className="text-3xl font-bold text-red-500">
@@ -96,12 +102,10 @@ export default function ProductCard() {
             </DialogHeader>
 
             <div className="text-xl mt-4 px-4 w-full text-center">
-              <p className="text-gray-600 mt-4">
-                Lorem ipsum dolor sit amet consectetur adipisicing elit.
-                Delectus ea facilis sequi natus iure. Maxime pariatur minus
-                delectus officia blanditiis, nulla aperiam vel iure atque
-                accusamus, sequi non nam eius?
-              </p>
+              <div
+                className="product-description w-full h-auto p-4 font-medium text-[14px]" // Ensures enough space for content
+                dangerouslySetInnerHTML={{ __html: sanitizedDescription }}
+              />
             </div>
 
             <div className="flex justify-between mt-10 w-2/3 mx-auto">
