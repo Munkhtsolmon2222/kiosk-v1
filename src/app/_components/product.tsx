@@ -27,9 +27,6 @@ export default function ProductCard({ product }: any) {
   const minusCount = () => {
     setOrderProducts(orderProducts > 1 ? orderProducts - 1 : 1);
   };
-  console.log(orderProducts);
-  console.log(product?.description);
-  console.log(sanitizedDescription);
   useEffect(() => {
     if (product) {
       console.log(product?.description);
@@ -47,6 +44,7 @@ export default function ProductCard({ product }: any) {
           <div className="w-60 h-auto bg-[#f1f1f1] rounded-2xl p-4">
             {images?.slice(0, 1).map((image: any, index: any) => (
               <img
+                key={index}
                 src={image.src}
                 alt="Aaviin Baraa"
                 className="w-20 h-20 object-cover mx-auto rounded-full"
