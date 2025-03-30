@@ -1,12 +1,7 @@
-"use client";
-
 import { useQuery } from "@tanstack/react-query";
 import ProductCard from "./_components/product";
-import { AiFillSetting } from "react-icons/ai";
-import { useState } from "react";
 
 export default function Home() {
-  const [setting, setSetting] = useState(false);
   const { data, error, isLoading } = useQuery({
     queryKey: ["products"], // ✅ Now uses an object
     queryFn: async () => {
@@ -46,10 +41,6 @@ export default function Home() {
           ))}
         </div>
       )}
-      <button onClick={() => setSetting((per) => !per)}>
-        <AiFillSetting />
-      </button>
-      {setting ? <div>hello bitch</div> : ""}
     </div>
   );
 }

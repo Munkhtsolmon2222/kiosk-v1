@@ -33,6 +33,7 @@ export default function ProductCard({ product }: any) {
       setSanitizedDescription(DOMPurify.sanitize(product?.description));
     }
   }, [product]);
+  console.log(product);
   return (
     <Dialog
       onOpenChange={(isOpen) => {
@@ -105,10 +106,18 @@ export default function ProductCard({ product }: any) {
                 </div>
                 <div className="text-center">
                   <p className="text-3xl font-bold text-red-500">
-                    <span className="text-gray-500 line-through text-2xl block">
-                      24,900₮
-                    </span>{" "}
-                    19,900₮``
+                    {product.regular_price && (
+                      <span className="text-gray-500 line-through text-2xl block">
+                        {`${product.regular_price}`}
+                        <span className="font-bold">₮</span>
+                      </span>
+                    )}
+                    {product.price && (
+                      <span>
+                        {`${product.price}`}
+                        <span className="font-bold">₮</span>
+                      </span>
+                    )}
                   </p>
                 </div>
               </DialogTitle>
