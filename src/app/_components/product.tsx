@@ -52,7 +52,21 @@ export default function ProductCard({ product }: any) {
 
             <h2 className="text-[#ab3030] text-center mt-4">{product?.name}</h2>
             <h3 className="text-black text-center mt-2">{product?.price}</h3>
-            <h5 className="text-[#5dc477] text-center mt-1">Бэлэн</h5>
+            <h5
+              className={`${
+                product?.stock_status == "instock"
+                  ? "text-[#5dc477]"
+                  : product?.stock_status == "onbackorder"
+                  ? "text-[#00b3fa]"
+                  : "text-[#ab3030]"
+              } text-center mt-1`}
+            >
+              {product?.stock_status == "instock"
+                ? "Бэлэн"
+                : product?.stock_status == "onbackorder"
+                ? "Захиалгаар"
+                : "Дууссан"}
+            </h5>
           </div>
         </div>
       </DialogTrigger>
@@ -112,26 +126,27 @@ export default function ProductCard({ product }: any) {
                 </div>
               </DialogTitle>
             </DialogHeader>
+            <div className="h-[500px]">
+              <div className="text-xl mt-4 px-4 w-full text-center">
+                <div
+                  className="product-description w-full h-auto p-4 font-medium text-[14px]" // Ensures enough space for content
+                  dangerouslySetInnerHTML={{ __html: sanitizedDescription }}
+                />
+              </div>
 
-            <div className="text-xl mt-4 px-4 w-full text-center">
-              <div
-                className="product-description w-full h-auto p-4 font-medium text-[14px]" // Ensures enough space for content
-                dangerouslySetInnerHTML={{ __html: sanitizedDescription }}
-              />
-            </div>
-
-            <div className="flex justify-between mt-10 w-2/3 mx-auto">
-              <DialogClose asChild>
-                <Button variant="outline" className="text-2xl px-8 py-4">
-                  Хаах
+              <div className="flex justify-between mt-10 w-2/3 mx-auto">
+                <DialogClose asChild>
+                  <Button variant="outline" className="text-2xl px-8 py-4">
+                    Хаах
+                  </Button>
+                </DialogClose>
+                <Button
+                  className="text-2xl px-8 py-4 bg-green-500 text-white"
+                  onClick={() => setPage(2)}
+                >
+                  Үргэлжлүүлэх
                 </Button>
-              </DialogClose>
-              <Button
-                className="text-2xl px-8 py-4 bg-green-500 text-white"
-                onClick={() => setPage(2)}
-              >
-                Үргэлжлүүлэх
-              </Button>
+              </div>
             </div>
           </>
         ) : page === 2 ? (

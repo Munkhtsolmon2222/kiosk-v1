@@ -1,191 +1,84 @@
 "use client";
 
-import { useInfiniteQuery } from "@tanstack/react-query";
-import { usePathname, useRouter } from "next/navigation";
-import { Router } from "next/router";
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useCategories } from "../../../providers/CategoriesContext";
 
 export function Navigation() {
-  const [mainCategory, setMainCategory] = useState("Эрэгтэй");
-  const [subCategory, setSubCategory] = useState(0); // initial subcategory
-  const [parentId, setParentId] = useState();
+  const { data, isLoading, isError, error, setMainCategory, mainCategory } =
+    useCategories(); // Consume the context
+  const [activeParentId, setActiveParentId] = useState<number | null>(null); // Define setActiveParentId
   const router = useRouter();
-  const [activeParentId, setActiveParentId] = useState(null);
-  console.log(mainCategory, subCategory, parentId);
-  // Check if the user is connected
-  const isConnected = navigator.onLine;
-
-  // Fetch categories with pagination until we have all categories
-  const fetchCategories = async ({ pageParam = 1 }) => {
-    const consumerKey = process.env.NEXT_PUBLIC_WC_CONSUMER_KEY;
-    const consumerSecret = process.env.NEXT_PUBLIC_WC_CONSUMER_SECRET;
-    if (!consumerKey || !consumerSecret) {
-      throw new Error("WooCommerce API keys are missing");
-    }
-
-    const perPage = 100; // Increase per page limit to get more categories at once
-
-    const response = await fetch(
-      `https://erchuudiindelguur.mn/wp-json/wc/v3/products/categories?per_page=${perPage}&page=${pageParam}`,
-      {
-        headers: {
-          Authorization: "Basic " + btoa(`${consumerKey}:${consumerSecret}`),
-        },
-      }
-    );
-
-    if (!response.ok) {
-      throw new Error(`Error ${response.status}: ${response.statusText}`);
-    }
-
-    return response.json();
-  };
-
-  // Use react-query's useInfiniteQuery to fetch all pages of categories
-  const { data, error, isLoading, isError } = useInfiniteQuery({
-    queryKey: ["categories"], // Query key to uniquely identify this query
-    queryFn: fetchCategories, // The function that fetches the data
-    getNextPageParam: (lastPage, allPages) => {
-      // pageParam is implicitly handled here by React Query
-      // If the number of categories returned is less than perPage, then stop fetching
-      return lastPage.length === 100 ? allPages.length + 1 : undefined; // Continue fetching if there are more categories
-    },
-    refetchInterval: isConnected ? false : 1000, // Only refetch every second when offline
-    initialPageParam: 1, // Start from page 1
-  });
-
-  useEffect(() => {
-    if (data?.pages) {
-      const parentCategory = data.pages
-        .flat()
-        .find((category) => category.name === mainCategory);
-      console.log(parentCategory);
-      setParentId(parentCategory?.id);
-    }
-  }, [data, mainCategory]); // Ensure useEffect is triggered when data or subCategory changes
 
   if (isLoading) return <div>Loading...</div>;
-  if (isError) return <div>Error: {error.message}</div>;
+  if (isError) return <div>Error: {error?.message}</div>;
 
-  console.log(data?.pages.flat()); // Debugging all categories
+  const categories = data || [];
+  const parentId =
+    categories.find((category) => category.name === mainCategory)?.id || null;
+
   return (
     <div>
-      {/* Header Section */}
       <header className="w-full h-32 bg-white shadow-md fixed right-10 left-0 top-0 z-50">
         <div className="container mx-auto flex items-center justify-between px-4 py-4 max-w-full">
-          {/* Logo */}
           <div className="flex items-center justify-start">
             <img src="./jpg.jpg" alt="Logo" className="h-25" />
           </div>
-
-          {/* Top Navigation Links */}
-          <nav className="hidden md:flex gap-10  text-red-700 font-bold">
-            <button
-              onClick={() => setMainCategory("Эрэгтэй")}
-              className="text-[20px]"
-            >
-              Эрэгтэй
-            </button>
-            <button
-              onClick={() => setMainCategory("Эмэгтэй")}
-              className="text-[20px]"
-            >
-              Эмэгтэй
-            </button>
-            <button
-              onClick={() => setMainCategory("Хосуудад")}
-              className="text-[20px]"
-            >
-              Хосуудад
-            </button>
-            <button
-              onClick={() => setMainCategory("Парти тоглоом")}
-              className="text-[20px]"
-            >
-              Парти тоглоом
-            </button>
+          <nav className="hidden md:flex gap-10 text-red-700 font-bold">
+            {["Эрэгтэй", "Эмэгтэй", "Хосуудад", "Парти тоглоом"].map(
+              (category) => (
+                <button
+                  key={category}
+                  onClick={() => setMainCategory(category)}
+                  className="text-[20px]"
+                >
+                  {category}
+                </button>
+              )
+            )}
           </nav>
         </div>
       </header>
 
-      {/* Sidebar Section */}
       <aside className="fixed top-32 left-0 h-full bg-[#ab3030] text-white transition-all w-56">
-        {/* Sidebar Navigation Links */}
         <nav className="flex flex-col gap-6 p-4">
-          {mainCategory === "Эрэгтэй" ? (
-            data?.pages
-              .flat()
-              ?.filter((category) => category.parent === parentId)
-              .map((category) => (
-                <div key={category.id}>
-                  <button
-                    onClick={() => {
-                      // First, check if the current parent has subcategories
-                      const subCategories = data?.pages
-                        .flat()
-                        .filter(
-                          (subCategory) => subCategory.parent === category.id
-                        );
-
-                      if (subCategories.length === 0) {
-                        // No subcategories, navigate directly to the parent category page
-                        router.push(`/category/${category.id}`);
-                      } else {
-                        // There are subcategories, open the parent category to show them
-                        if (activeParentId === category.id) {
-                          setActiveParentId(null); // Close if it's already active
-                        } else {
-                          setActiveParentId(category.id); // Open if it's not active
+          {categories
+            .filter((category) => category.parent === parentId)
+            .map((category) => (
+              <div key={category.id}>
+                <button
+                  onClick={() => {
+                    const subCategories = categories.filter(
+                      (sub) => sub.parent === category.id
+                    );
+                    if (subCategories.length === 0) {
+                      router.push(`/category/${category.id}`);
+                    } else {
+                      setActiveParentId(
+                        activeParentId === category.id ? null : category.id
+                      );
+                    }
+                  }}
+                  className="flex items-center gap-4 p-3 hover:bg-gray-800 rounded"
+                >
+                  {category.name}
+                </button>
+                {activeParentId === category.id &&
+                  categories
+                    .filter((sub) => sub.parent === category.id)
+                    .map((subCategory) => (
+                      <button
+                        key={subCategory.id}
+                        className="mt-2 ml-3 text-[10px]"
+                        onClick={() =>
+                          router.push(`/category/${subCategory.id}`)
                         }
-                      }
-                    }}
-                    className="flex items-center gap-4 p-3 hover:bg-gray-800 rounded"
-                  >
-                    {category.name}
-                  </button>
-
-                  {/* Render subcategories if the parent is active */}
-                  {activeParentId === category.id &&
-                    data?.pages
-                      .flat()
-                      ?.filter(
-                        (subCategory) => subCategory.parent === category.id
-                      )
-                      .map((subCategory, i) => (
-                        <button
-                          key={i}
-                          className="mt-2 ml-3 text-[10px]"
-                          onClick={() =>
-                            router.push(`/category/${subCategory.id}`)
-                          } // Navigates to the dynamic subcategory page
-                        >
-                          {subCategory.name}
-                        </button>
-                      ))}
-                </div>
-              ))
-          ) : mainCategory === "Эмэгтэй" ? (
-            <a
-              href="#"
-              className="flex items-center gap-4 p-3 hover:bg-gray-800 rounded"
-            >
-              Эмэгтэй
-            </a>
-          ) : mainCategory === "Хосуудад" ? (
-            <a
-              href="#"
-              className="flex items-center gap-4 p-3 hover:bg-gray-800 rounded"
-            >
-              Хосуудад
-            </a>
-          ) : (
-            <a
-              href="#"
-              className="flex items-center gap-4 p-3 hover:bg-gray-800 rounded"
-            >
-              Парти тоглоом
-            </a>
-          )}
+                      >
+                        {subCategory.name}
+                      </button>
+                    ))}
+              </div>
+            ))}
         </nav>
       </aside>
     </div>
