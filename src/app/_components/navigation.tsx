@@ -1,65 +1,55 @@
 "use client";
 
 import { useCategories } from "../../../providers/CategoriesContext";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useInfiniteQuery } from "@tanstack/react-query";
+import { usePathname, useRouter } from "next/navigation";
+import { Router } from "next/router";
+import { useEffect, useState } from "react";
 import { Settings } from "./settings";
 
 export function Navigation() {
-  const {
-    data,
-    isLoading,
-    isError,
-    error,
-    setMainCategory,
-    mainCategory,
-    setSubCategory,
-    subCategory,
-  } = useCategories();
-  const [activeParentId, setActiveParentId] = useState<number | null>(null);
+  const { data, isLoading, isError, error, setMainCategory, mainCategory } =
+    useCategories(); // Consume the context
+  const [activeParentId, setActiveParentId] = useState<number | null>(null); // Define setActiveParentId
+  const [selectedCategory, setSelectedCategory] = useState<any>(null); // Track selected category
+  const [selectedSubCategory, setSelectedSubCategory] = useState(null);
   const router = useRouter();
-
   const handleCategorySelection = (category: string) => {
-    setMainCategory(category);
+    setMainCategory(category); // Сонгосон категориийг хадгалах
     console.log("Сонгосон категори: ", category);
-
-    // Check if a subcategory is pre-selected, then navigate automatically
-    const selectedSubCategory = data?.find(
-      (c) =>
-        c.id === subCategory && // Compare with ID instead of name
-        c.parent === data.find((c) => c.name === category)?.id
-    );
-
-    if (selectedSubCategory) {
-      router.push(`/category/${selectedSubCategory.id}`);
-    }
   };
-
+  const [subCategory, setSubCategory] = useState(0); // initial subcategory
   const handleSubCategory = (subCategorySelect: any) => {
     setSubCategory(subCategorySelect);
   };
-
   if (isLoading) return <div>Loading...</div>;
   if (isError) return <div>Error: {error?.message}</div>;
-  console.log(subCategory);
+
   const categories = data || [];
   const parentId =
     categories.find((category) => category.name === mainCategory)?.id || null;
-  console.log(activeParentId);
+
   return (
     <div>
       <header className="w-full h-32 bg-white shadow-md fixed right-10 left-0 top-0 z-50">
         <div className="container mx-auto flex items-center justify-between px-4 py-4 max-w-full">
           <div className="flex items-center justify-start">
-            <img src="./jpg.jpg" alt="Logo" className="h-25" />
+            <img src="./png.png" alt="Logo" className="h-25" />
           </div>
           <nav className="hidden md:flex gap-10 text-red-700 font-bold">
             {["Эрэгтэй", "Эмэгтэй", "Хосуудад", "Парти тоглоом"].map(
               (category) => (
                 <button
                   key={category}
-                  onClick={() => handleCategorySelection(category)}
-                  className="text-[20px]"
+                  onClick={() => {
+                    setMainCategory(category);
+                    setSelectedCategory(category); // Set selected main category
+                  }}
+                  className={`text-[20px] font-semibold py-2 px-4 rounded-lg transition-all duration-300 ${
+                    selectedCategory === category
+                      ? "bg-blue-500 text-white"
+                      : "bg-transparent hover:bg-blue-100"
+                  }`}
                 >
                   {category}
                 </button>
@@ -86,31 +76,48 @@ export function Navigation() {
                     );
                     if (subCategories.length === 0) {
                       router.push(`/category/${category.id}`);
+                      setSelectedCategory(category.name); // Set selected main category
                     } else {
                       setActiveParentId(
                         activeParentId === category.id ? null : category.id
                       );
+                      setSelectedCategory(category.name); // Set selected main category
                     }
                   }}
-                  className="flex items-center gap-4 p-3 hover:bg-gray-800 rounded"
+                  className={`text-start p-3 rounded-lg text-lg transition-all duration-300 ${
+                    selectedCategory === category.name
+                      ? "bg-blue-500 text-white"
+                      : "bg-transparent hover:bg-blue-100"
+                  }`}
                 >
                   {category.name}
                 </button>
+
+                {/* Render subcategories when the parent is active */}
                 {activeParentId === category.id &&
                   categories
                     .filter((sub) => sub.parent === category.id)
-                    .map((subCategory) => (
-                      <button
-                        key={subCategory.id}
-                        className="mt-2 ml-3 text-[10px]"
-                        onClick={() => {
-                          setSubCategory(subCategory.id);
-                          router.push(`/category/${subCategory.id}`);
-                        }}
-                      >
-                        {subCategory.name}
-                      </button>
-                    ))}
+                    .map((subCategory: any) => {
+                      const hasSubCategories = categories.some(
+                        (child) => child.parent === subCategory.id
+                      );
+                      return (
+                        <button
+                          key={subCategory.id}
+                          className={`mt-2 ml-5 px-2 text-md text-start transition-all duration-300 ${
+                            selectedSubCategory === subCategory.name
+                              ? "bg-blue-900 text-white rounded-2xl "
+                              : "bg-amber-900 text-white hover:bg-blue-700 rounded-2xl "
+                          }`}
+                          onClick={() => {
+                            router.push(`/category/${subCategory.id}`);
+                            setSelectedSubCategory(subCategory.name); // Set selected subcategory
+                          }}
+                        >
+                          {subCategory.name}
+                        </button>
+                      );
+                    })}
               </div>
             ))}
         </nav>

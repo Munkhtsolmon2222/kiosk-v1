@@ -51,7 +51,26 @@ export default function ProductCard({ product }: any) {
             ))}
 
             <h2 className="text-[#ab3030] text-center mt-4">{product?.name}</h2>
-            <h3 className="text-black text-center mt-2">{product?.price}</h3>
+            <h3 className="text-black text-center mt-2">
+              {product.sale_price ? (
+                <>
+                  <span className="text-gray-500 font-bold line-through text-md block">
+                    {new Intl.NumberFormat("mn-MN").format(
+                      product.regular_price
+                    )}
+                    ₮
+                  </span>
+                  <span className="text-red-500 text-2xl block">
+                    {new Intl.NumberFormat("mn-MN").format(product.sale_price)}₮
+                  </span>
+                </>
+              ) : (
+                <span className="text-2xl font-bold block">
+                  {new Intl.NumberFormat("mn-MN").format(product.regular_price)}
+                  ₮
+                </span>
+              )}
+            </h3>
             <h5
               className={`${
                 product?.stock_status == "instock"
@@ -71,7 +90,7 @@ export default function ProductCard({ product }: any) {
         </div>
       </DialogTrigger>
 
-      <DialogContent className="p-6 min-w-[70vw] min-h-[80vh] flex flex-col overflow-y-auto">
+      <DialogContent className="p-6 min-w-[70vw] min-h-[80vh] flex flex-col ">
         {page === 1 ? (
           // Page 1: Product Details
           <>
@@ -117,32 +136,43 @@ export default function ProductCard({ product }: any) {
                   <p className="text-4xl font-bold">{product?.name}</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-3xl font-bold text-red-500">
-                    {product.regular_price && (
-                      <span className="text-gray-500 line-through text-2xl block">
-                        {`${product.regular_price}`}
-                        <span className="font-bold">₮</span>
-                      </span>
-                    )}
-                    {product.price && (
-                      <span>
-                        {`${product.price}`}
-                        <span className="font-bold">₮</span>
+                  <p className="text-3xl mt-4 font-bold">
+                    {product.sale_price ? (
+                      <>
+                        <span className="text-gray-500 line-through text-md block">
+                          {new Intl.NumberFormat("mn-MN").format(
+                            product.regular_price
+                          )}
+                          ₮
+                        </span>
+                        <span className="text-red-500 text-2xl block">
+                          {new Intl.NumberFormat("mn-MN").format(
+                            product.sale_price
+                          )}
+                          ₮
+                        </span>
+                      </>
+                    ) : (
+                      <span className="text-2xl block">
+                        {new Intl.NumberFormat("mn-MN").format(
+                          product.regular_price
+                        )}
+                        ₮
                       </span>
                     )}
                   </p>
                 </div>
               </DialogTitle>
             </DialogHeader>
-            <div className="h-[500px] mb-[20px]">
+            <div className="h-auto mb-[20px]">
               <div className="text-xl mt-4 px-4 w-full text-center">
                 <div
-                  className="product-description w-full h-auto p-4 font-medium text-[14px]" // Ensures enough space for content
+                  className="product-description w-full p-4 font-medium text-[14px] overflow-y-auto max-h-[500px] " // Ensures enough space for content
                   dangerouslySetInnerHTML={{ __html: sanitizedDescription }}
                 />
               </div>
 
-              <div className="flex justify-between mt-10 w-2/3 mx-auto pb-10 ">
+              <div className="flex justify-between mt-10 w-2/3 mx-auto pb-5 ">
                 <DialogClose asChild>
                   <Button variant="outline" className="text-2xl px-8 py-4">
                     Хаах
