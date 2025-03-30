@@ -1,12 +1,16 @@
 "use client";
 
 import { useInfiniteQuery } from "@tanstack/react-query";
+import { usePathname, useRouter } from "next/navigation";
+import { Router } from "next/router";
 import { useEffect, useState } from "react";
 
 export function Navigation() {
   const [mainCategory, setMainCategory] = useState("Эрэгтэй");
   const [subCategory, setSubCategory] = useState(0); // initial subcategory
   const [parentId, setParentId] = useState();
+  const router = useRouter();
+  const [activeParentId, setActiveParentId] = useState(null);
   console.log(mainCategory, subCategory, parentId);
   // Check if the user is connected
   const isConnected = navigator.onLine;
@@ -114,21 +118,50 @@ export function Navigation() {
               ?.filter((category) => category.parent === parentId)
               .map((category) => (
                 <div key={category.id}>
-                  {/* Make sure each element has a unique key */}
                   <button
-                    onClick={() => setSubCategory(category.id)}
+                    onClick={() => {
+                      // First, check if the current parent has subcategories
+                      const subCategories = data?.pages
+                        .flat()
+                        .filter(
+                          (subCategory) => subCategory.parent === category.id
+                        );
+
+                      if (subCategories.length === 0) {
+                        // No subcategories, navigate directly to the parent category page
+                        router.push(`/category/${category.id}`);
+                      } else {
+                        // There are subcategories, open the parent category to show them
+                        if (activeParentId === category.id) {
+                          setActiveParentId(null); // Close if it's already active
+                        } else {
+                          setActiveParentId(category.id); // Open if it's not active
+                        }
+                      }
+                    }}
                     className="flex items-center gap-4 p-3 hover:bg-gray-800 rounded"
                   >
                     {category.name}
                   </button>
-                  {data?.pages
-                    .flat()
-                    ?.filter((category) => category.parent === subCategory)
-                    .map((category, i) => (
-                      <div key={i} className="mt-2 ml-3 text-[10px]">
-                        {category.name}
-                      </div>
-                    ))}
+
+                  {/* Render subcategories if the parent is active */}
+                  {activeParentId === category.id &&
+                    data?.pages
+                      .flat()
+                      ?.filter(
+                        (subCategory) => subCategory.parent === category.id
+                      )
+                      .map((subCategory, i) => (
+                        <button
+                          key={i}
+                          className="mt-2 ml-3 text-[10px]"
+                          onClick={() =>
+                            router.push(`/category/${subCategory.id}`)
+                          } // Navigates to the dynamic subcategory page
+                        >
+                          {subCategory.name}
+                        </button>
+                      ))}
                 </div>
               ))
           ) : mainCategory === "Эмэгтэй" ? (

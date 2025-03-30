@@ -29,7 +29,6 @@ export default function ProductCard({ product }: any) {
   };
   useEffect(() => {
     if (product) {
-      console.log(product?.description);
       setSanitizedDescription(DOMPurify.sanitize(product?.description));
     }
   }, [product]);
