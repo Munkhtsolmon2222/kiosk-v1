@@ -1,15 +1,25 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { useCategories } from "../../../providers/CategoriesContext";
+import { useInfiniteQuery } from "@tanstack/react-query";
+import { usePathname, useRouter } from "next/navigation";
+import { Router } from "next/router";
+import { useEffect, useState } from "react";
+import { Settings } from "./settings";
 
 export function Navigation() {
   const { data, isLoading, isError, error, setMainCategory, mainCategory } =
     useCategories(); // Consume the context
   const [activeParentId, setActiveParentId] = useState<number | null>(null); // Define setActiveParentId
   const router = useRouter();
-
+  const handleCategorySelection = (category: string) => {
+    setMainCategory(category); // Сонгосон категориийг хадгалах
+    console.log("Сонгосон категори: ", category);
+  };
+  const [subCategory, setSubCategory] = useState(0); // initial subcategory
+  const handleSubCategory = (subCategorySelect: any) => {
+    setSubCategory(subCategorySelect);
+  };
   if (isLoading) return <div>Loading...</div>;
   if (isError) return <div>Error: {error?.message}</div>;
 
@@ -35,7 +45,11 @@ export function Navigation() {
                   {category}
                 </button>
               )
-            )}
+            )}{" "}
+            <Settings
+              onSelectCategory={handleCategorySelection}
+              onSubCategory={handleSubCategory}
+            />
           </nav>
         </div>
       </header>

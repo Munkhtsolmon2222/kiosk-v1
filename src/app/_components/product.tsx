@@ -32,6 +32,7 @@ export default function ProductCard({ product }: any) {
       setSanitizedDescription(DOMPurify.sanitize(product?.description));
     }
   }, [product]);
+  console.log(product);
   return (
     <Dialog
       onOpenChange={(isOpen) => {
@@ -118,15 +119,23 @@ export default function ProductCard({ product }: any) {
                 </div>
                 <div className="text-center">
                   <p className="text-3xl font-bold text-red-500">
-                    <span className="text-gray-500 line-through text-2xl block">
-                      24,900₮
-                    </span>{" "}
-                    19,900₮``
+                    {product.regular_price && (
+                      <span className="text-gray-500 line-through text-2xl block">
+                        {`${product.regular_price}`}
+                        <span className="font-bold">₮</span>
+                      </span>
+                    )}
+                    {product.price && (
+                      <span>
+                        {`${product.price}`}
+                        <span className="font-bold">₮</span>
+                      </span>
+                    )}
                   </p>
                 </div>
               </DialogTitle>
             </DialogHeader>
-            <div className="h-[500px]">
+            <div className="h-[500px] mb-[20px]">
               <div className="text-xl mt-4 px-4 w-full text-center">
                 <div
                   className="product-description w-full h-auto p-4 font-medium text-[14px]" // Ensures enough space for content
@@ -134,7 +143,7 @@ export default function ProductCard({ product }: any) {
                 />
               </div>
 
-              <div className="flex justify-between mt-10 w-2/3 mx-auto">
+              <div className="flex justify-between mt-10 w-2/3 mx-auto pb-10 ">
                 <DialogClose asChild>
                   <Button variant="outline" className="text-2xl px-8 py-4">
                     Хаах
