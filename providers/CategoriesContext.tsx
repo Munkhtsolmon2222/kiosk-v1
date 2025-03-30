@@ -15,7 +15,11 @@ interface CategoryContextType {
   isLoading: boolean;
   isError: boolean;
   setMainCategory: React.Dispatch<React.SetStateAction<string>>;
-  mainCategory: string;
+  mainCategory: any;
+  setSubCategory: any;
+  subCategory: any;
+  setThirdCategory: any;
+  thirdCategory: any;
   fetchCategories: any;
 }
 
@@ -26,6 +30,8 @@ const CategoryContext = createContext<CategoryContextType | undefined>(
 // Provider component
 export const CategoryProvider = ({ children }: { children: ReactNode }) => {
   const [mainCategory, setMainCategory] = useState("Эрэгтэй");
+  const [subCategory, setSubCategory] = useState(0);
+  const [thirdCategory, setThirdCategory] = useState(0);
 
   // Fetch categories with react-query
   const fetchCategories = async ({ pageParam = 1 }) => {
@@ -76,6 +82,10 @@ export const CategoryProvider = ({ children }: { children: ReactNode }) => {
         isError,
         setMainCategory,
         mainCategory,
+        setSubCategory,
+        subCategory,
+        setThirdCategory,
+        thirdCategory,
         fetchCategories,
       }}
     >

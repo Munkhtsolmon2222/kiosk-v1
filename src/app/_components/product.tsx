@@ -32,7 +32,6 @@ export default function ProductCard({ product }: any) {
       setSanitizedDescription(DOMPurify.sanitize(product?.description));
     }
   }, [product]);
-  console.log(product);
   return (
     <Dialog
       onOpenChange={(isOpen) => {

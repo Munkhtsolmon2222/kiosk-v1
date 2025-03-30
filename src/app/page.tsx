@@ -1,7 +1,6 @@
 "use client";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import ProductCard from "./_components/product";
-<<<<<<< HEAD
 import { AiFillSetting } from "react-icons/ai";
 import { useState, useEffect } from "react";
 import { useProducts } from "../../providers/productContext";
@@ -9,19 +8,6 @@ import { useProducts } from "../../providers/productContext";
 export default function Home() {
   const [isConnected, setIsConnected] = useState(true);
   const [setting, setSetting] = useState(false);
-=======
-
-export default function Home() {
-  // Check if the user is connected
-  const isConnected = navigator.onLine;
-  // Fetch products with pagination until we have all products
-  const fetchProduct = async ({ pageParam = 1 }) => {
-    const consumerKey = process.env.NEXT_PUBLIC_WC_CONSUMER_KEY;
-    const consumerSecret = process.env.NEXT_PUBLIC_WC_CONSUMER_SECRET;
-    if (!consumerKey || !consumerSecret) {
-      throw new Error("WooCommerce API keys are missing");
-    }
->>>>>>> 2-boonaa
 
   const { data, isLoading, error } = useProducts();
 
@@ -41,14 +27,11 @@ export default function Home() {
             ))}
         </div>
       )}
-<<<<<<< HEAD
 
       <button onClick={() => setSetting((prev) => !prev)}>
         <AiFillSetting />
       </button>
       {setting && <div>Settings Panel</div>}
-=======
->>>>>>> 2-boonaa
     </div>
   );
 }

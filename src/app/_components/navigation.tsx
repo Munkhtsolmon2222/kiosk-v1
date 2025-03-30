@@ -1,32 +1,51 @@
 "use client";
 
 import { useCategories } from "../../../providers/CategoriesContext";
-import { useInfiniteQuery } from "@tanstack/react-query";
-import { usePathname, useRouter } from "next/navigation";
-import { Router } from "next/router";
-import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { Settings } from "./settings";
 
 export function Navigation() {
-  const { data, isLoading, isError, error, setMainCategory, mainCategory } =
-    useCategories(); // Consume the context
-  const [activeParentId, setActiveParentId] = useState<number | null>(null); // Define setActiveParentId
+  const {
+    data,
+    isLoading,
+    isError,
+    error,
+    setMainCategory,
+    mainCategory,
+    setSubCategory,
+    subCategory,
+  } = useCategories();
+  const [activeParentId, setActiveParentId] = useState<number | null>(null);
   const router = useRouter();
+
   const handleCategorySelection = (category: string) => {
-    setMainCategory(category); // Сонгосон категориийг хадгалах
+    setMainCategory(category);
     console.log("Сонгосон категори: ", category);
+
+    // Check if a subcategory is pre-selected, then navigate automatically
+    const selectedSubCategory = data?.find(
+      (c) =>
+        c.id === subCategory && // Compare with ID instead of name
+        c.parent === data.find((c) => c.name === category)?.id
+    );
+
+    if (selectedSubCategory) {
+      router.push(`/category/${selectedSubCategory.id}`);
+    }
   };
-  const [subCategory, setSubCategory] = useState(0); // initial subcategory
+
   const handleSubCategory = (subCategorySelect: any) => {
     setSubCategory(subCategorySelect);
   };
+
   if (isLoading) return <div>Loading...</div>;
   if (isError) return <div>Error: {error?.message}</div>;
-
+  console.log(subCategory);
   const categories = data || [];
   const parentId =
     categories.find((category) => category.name === mainCategory)?.id || null;
-
+  console.log(activeParentId);
   return (
     <div>
       <header className="w-full h-32 bg-white shadow-md fixed right-10 left-0 top-0 z-50">
@@ -39,13 +58,13 @@ export function Navigation() {
               (category) => (
                 <button
                   key={category}
-                  onClick={() => setMainCategory(category)}
+                  onClick={() => handleCategorySelection(category)}
                   className="text-[20px]"
                 >
                   {category}
                 </button>
               )
-            )}{" "}
+            )}
             <Settings
               onSelectCategory={handleCategorySelection}
               onSubCategory={handleSubCategory}
@@ -84,9 +103,10 @@ export function Navigation() {
                       <button
                         key={subCategory.id}
                         className="mt-2 ml-3 text-[10px]"
-                        onClick={() =>
-                          router.push(`/category/${subCategory.id}`)
-                        }
+                        onClick={() => {
+                          setSubCategory(subCategory.id);
+                          router.push(`/category/${subCategory.id}`);
+                        }}
                       >
                         {subCategory.name}
                       </button>
