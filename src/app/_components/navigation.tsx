@@ -4,6 +4,7 @@ import { useInfiniteQuery } from "@tanstack/react-query";
 import { usePathname, useRouter } from "next/navigation";
 import { Router } from "next/router";
 import { useEffect, useState } from "react";
+import { Settings } from "./settings";
 
 export function Navigation() {
   const [mainCategory, setMainCategory] = useState("Эрэгтэй");
@@ -14,6 +15,13 @@ export function Navigation() {
   console.log(mainCategory, subCategory, parentId);
   // Check if the user is connected
   const isConnected = navigator.onLine;
+  const handleCategorySelection = (category: string) => {
+    setMainCategory(category); // Сонгосон категориийг хадгалах
+    console.log("Сонгосон категори: ", category);
+  };
+  const handleSubCategory = (subCategorySelect: any) => {
+    setSubCategory(subCategorySelect);
+  };
 
   // Fetch categories with pagination until we have all categories
   const fetchCategories = async ({ pageParam = 1 }) => {
@@ -104,6 +112,10 @@ export function Navigation() {
             >
               Парти тоглоом
             </button>
+            <Settings
+              onSelectCategory={handleCategorySelection}
+              onSubCategory={handleSubCategory}
+            />
           </nav>
         </div>
       </header>

@@ -6,7 +6,6 @@ import ProductCard from "./_components/product";
 export default function Home() {
   // Check if the user is connected
   const isConnected = navigator.onLine;
-  const [setting, setSetting] = useState(false);
   // Fetch products with pagination until we have all products
   const fetchProduct = async ({ pageParam = 1 }) => {
     const consumerKey = process.env.NEXT_PUBLIC_WC_CONSUMER_KEY;
