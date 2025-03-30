@@ -2,11 +2,13 @@
 
 import { useInfiniteQuery } from "@tanstack/react-query";
 import ProductCard from "./_components/product";
+import { AiFillSetting } from "react-icons/ai";
+import { useState } from "react";
 
 export default function Home() {
   // Check if the user is connected
   const isConnected = navigator.onLine;
-
+  const [setting, setSetting] = useState(false);
   // Fetch products with pagination until we have all products
   const fetchProduct = async ({ pageParam = 1 }) => {
     const consumerKey = process.env.NEXT_PUBLIC_WC_CONSUMER_KEY;
@@ -49,7 +51,7 @@ export default function Home() {
   if (isError) return <div>Error: {error.message}</div>;
 
   return (
-    <div className="mt-44 ml-60">
+    <div className="mt-44 ml-64">
       {data?.pages.flat().length === 0 ? (
         <p>No products found.</p>
       ) : (
@@ -59,6 +61,10 @@ export default function Home() {
           ))}
         </div>
       )}
+      <button onClick={() => setSetting((per) => !per)}>
+        <AiFillSetting />
+      </button>
+      {setting ? <div>hello bitch</div> : ""}
     </div>
   );
 }
