@@ -1,15 +1,7 @@
 "use client";
-import { useInfiniteQuery } from "@tanstack/react-query";
-import ProductCard from "./_components/product";
-<<<<<<< HEAD
-import { AiFillSetting } from "react-icons/ai";
-import { useState, useEffect } from "react";
-import { useProducts } from "../../providers/productContext";
 
-export default function Home() {
-  const [isConnected, setIsConnected] = useState(true);
-  const [setting, setSetting] = useState(false);
-=======
+import ProductCard from "./_components/product";
+import { useProducts } from "../../providers/productContext";
 
 export default function Home() {
   // Check if the user is connected
@@ -21,8 +13,7 @@ export default function Home() {
     if (!consumerKey || !consumerSecret) {
       throw new Error("WooCommerce API keys are missing");
     }
->>>>>>> 2-boonaa
-
+  };
   const { data, isLoading, error } = useProducts();
 
   if (isLoading) return <div>Loading...</div>;
@@ -41,14 +32,6 @@ export default function Home() {
             ))}
         </div>
       )}
-<<<<<<< HEAD
-
-      <button onClick={() => setSetting((prev) => !prev)}>
-        <AiFillSetting />
-      </button>
-      {setting && <div>Settings Panel</div>}
-=======
->>>>>>> 2-boonaa
     </div>
   );
 }
