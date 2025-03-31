@@ -1,10 +1,8 @@
 "use client";
 
 import { useCategories } from "../../../providers/CategoriesContext";
-import { useInfiniteQuery } from "@tanstack/react-query";
-import { usePathname, useRouter } from "next/navigation";
-import { Router } from "next/router";
-import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { Settings } from "./settings";
 
 export function Navigation() {
