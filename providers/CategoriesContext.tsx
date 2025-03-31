@@ -1,8 +1,13 @@
 "use client";
-import { createContext, useContext, useState, ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useState,
+  ReactNode,
+  useEffect,
+} from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
 
-// Define types
 interface Category {
   id: number;
   name: string;
@@ -15,11 +20,11 @@ interface CategoryContextType {
   isLoading: boolean;
   isError: boolean;
   setMainCategory: React.Dispatch<React.SetStateAction<string>>;
-  mainCategory: any;
-  setSubCategory: any;
-  subCategory: any;
-  setThirdCategory: any;
-  thirdCategory: any;
+  mainCategory: string;
+  setSubCategory: React.Dispatch<React.SetStateAction<number>>;
+  subCategory: number;
+  setThirdCategory: React.Dispatch<React.SetStateAction<number>>;
+  thirdCategory: number;
   fetchCategories: any;
 }
 
@@ -27,11 +32,10 @@ const CategoryContext = createContext<CategoryContextType | undefined>(
   undefined
 );
 
-// Provider component
 export const CategoryProvider = ({ children }: { children: ReactNode }) => {
-  const [mainCategory, setMainCategory] = useState("Эрэгтэй");
-  const [subCategory, setSubCategory] = useState(0);
-  const [thirdCategory, setThirdCategory] = useState(0);
+  const [mainCategory, setMainCategory] = useState<string>("Эрэгтэй");
+  const [subCategory, setSubCategory] = useState<number>(0);
+  const [thirdCategory, setThirdCategory] = useState<number>(0);
 
   // Fetch categories with react-query
   const fetchCategories = async ({ pageParam = 1 }) => {
@@ -69,9 +73,22 @@ export const CategoryProvider = ({ children }: { children: ReactNode }) => {
     queryFn: fetchCategories,
     getNextPageParam: (lastPage, allPages) =>
       lastPage.length === 100 ? allPages.length + 1 : undefined,
-    refetchInterval: navigator.onLine ? false : 1000,
+    refetchInterval:
+      typeof window !== "undefined" && navigator.onLine ? false : 1000,
     initialPageParam: 1,
   });
+
+  // Set default category when data is fetched
+  useEffect(() => {
+    if (data && data.length > 0) {
+      const defaultMainCategory = "Эрэгтэй";
+      const defaultSubCategory = data.find(
+        (category) => category.name === defaultMainCategory
+      )?.id;
+      setMainCategory(defaultMainCategory);
+      if (defaultSubCategory) setSubCategory(defaultSubCategory);
+    }
+  }, [data]);
 
   return (
     <CategoryContext.Provider
@@ -94,7 +111,6 @@ export const CategoryProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
-// Custom hook to access the category context
 export const useCategories = () => {
   const context = useContext(CategoryContext);
   if (!context) {
