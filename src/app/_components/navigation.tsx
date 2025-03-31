@@ -9,7 +9,7 @@ import { getCookie } from "cookies-next/client";
 
 export function Navigation() {
   const {
-    data,
+    data1,
     isLoading,
     isError,
     error,
@@ -18,7 +18,9 @@ export function Navigation() {
     mainCategory,
     thirdCategory,
   } = useCategories();
-  const [activeParentId, setActiveParentId] = useState<number | null>(null);
+  const [activeParentId, setActiveParentId] = useState<number | null>(
+    subCategory
+  );
   const [selectedCategory, setSelectedCategory] = useState<any>(subCategory);
   const [selectedMainCategoryActive, setSelectedMainCategoryActive] =
     useState<any>(mainCategory);
@@ -30,10 +32,43 @@ export function Navigation() {
   const router = useRouter();
   const pathname = usePathname();
   const lastRoute = pathname.split("/").pop(); // This will give "71"
-  const categories = data || [];
+  const categories = data1 || [];
 
   const parentId =
     categories.find((category) => category.name === mainCategory)?.id || null;
+  useEffect(() => {
+    setSelectedMainCategoryActive(mainCategory);
+    setSelectedCategory(subCategory);
+    setSelectedSubCategory(subCategory);
+    setSelectedThirdCategory(thirdCategory);
+
+    // Ensure categories are available before setting defaults
+    if (categories.length > 0 && activeParentId === null) {
+      const defaultMainCategory = categories.find(
+        (category) => !category.parent
+      ); // Find the first main category
+      if (defaultMainCategory) {
+        setActiveParentId(defaultMainCategory.id);
+        setSelectedCategory(defaultMainCategory.id);
+
+        // Expand its first subcategory, if available
+        const firstSubCategory = categories.find(
+          (sub) => sub.parent === defaultMainCategory.id
+        );
+        if (firstSubCategory) {
+          setSelectedSubCategory(firstSubCategory.id);
+
+          // Expand its first third category, if available
+          const firstThirdCategory = categories.find(
+            (third) => third.parent === firstSubCategory.id
+          );
+          if (firstThirdCategory) {
+            setSelectedThirdCategory(firstThirdCategory.id);
+          }
+        }
+      }
+    }
+  }, [mainCategory, subCategory, thirdCategory, categories, router]); // Depend on categories to re-run when they are updated
 
   const handleCategorySelection = (category: string) => {
     setMainCategory(category);
@@ -68,6 +103,8 @@ export function Navigation() {
   if (isLoading) return <div>Loading...</div>;
   if (isError) return <div>Error: {error?.message}</div>;
   console.log(categories);
+  console.log(activeParentId);
+
   return (
     <div>
       <header className="w-full h-32 bg-white shadow-md fixed right-10 left-0 top-0 z-50">
@@ -144,7 +181,7 @@ export function Navigation() {
                       const hasThirdCategories = categories.some(
                         (child) => child.parent === subCategory.id
                       );
-
+                      console.log(activeParentId, category.id);
                       return (
                         <div key={subCategory.id}>
                           <button

@@ -16,7 +16,7 @@ interface Category {
 }
 
 interface CategoryContextType {
-  data: Category[] | undefined;
+  data1: Category[] | undefined;
   error: Error | null;
   isLoading: boolean;
   isError: boolean;
@@ -90,7 +90,7 @@ export const CategoryProvider = ({ children }: { children: ReactNode }) => {
   return (
     <CategoryContext.Provider
       value={{
-        data: data?.pages.flat() || [],
+        data1: data?.pages.flat() || [],
         error,
         isLoading,
         isError,
