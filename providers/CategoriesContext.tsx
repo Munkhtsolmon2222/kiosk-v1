@@ -78,18 +78,6 @@ export const CategoryProvider = ({ children }: { children: ReactNode }) => {
     initialPageParam: 1,
   });
 
-  // Set default category when data is fetched
-  useEffect(() => {
-    if (data && data.length > 0) {
-      const defaultMainCategory = "Эрэгтэй";
-      const defaultSubCategory = data.find(
-        (category) => category.name === defaultMainCategory
-      )?.id;
-      setMainCategory(defaultMainCategory);
-      if (defaultSubCategory) setSubCategory(defaultSubCategory);
-    }
-  }, [data]);
-
   return (
     <CategoryContext.Provider
       value={{

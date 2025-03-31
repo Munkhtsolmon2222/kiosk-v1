@@ -27,6 +27,7 @@ export default function ProductCard({ product }: any) {
   const minusCount = () => {
     setOrderProducts(orderProducts > 1 ? orderProducts - 1 : 1);
   };
+  const totalPrice = product.regular_price * orderProducts;
   useEffect(() => {
     if (product) {
       setSanitizedDescription(DOMPurify.sanitize(product?.description));
@@ -187,9 +188,19 @@ export default function ProductCard({ product }: any) {
               </div>
             </div>
           </>
-        ) : page === 2 ? (
+        ) : (
           // Page 2: Additional Content
           <>
+            <div className="flex justify-end">
+              <DialogClose asChild>
+                <Button
+                  variant="outline"
+                  className="text-center text-white p-2 bg-[#ab3030] w-10 rounded-sm"
+                >
+                  X
+                </Button>
+              </DialogClose>
+            </div>
             <DialogHeader>
               <DialogTitle className="text-3xl font-bold">
                 Нэмэлт мэдээлэл
@@ -197,45 +208,273 @@ export default function ProductCard({ product }: any) {
             </DialogHeader>
 
             <div className="text-xl mt-4 px-4 w-full text-center">
-              <p className="text-gray-600 mt-4">
-                Энэ бүтээгдэхүүний дэлгэрэнгүй мэдээлэл энд байрлана. Та өөрийн
-                сонголтоо хийж, захиалгаа баталгаажуулна уу.
-              </p>
+              <p className="text-gray-600 mt-4">Төрөл</p>
+              <div className="flex justify-center gap-6 p-5 ">
+                <img
+                  className=" h-16 w-16 rounded-full "
+                  src="./zurag.png "
+                  alt="Image"
+                />
+                <img
+                  className=" h-16 w-16 rounded-full "
+                  src="./zurag.png "
+                  alt="Image"
+                />
+              </div>
             </div>
+
+            {/* Product Image Slider */}
             <Swiper
               spaceBetween={10}
               slidesPerView={1}
               loop={true}
               pagination={{ clickable: true }}
               navigation={true}
-              modules={[Pagination, Navigation]}
+              modules={[Pagination, Navigation, Autoplay]}
               autoplay={{
                 delay: 2000,
-                disableOnInteraction: false, // Keeps autoplay active even after user interaction
+                disableOnInteraction: false,
               }}
-              className="w-full"
+              className="w-full flex justify-center"
             >
               {images.map((image: any, index: any) => (
                 <SwiperSlide key={index}>
                   <img
                     src={image.src}
                     alt={`Product Image ${index + 1}`}
-                    className="rounded-lg w-[822px] h-[514px] object-cover"
+                    className="rounded-lg w-[200px] h-[200px] object-contain bg-cover mx-auto"
                   />
                 </SwiperSlide>
               ))}
             </Swiper>
 
-            <div className=" border-4 border-[#ab3030] mx-auto px-8 flex gap-10 py-2 rounded-[15px] ">
-              <button onClick={minusCount} className="text-5xl text-[#ab3030] ">
+            {/* Counter for quantity */}
+            <div className="border-4 border-[#ab3030] mx-auto px-8 flex gap-10 py-2 rounded-[15px]">
+              <button onClick={minusCount} className="text-5xl text-[#ab3030]">
                 -
               </button>
-              <span className="text-5xl text-[#ab3030] ">{orderProducts}</span>
-              <button onClick={plusCount} className="text-5xl text-[#ab3030] ">
+              <span className="text-5xl text-[#ab3030]">{orderProducts}</span>
+              <button onClick={plusCount} className="text-5xl text-[#ab3030]">
                 +
               </button>
             </div>
+            <div>
+              <p className=" text-xl text-center ">
+                Хэрвээ та галзуу бэлгийн харилцааг хүсэж байвал дараах
+                бараануудыг сонирхоод үзээрэй !!!
+              </p>
+              <p className="text-2xl text-[#a3554b]">
+                Хослуулж хэргэлвэл гал гарна
+              </p>
+              <div className=" overflow-y-auto mt-2 h-[400px] ">
+                <div className=" flex gap-4 mt-4 ">
+                  <img
+                    className=" h-16 w-16 rounded-2xl "
+                    src="zurag.png"
+                    alt="Zurag"
+                  />
+                  <div>
+                    <p>Tokyogiin zuragtai shodoi haha </p>
+                    <span className="text-2xl block">
+                      (
+                      {new Intl.NumberFormat("mn-MN").format(
+                        product.regular_price
+                      )}
+                      ₮)
+                    </span>
+                  </div>
+                  <div className="border-4 border-[#ab3030] mx-auto px-8 flex items-center gap-10 py-2 rounded-[15px]">
+                    <button
+                      onClick={minusCount}
+                      className="text-2xl text-[#ab3030]"
+                    >
+                      -
+                    </button>
+                    <span className="text-2xl text-[#ab3030]">
+                      {orderProducts}
+                    </span>
+                    <button
+                      onClick={plusCount}
+                      className="text-2xl text-[#ab3030]"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+                <div className=" flex gap-4 mt-4 ">
+                  <img
+                    className=" h-16 w-16 rounded-2xl "
+                    src="zurag.png"
+                    alt="Zurag"
+                  />
+                  <div>
+                    <p>Tokyogiin zuragtai shodoi haha </p>
+                    <span className="text-2xl block">
+                      (
+                      {new Intl.NumberFormat("mn-MN").format(
+                        product.regular_price
+                      )}
+                      ₮)
+                    </span>
+                  </div>
+                  <div className="border-4 border-[#ab3030] mx-auto px-8 flex items-center gap-10 py-2 rounded-[15px]">
+                    <button
+                      onClick={minusCount}
+                      className="text-2xl text-[#ab3030]"
+                    >
+                      -
+                    </button>
+                    <span className="text-2xl text-[#ab3030]">
+                      {orderProducts}
+                    </span>
+                    <button
+                      onClick={plusCount}
+                      className="text-2xl text-[#ab3030]"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+                <div className=" flex gap-4 mt-4 ">
+                  <img
+                    className=" h-16 w-16 rounded-2xl "
+                    src="zurag.png"
+                    alt="Zurag"
+                  />
+                  <div>
+                    <p>Tokyogiin zuragtai shodoi haha </p>
+                    <span className="text-2xl block">
+                      (
+                      {new Intl.NumberFormat("mn-MN").format(
+                        product.regular_price
+                      )}
+                      ₮)
+                    </span>
+                  </div>
+                  <div className="border-4 border-[#ab3030] mx-auto px-8 flex items-center gap-10 py-2 rounded-[15px]">
+                    <button
+                      onClick={minusCount}
+                      className="text-2xl text-[#ab3030]"
+                    >
+                      -
+                    </button>
+                    <span className="text-2xl text-[#ab3030]">
+                      {orderProducts}
+                    </span>
+                    <button
+                      onClick={plusCount}
+                      className="text-2xl text-[#ab3030]"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+                <div className=" flex gap-4 mt-4 ">
+                  <img
+                    className=" h-16 w-16 rounded-2xl "
+                    src="zurag.png"
+                    alt="Zurag"
+                  />
+                  <div>
+                    <p>Tokyogiin zuragtai shodoi haha </p>
+                    <span className="text-2xl block">
+                      (
+                      {new Intl.NumberFormat("mn-MN").format(
+                        product.regular_price
+                      )}
+                      ₮)
+                    </span>
+                  </div>
+                  <div className="border-4 border-[#ab3030] mx-auto px-8 flex items-center gap-10 py-2 rounded-[15px]">
+                    <button
+                      onClick={minusCount}
+                      className="text-2xl text-[#ab3030]"
+                    >
+                      -
+                    </button>
+                    <span className="text-2xl text-[#ab3030]">
+                      {orderProducts}
+                    </span>
+                    <button
+                      onClick={plusCount}
+                      className="text-2xl text-[#ab3030]"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+                <div className=" flex gap-4 mt-4 ">
+                  <img
+                    className=" h-16 w-16 rounded-2xl "
+                    src="zurag.png"
+                    alt="Zurag"
+                  />
+                  <div>
+                    <p>Tokyogiin zuragtai shodoi haha </p>
+                    <span className="text-2xl block">
+                      (
+                      {new Intl.NumberFormat("mn-MN").format(
+                        product.regular_price
+                      )}
+                      ₮)
+                    </span>
+                  </div>
+                  <div className="border-4 border-[#ab3030] mx-auto px-8 flex items-center gap-10 py-2 rounded-[15px]">
+                    <button
+                      onClick={minusCount}
+                      className="text-2xl text-[#ab3030]"
+                    >
+                      -
+                    </button>
+                    <span className="text-2xl text-[#ab3030]">
+                      {orderProducts}
+                    </span>
+                    <button
+                      onClick={plusCount}
+                      className="text-2xl text-[#ab3030]"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+                <div className=" flex gap-4 mt-4 ">
+                  <img
+                    className=" h-16 w-16 rounded-2xl "
+                    src="zurag.png"
+                    alt="Zurag"
+                  />
+                  <div>
+                    <p>Tokyogiin zuragtai shodoi haha </p>
+                    <span className="text-2xl block">
+                      (
+                      {new Intl.NumberFormat("mn-MN").format(
+                        product.regular_price
+                      )}
+                      ₮)
+                    </span>
+                  </div>
+                  <div className="border-4 border-[#ab3030] mx-auto px-8 flex items-center gap-10 py-2 rounded-[15px]">
+                    <button
+                      onClick={minusCount}
+                      className="text-2xl text-[#ab3030]"
+                    >
+                      -
+                    </button>
+                    <span className="text-2xl text-[#ab3030]">
+                      {orderProducts}
+                    </span>
+                    <button
+                      onClick={plusCount}
+                      className="text-2xl text-[#ab3030]"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
 
+            {/* Buttons for navigation */}
             <div className="flex justify-between mt-10 w-2/3 mx-auto">
               <Button
                 variant="outline"
@@ -249,64 +488,6 @@ export default function ProductCard({ product }: any) {
                 className="text-2xl px-8 py-4 bg-blue-500 text-white"
               >
                 Сагсанд хийх
-              </Button>
-            </div>
-          </>
-        ) : (
-          <>
-            <DialogHeader>
-              <DialogTitle className="text-3xl font-bold">
-                Нэмэлт мэдээлэл
-              </DialogTitle>
-            </DialogHeader>
-
-            <div className="text-xl mt-4 px-4 w-full text-center">
-              <p className="text-gray-600 mt-4">
-                Энэ бүтээгдэхүүний дэлгэрэнгүй мэдээлэл энд байрлана. Та өөрийн
-                сонголтоо хийж, захиалгаа баталгаажуулна уу.
-              </p>
-            </div>
-            <Swiper
-              spaceBetween={10}
-              slidesPerView={1}
-              loop={true}
-              pagination={{ clickable: true }}
-              navigation={true}
-              modules={[Pagination, Navigation]}
-              autoplay={{
-                delay: 2000,
-                disableOnInteraction: false, // Keeps autoplay active even after user interaction
-              }}
-              className="w-full"
-            >
-              {images.map((image: any, index: any) => (
-                <SwiperSlide key={index}>
-                  <img
-                    src={image.src}
-                    alt={`Product Image ${index + 1}`}
-                    className="rounded-lg w-[822px] h-[514px] object-cover"
-                  />
-                </SwiperSlide>
-              ))}
-            </Swiper>
-
-            <div className=" border-4 border-[#ab3030] mx-auto px-8 flex gap-10 py-2 rounded-[15px] ">
-              <button onClick={minusCount} className="text-5xl text-[#ab3030] ">
-                -
-              </button>
-              <span className="text-5xl text-[#ab3030] ">{orderProducts}</span>
-              <button onClick={plusCount} className="text-5xl text-[#ab3030] ">
-                +
-              </button>
-            </div>
-
-            <div className="flex justify-between mt-10 w-2/3 mx-auto">
-              <Button
-                variant="outline"
-                className="text-2xl px-8 py-4"
-                onClick={() => setPage(2)}
-              >
-                Буцах
               </Button>
             </div>
           </>
