@@ -7,6 +7,7 @@ import {
   useEffect,
 } from "react";
 import { useInfiniteQuery } from "@tanstack/react-query";
+import { getCookie } from "cookies-next/client";
 
 interface Category {
   id: number;
@@ -33,9 +34,17 @@ const CategoryContext = createContext<CategoryContextType | undefined>(
 );
 
 export const CategoryProvider = ({ children }: { children: ReactNode }) => {
-  const [mainCategory, setMainCategory] = useState<string>("Эрэгтэй");
-  const [subCategory, setSubCategory] = useState<number>(0);
-  const [thirdCategory, setThirdCategory] = useState<number>(0);
+  const defaultCategoryMain = getCookie("defaultCategoryMain"); // onee of 4 main categories got from cookies!!!!!!!!!
+  const defaultCategorySub = getCookie("defaultCategorySub");
+  const defaultCategoryThird = getCookie("defaultCategoryThird");
+  console.log(defaultCategoryMain, defaultCategorySub, defaultCategoryThird);
+  const [mainCategory, setMainCategory] = useState<any>(
+    defaultCategoryMain || "Эрэгтэй"
+  );
+  const [subCategory, setSubCategory] = useState<any>(defaultCategorySub || 0);
+  const [thirdCategory, setThirdCategory] = useState<any>(
+    defaultCategoryThird || 0
+  );
 
   // Fetch categories with react-query
   const fetchCategories = async ({ pageParam = 1 }) => {
@@ -77,18 +86,6 @@ export const CategoryProvider = ({ children }: { children: ReactNode }) => {
       typeof window !== "undefined" && navigator.onLine ? false : 1000,
     initialPageParam: 1,
   });
-
-  // Set default category when data is fetched
-  useEffect(() => {
-    if (data && data.length > 0) {
-      const defaultMainCategory = "Эрэгтэй";
-      const defaultSubCategory = data.find(
-        (category) => category.name === defaultMainCategory
-      )?.id;
-      setMainCategory(defaultMainCategory);
-      if (defaultSubCategory) setSubCategory(defaultSubCategory);
-    }
-  }, [data]);
 
   return (
     <CategoryContext.Provider
