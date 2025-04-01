@@ -15,12 +15,14 @@ import "swiper/css/navigation";
 import "swiper/css/pagination";
 import { Autoplay, Navigation, Pagination } from "swiper/modules";
 import DOMPurify from "dompurify";
+import { useProducts } from "../../../providers/productContext";
 
 export default function ProductCard({ product }: any) {
   const [page, setPage] = useState(1); // Track the current page
   const [sanitizedDescription, setSanitizedDescription] = useState<any>("");
   const images = product?.images;
   const [orderProducts, setOrderProducts] = useState(0);
+  const [variationsProduct, setVariationsProduct] = useState<any>();
   const plusCount = () => {
     setOrderProducts(orderProducts + 1);
   };
@@ -32,7 +34,30 @@ export default function ProductCard({ product }: any) {
     if (product) {
       setSanitizedDescription(DOMPurify.sanitize(product?.description));
     }
+    const fetchVariations = async () => {
+      const consumerKey = process.env.NEXT_PUBLIC_WC_CONSUMER_KEY;
+      const consumerSecret = process.env.NEXT_PUBLIC_WC_CONSUMER_SECRET;
+      const authHeader =
+        typeof window === "undefined"
+          ? Buffer.from(`${consumerKey}:${consumerSecret}`).toString("base64")
+          : btoa(`${consumerKey}:${consumerSecret}`);
+      const res = await fetch(
+        `https://erchuudiindelguur.mn/wp-json/wc/v3/products/${product.id}/variations`,
+        {
+          headers: {
+            Authorization: `Basic ${authHeader}`,
+          },
+        }
+      );
+      const resJson = await res.json();
+      setVariationsProduct(resJson);
+    };
+    fetchVariations();
   }, [product]);
+  console.log(variationsProduct);
+  // const { data, isLoading, error } = useProducts();
+  // const bigData = data?.pages.flatMap((page) => page.data) || []; // ✅ Fix applied
+  // const dataSpread = [...bigData];
   return (
     <Dialog
       onOpenChange={(isOpen) => {
@@ -207,28 +232,32 @@ export default function ProductCard({ product }: any) {
               </DialogTitle>
             </DialogHeader>
             {product.variations.length > 0 && (
-      <div className="text-xl mt-4 px-4 w-full text-center">
-        <p className="text-gray-600 mt-4">Төрөл</p>
-        <div className="flex justify-center gap-6 p-5">
-          {product.variations.map((variationId: any, index: any) => {
-            const variations = product.variations || [];
-            // Бүх бүтээгдэхүүний дундаас ID таарах variation олох
-            const variation = variations.find((p: any) => p.id === variationId); 
+              <div className="text-xl mt-4 px-4 w-full text-center">
+                <p className="text-gray-600 mt-4">Төрөл</p>
+                <div className="flex justify-center gap-6 p-5">
+                  {variationsProduct?.map((variationId: any, index: any) => {
+                    const variations = product.variations || [];
+                    // Бүх бүтээгдэхүүний дундаас ID таарах variation олох
+                    const variationsProduct = variationId.filter(
+                      (p: any) => p.id === variationId
+                    );
 
-             variation ? (
-              <div key={index} className="flex flex-col items-center">
-                <img
-                  className="h-16 w-16 rounded-full"
-                  src={variation.image || "./zurag.png"}
-                  alt={variation.name || "Variation"}
-                />
-                <p className="text-sm">{variation.name || "Төрөл"}</p>
+                    variationsProduct ? (
+                      <div key={index} className="flex flex-col items-center">
+                        <img
+                          className="h-16 w-16 rounded-full"
+                          src={variationsProduct.image.src || "./zurag.png"}
+                          alt={variationsProduct.name || "Variation"}
+                        />
+                        <p className="text-sm">
+                          {variationsProduct.name || "Төрөл"}
+                        </p>
+                      </div>
+                    ) : null;
+                  })}
+                </div>
               </div>
-            ) : null;
-          })}
-        </div>
-      </div>
-    )} 
+            )}
             {/* Product Image Slider */}
             <Swiper
               spaceBetween={10}
