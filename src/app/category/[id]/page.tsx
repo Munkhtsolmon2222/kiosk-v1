@@ -30,8 +30,11 @@ export default function Page() {
     <div className="mt-44 ml-60">
       {categoriesData
         ?.filter((category) => category.id.toString() == id)
-        .map((category) => (
-          <div className="text-[#ab3030] font-bold mx-auto w-[40vw] text-[24px]">
+        .map((category, i) => (
+          <div
+            key={i}
+            className="text-[#ab3030] font-bold mx-auto w-[40vw] text-[24px]"
+          >
             {category.name}
           </div>
         ))}

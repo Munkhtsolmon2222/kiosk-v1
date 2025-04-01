@@ -42,7 +42,8 @@ export function Settings({
   const [selectedSubCategory, setSelectedSubCategory] = useState<any>("");
   const [selectedThirdCategory, setSelectedThirdCategory] =
     useState<any>(thirdCategory);
-
+  const [email, setEmail] = useState(getCookie("clientEmail") || "");
+  const [emailError, setEmailError] = useState("");
   // Error state for category selection
   const [categoryError, setCategoryError] = useState({
     mainCategory: false,
@@ -66,7 +67,10 @@ export function Settings({
 
   const handleSave = () => {
     let valid = true;
-
+    if (!validateEmail(email)) {
+      setEmailError("Зөв имэйл хаяг оруулна уу.");
+      return;
+    }
     // Reset errors
     setCategoryError({
       mainCategory: false,
@@ -112,6 +116,7 @@ export function Settings({
       setCookie("defaultCategoryThird", selectedThirdCategory, {
         maxAge: 3650 * 24 * 60 * 60,
       });
+      setCookie("clientEmail", email, { maxAge: 3650 * 24 * 60 * 60 });
       console.log("setting", selectedThirdCategory);
     } else {
       setCookie("defaultCategory", selectedSubCategory, {
@@ -126,6 +131,7 @@ export function Settings({
       setCookie("defaultCategoryThird", selectedThirdCategory, {
         maxAge: 3650 * 24 * 60 * 60,
       });
+      setCookie("clientEmail", email, { maxAge: 3650 * 24 * 60 * 60 });
       console.log("setting", selectedSubCategory);
     }
 
@@ -157,7 +163,10 @@ export function Settings({
       category.parent ===
       (categories.find((c) => c.id === Number(selectedSubCategory))?.id || null)
   );
-
+  const validateEmail = (email: string) => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+  };
   console.log(selectedCategory);
 
   console.log(selectedSubCategory);
@@ -199,6 +208,19 @@ export function Settings({
               </div>
             ) : (
               <div className="grid gap-4 py-4">
+                <div className="grid gap-4 py-4">
+                  <label className="block text-sm font-medium">Имэйл</label>
+                  <input
+                    type="email"
+                    placeholder="Имэйлээ оруулна уу"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="border p-2 w-full"
+                  />
+                  {emailError && (
+                    <p className="text-red-500 text-sm mt-1">{emailError}</p>
+                  )}
+                </div>
                 {/* Main Category Selection */}
                 <div>
                   <select
