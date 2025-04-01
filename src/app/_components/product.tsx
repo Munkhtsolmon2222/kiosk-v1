@@ -34,26 +34,33 @@ export default function ProductCard({ product }: any) {
     if (product) {
       setSanitizedDescription(DOMPurify.sanitize(product?.description));
     }
-    const fetchVariations = async () => {
-      const consumerKey = process.env.NEXT_PUBLIC_WC_CONSUMER_KEY;
-      const consumerSecret = process.env.NEXT_PUBLIC_WC_CONSUMER_SECRET;
-      const authHeader =
-        typeof window === "undefined"
-          ? Buffer.from(`${consumerKey}:${consumerSecret}`).toString("base64")
-          : btoa(`${consumerKey}:${consumerSecret}`);
-      const res = await fetch(
-        `https://erchuudiindelguur.mn/wp-json/wc/v3/products/${product.id}/variations`,
-        {
-          headers: {
-            Authorization: `Basic ${authHeader}`,
-          },
-        }
-      );
-      const resJson = await res.json();
-      setVariationsProduct(resJson);
-    };
-    fetchVariations();
   }, [product]);
+  useEffect(() => {
+    if (!product?.id || !product.variations?.length) return;
+
+    const fetchVariations = async () => {
+      try {
+        const consumerKey = process.env.NEXT_PUBLIC_WC_CONSUMER_KEY;
+        const consumerSecret = process.env.NEXT_PUBLIC_WC_CONSUMER_SECRET;
+        const authHeader = btoa(`${consumerKey}:${consumerSecret}`);
+
+        const res = await fetch(
+          `https://erchuudiindelguur.mn/wp-json/wc/v3/products/${product.id}/variations`,
+          {
+            headers: { Authorization: `Basic ${authHeader}` },
+          }
+        );
+        if (!res.ok) throw new Error("Failed to fetch variations");
+
+        const resJson = await res.json();
+        setVariationsProduct(resJson);
+      } catch (error) {
+        console.error("Error fetching variations:", error);
+      }
+    };
+
+    fetchVariations();
+  }, [product?.id, product?.variations]);
   console.log(variationsProduct);
   // const { data, isLoading, error } = useProducts();
   // const bigData = data?.pages.flatMap((page) => page.data) || []; // ✅ Fix applied

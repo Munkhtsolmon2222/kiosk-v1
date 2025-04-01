@@ -16,7 +16,7 @@ interface Category {
 }
 
 interface CategoryContextType {
-  data: Category[] | undefined;
+  data1: Category[] | undefined;
   error: Error | null;
   isLoading: boolean;
   isError: boolean;
@@ -41,9 +41,13 @@ export const CategoryProvider = ({ children }: { children: ReactNode }) => {
   const [mainCategory, setMainCategory] = useState<any>(
     defaultCategoryMain || "Эрэгтэй"
   );
+<<<<<<< HEAD
   const [subCategory, setSubCategory] = useState<any>(
     defaultCategorySub || "Бэлгэвч"
   );
+=======
+  const [subCategory, setSubCategory] = useState<any>(defaultCategorySub || 0);
+>>>>>>> main
   const [thirdCategory, setThirdCategory] = useState<any>(
     defaultCategoryThird || 0
   );
@@ -92,7 +96,7 @@ export const CategoryProvider = ({ children }: { children: ReactNode }) => {
   return (
     <CategoryContext.Provider
       value={{
-        data: data?.pages.flat() || [],
+        data1: data?.pages.flat() || [],
         error,
         isLoading,
         isError,
