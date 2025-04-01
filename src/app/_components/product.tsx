@@ -206,23 +206,29 @@ export default function ProductCard({ product }: any) {
                 Нэмэлт мэдээлэл
               </DialogTitle>
             </DialogHeader>
+            {product.variations.length > 0 && (
+      <div className="text-xl mt-4 px-4 w-full text-center">
+        <p className="text-gray-600 mt-4">Төрөл</p>
+        <div className="flex justify-center gap-6 p-5">
+          {product.variations.map((variationId: any, index: any) => {
+            const variations = product.variations || [];
+            // Бүх бүтээгдэхүүний дундаас ID таарах variation олох
+            const variation = variations.find((p: any) => p.id === variationId); 
 
-            <div className="text-xl mt-4 px-4 w-full text-center">
-              <p className="text-gray-600 mt-4">Төрөл</p>
-              <div className="flex justify-center gap-6 p-5 ">
+             variation ? (
+              <div key={index} className="flex flex-col items-center">
                 <img
-                  className=" h-16 w-16 rounded-full "
-                  src="./zurag.png "
-                  alt="Image"
+                  className="h-16 w-16 rounded-full"
+                  src={variation.image || "./zurag.png"}
+                  alt={variation.name || "Variation"}
                 />
-                <img
-                  className=" h-16 w-16 rounded-full "
-                  src="./zurag.png "
-                  alt="Image"
-                />
+                <p className="text-sm">{variation.name || "Төрөл"}</p>
               </div>
-            </div>
-
+            ) : null;
+          })}
+        </div>
+      </div>
+    )} 
             {/* Product Image Slider */}
             <Swiper
               spaceBetween={10}
