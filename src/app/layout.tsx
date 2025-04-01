@@ -35,11 +35,11 @@ export default function RootLayout({
             <CategoryProvider>
               <Navigation />
               {children}
+              <Cart />
             </CategoryProvider>{" "}
             {/* ✅ Wrap the application with ProductProvider */}
           </ProductProvider>
         </QueryProvider>
-        <Cart />
       </body>
     </html>
   );
