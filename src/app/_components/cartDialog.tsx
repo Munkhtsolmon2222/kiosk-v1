@@ -58,6 +58,13 @@ export function CartDialog({
       }
     }
   }, [open]); // Depend only on `open`
+  useEffect(() => {
+    const total = cartItems.reduce(
+      (sum: number, item: any) => sum + item.price * item.quantity,
+      0
+    );
+    setTotalPrice(total);
+  }, [cartItems]); // Dependency on cartItems to track changes
 
   const removeItem = (index: number) => {
     const updatedItems = [...cartItems];
@@ -283,7 +290,7 @@ export function CartDialog({
                               : item?.stock_status == "onbackorder"
                               ? "text-[#00b3fa]"
                               : "text-[#ab3030]"
-                          } text-center mt-1`}
+                          } text-center items-center w-4 mt-1`}
                         >
                           {item?.stock_status == "instock"
                             ? "Бэлэн"
@@ -294,7 +301,8 @@ export function CartDialog({
                       </div>
 
                       <span className="text-2xl block">
-                        {item.quantity} * {item.price}₮
+                        {item.quantity} *{" "}
+                        {new Intl.NumberFormat("mn-MN").format(item.price)}₮
                       </span>
                     </div>
                     {/* Remove Button */}
@@ -367,6 +375,7 @@ export function CartDialog({
               </Button>
               <Button
                 className="text-2xl px-8 py-4 bg-blue-500 text-white"
+                disabled={totalPrice === 0}
                 onClick={(e) => {
                   e.preventDefault(); // Prevents default form submission
                   if (validate()) {

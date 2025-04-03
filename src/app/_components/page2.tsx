@@ -79,7 +79,6 @@ export function Page2({ product, setPage }: any) {
 
   const handleAddToCart = () => {
     let cart = JSON.parse(localStorage.getItem("cart") || "[]");
-
     // Check if the selected variation or product is out of stock
     if (
       selectedVariation?.stock_status === "outofstock" ||
@@ -305,7 +304,7 @@ export function Page2({ product, setPage }: any) {
                           />
                           <div>
                             <p>{upsell.name}</p>
-                            <span className="text-2xl w-[200px] block">
+                            <span className="text-2xl w-[100px] block">
                               (
                               {new Intl.NumberFormat("mn-MN").format(
                                 upsell.regular_price
@@ -320,7 +319,7 @@ export function Page2({ product, setPage }: any) {
                                 : upsell?.stock_status == "onbackorder"
                                 ? "text-[#00b3fa]"
                                 : "text-[#ab3030]"
-                            } text-center mt-1`}
+                            } text-center w-3 mt-1`}
                           >
                             {upsell?.stock_status == "instock"
                               ? "Бэлэн"
@@ -328,7 +327,7 @@ export function Page2({ product, setPage }: any) {
                               ? "Захиалгаар"
                               : "Дууссан"}
                           </h5>
-                          <div className="border-4 border-[#ab3030] mx-auto px-8 flex items-center gap-10 py-2 rounded-[15px]">
+                          <div className="border-4 border-[#ab3030] mx-auto mr-4 px-8 flex items-center gap-10 py-2 rounded-[15px]">
                             <button
                               onClick={() =>
                                 handleUpsellCount(upsell.id, false)
@@ -366,15 +365,17 @@ export function Page2({ product, setPage }: any) {
             >
               Буцах
             </Button>
-            <Button
-              onClick={() => {
-                handleAddToCart();
-                setOpen(true);
-              }}
-              className="text-2xl px-8 py-4 bg-blue-500 text-white"
-            >
-              Сагсанд хийх
-            </Button>
+            <DialogClose asChild>
+              <Button
+                onClick={() => {
+                  handleAddToCart();
+                }}
+                className="text-2xl px-8 py-4 bg-blue-500 text-white"
+              >
+                Сагсанд хийх
+              </Button>
+            </DialogClose>
+
             <CartDialog
               open={open}
               setOpen={setOpen}
