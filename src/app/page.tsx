@@ -42,7 +42,7 @@ export default function Home() {
       <button onClick={() => setSetting((prev) => !prev)}>
         <AiFillSetting />
       </button>
-      {setting && <div>Settings Panel</div>}
+      {setting && <div>Settings Panel sfdjas</div>}
     </div>
   );
 }
