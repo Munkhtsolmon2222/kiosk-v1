@@ -92,6 +92,9 @@ export function CartDialog({
   };
   const validate2 = () => {
     let newErrors: any = {};
+    if (!hasBackorderItem) {
+      return true;
+    }
     if (!formData.address) newErrors.address = "Хаяг шаардлагатай";
     if (!formData.phone) {
       newErrors.phone = "Утас шаардлагатай";
@@ -127,72 +130,6 @@ export function CartDialog({
     }
   };
 
-  const createWooCommerceOrder = async () => {
-    const consumerKey = process.env.NEXT_PUBLIC_WC_CONSUMER_KEY;
-    const consumerSecret = process.env.NEXT_PUBLIC_WC_CONSUMER_SECRET;
-    if (!consumerKey || !consumerSecret) {
-      throw new Error("WooCommerce API keys are missing");
-    }
-    const authHeader =
-      typeof window === "undefined"
-        ? Buffer.from(`${consumerKey}:${consumerSecret}`).toString("base64")
-        : btoa(`${consumerKey}:${consumerSecret}`);
-    const response = await fetch(
-      "https://erchuudiindelguur.mn/?wc-ajax=update_order_review",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Basic ${authHeader}`,
-        },
-        body: JSON.stringify({
-          payment_method: "qpay_gateway",
-          payment_method_title: "QPay",
-          set_paid: false, // Don't set the order as paid yet
-          billing: {
-            first_name: "Kiosk",
-            last_name: "User",
-            email: "user@example.com",
-          },
-          line_items: cartItems.map((item) => ({
-            product_id: item.id, // Ensure product_id exists in your cart items
-            quantity: item.quantity,
-          })),
-        }),
-      }
-    );
-
-    const order = await response.json();
-    return order.id; // Return the created order ID
-  };
-
-  const fetchOrderDetails = async (orderId: string) => {
-    const consumerKey = process.env.NEXT_PUBLIC_WC_CONSUMER_KEY;
-    const consumerSecret = process.env.NEXT_PUBLIC_WC_CONSUMER_SECRET;
-    if (!consumerKey || !consumerSecret) {
-      throw new Error("WooCommerce API keys are missing");
-    }
-    const authHeader =
-      typeof window === "undefined"
-        ? Buffer.from(`${consumerKey}:${consumerSecret}`).toString("base64")
-        : btoa(`${consumerKey}:${consumerSecret}`);
-    const response = await fetch(
-      `https://erchuudiindelguur.mn/wp-json/wc/v3/orders/${orderId}`,
-      {
-        headers: {
-          Authorization: `Basic ${authHeader}`,
-        },
-      }
-    );
-    const order = await response.json();
-    return order.payment_url; // You can use the payment_url or qr_image if provided
-  };
-
-  const handlePayment = async () => {
-    const orderId = await createWooCommerceOrder();
-    const paymentUrl = await fetchOrderDetails(orderId);
-    setPaymentUrl(paymentUrl); // Set the payment URL (or QR code)
-    setStep(3); // Go to the next step (payment view)
-  };
   console.log(cartItems);
   return (
     <Dialog
@@ -367,7 +304,7 @@ export function CartDialog({
                   if (validate2()) {
                     handleSubmit(e);
                     handleSubmitForMethod();
-                    handlePayment();
+
                     setStep(3);
                   }
                 }}
@@ -380,6 +317,13 @@ export function CartDialog({
           <>
             <div className="w-[512px] h-[854px]">
               {" "}
+              <p>
+                Your order has been created! To complete the payment, click the
+                link below:
+              </p>
+              <a href={paymentUrl} target="_blank" rel="noopener noreferrer">
+                Complete Payment with QPay
+              </a>
               <Button
                 variant="outline"
                 className="text-2xl  py-4"
