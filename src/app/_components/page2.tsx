@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 import { Autoplay, Navigation, Pagination } from "swiper/modules";
 import DOMPurify from "dompurify";
 import { useProducts } from "../../../providers/productContext";
+import { CartDialog } from "./cartDialog";
 
 export function Page2({ product, setPage }: any) {
   const [orderProducts, setOrderProducts] = useState(1);
@@ -18,6 +19,8 @@ export function Page2({ product, setPage }: any) {
   const [selectedVariation, setSelectedVariation] = useState<any>(null);
   const { data } = useProducts();
   const [loading, setLoading] = useState(false);
+  const [open, setOpen] = useState(false);
+  const [step, setStep] = useState(1);
   const minusCount = () => {
     setOrderProducts((prev) => (prev > 1 ? prev - 1 : 1));
   };
@@ -77,6 +80,15 @@ export function Page2({ product, setPage }: any) {
   const handleAddToCart = () => {
     let cart = JSON.parse(localStorage.getItem("cart") || "[]");
 
+    // Check if the selected variation or product is out of stock
+    if (
+      selectedVariation?.stock_status === "outofstock" ||
+      product?.stock_status === "outofstock"
+    ) {
+      alert("Энэхүү бүтээгдэхүүн дууссан тул худалдан авах боломжгүй.");
+      return;
+    }
+
     const cartItem = {
       id: selectedVariation ? selectedVariation.id : product.id,
       name: selectedVariation ? selectedVariation.name : product.name,
@@ -85,23 +97,33 @@ export function Page2({ product, setPage }: any) {
       image: selectedVariation
         ? selectedVariation.image?.src
         : product.images[0]?.src,
+      stock_status: selectedVariation
+        ? selectedVariation.stock_status
+        : product.stock_status,
     };
 
-    // Add upsell products
+    // Add upsell products but exclude those that are out of stock
     const upsellItems = Object.entries(upsellOrderCounts)
-      .filter(([_, count]) => count > 0)
+      .filter(([id, count]) => count > 0)
       .map(([id, count]) => {
         const upsellProduct = data?.pages
           .flatMap((page) => page.data)
           .find((p) => p.id == id);
+
+        if (upsellProduct?.stock_status === "outofstock") {
+          return null; // Skip out-of-stock upsell items
+        }
+
         return {
           id: upsellProduct.id,
           name: upsellProduct.name,
           price: upsellProduct.regular_price,
           quantity: count,
           image: upsellProduct.images?.[0]?.src || "zurag.png",
+          stock_status: upsellProduct.stock_status,
         };
-      });
+      })
+      .filter(Boolean); // Remove null values (out-of-stock items)
 
     cart.push(cartItem, ...upsellItems);
     localStorage.setItem("cart", JSON.stringify(cart));
@@ -110,6 +132,7 @@ export function Page2({ product, setPage }: any) {
   };
 
   console.log(product);
+  console.log(selectedVariation);
   return (
     <div>
       {loading ? (
@@ -155,17 +178,66 @@ export function Page2({ product, setPage }: any) {
                   </div>
                 ))}
               </div>
+              {selectedVariation ? (
+                <h5
+                  className={`${
+                    selectedVariation?.stock_status == "instock"
+                      ? "text-[#5dc477]"
+                      : selectedVariation?.stock_status == "onbackorder"
+                      ? "text-[#00b3fa]"
+                      : "text-[#ab3030]"
+                  } text-center mt-1`}
+                >
+                  {selectedVariation?.stock_status == "instock"
+                    ? "Бэлэн"
+                    : selectedVariation?.stock_status == "onbackorder"
+                    ? "Захиалгаар"
+                    : "Дууссан"}
+                </h5>
+              ) : (
+                <h5
+                  className={`${
+                    product?.stock_status == "instock"
+                      ? "text-[#5dc477]"
+                      : product?.stock_status == "onbackorder"
+                      ? "text-[#00b3fa]"
+                      : "text-[#ab3030]"
+                  } text-center mt-1`}
+                >
+                  {product?.stock_status == "instock"
+                    ? "Бэлэн"
+                    : product?.stock_status == "onbackorder"
+                    ? "Захиалгаар"
+                    : "Дууссан"}
+                </h5>
+              )}
+
               <div
                 className="product-description w-full p-4 font-medium text-[14px] overflow-y-auto max-h-[500px]"
                 dangerouslySetInnerHTML={{
-                  __html: DOMPurify.sanitize(
-                    selectedVariation?.description || ""
-                  ),
+                  __html: DOMPurify.sanitize(selectedVariation?.description),
                 }}
               />
             </div>
           ) : (
-            <div></div>
+            <div className="w-fit mx-2">
+              {" "}
+              <h5
+                className={`${
+                  product?.stock_status == "instock"
+                    ? "text-[#5dc477]"
+                    : product?.stock_status == "onbackorder"
+                    ? "text-[#00b3fa]"
+                    : "text-[#ab3030]"
+                } text-center mt-1`}
+              >
+                {product?.stock_status == "instock"
+                  ? "Бэлэн"
+                  : product?.stock_status == "onbackorder"
+                  ? "Захиалгаар"
+                  : "Дууссан"}
+              </h5>
+            </div>
           )}
 
           {/* Keep all other parts of your code unchanged */}
@@ -241,6 +313,21 @@ export function Page2({ product, setPage }: any) {
                               ₮)
                             </span>
                           </div>
+                          <h5
+                            className={`${
+                              upsell?.stock_status == "instock"
+                                ? "text-[#5dc477]"
+                                : upsell?.stock_status == "onbackorder"
+                                ? "text-[#00b3fa]"
+                                : "text-[#ab3030]"
+                            } text-center mt-1`}
+                          >
+                            {upsell?.stock_status == "instock"
+                              ? "Бэлэн"
+                              : upsell?.stock_status == "onbackorder"
+                              ? "Захиалгаар"
+                              : "Дууссан"}
+                          </h5>
                           <div className="border-4 border-[#ab3030] mx-auto px-8 flex items-center gap-10 py-2 rounded-[15px]">
                             <button
                               onClick={() =>
@@ -282,12 +369,18 @@ export function Page2({ product, setPage }: any) {
             <Button
               onClick={() => {
                 handleAddToCart();
-                setPage(3);
+                setOpen(true);
               }}
               className="text-2xl px-8 py-4 bg-blue-500 text-white"
             >
               Сагсанд хийх
             </Button>
+            <CartDialog
+              open={open}
+              setOpen={setOpen}
+              step={step}
+              setStep={setStep}
+            />
           </div>
         </div>
       )}
