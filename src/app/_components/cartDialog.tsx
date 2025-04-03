@@ -28,7 +28,7 @@ export function CartDialog({
   const [isDelivered, setIsDelivered] = useState(false);
   const [methodError, setMethodError] = useState("");
   const [selected, setSelected] = useState("");
-  const [paymentQPayImg, setPaymentQPayImg] = useState<string>("");
+  const [paymentQRImg, setPaymentQRImg] = useState<string>("");
 
   const [formData, setFormData] = useState({
     address: "",
@@ -191,13 +191,63 @@ export function CartDialog({
       const data = await response.json();
       console.log("QPay Invoice Response:", data);
 
-      setPaymentQPayImg(data.qr_image);
+      setPaymentQRImg(data.qr_image);
     } catch (error) {
       console.error("Error creating QPay invoice:", error);
     }
   };
+  const getStorePayToken = async () => {
+    try {
+      const response = await fetch("/api/storepay/token", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
 
-  console.log(paymentQPayImg);
+      const data = await response.json();
+      return data.access_token; // Return the access token
+    } catch (error) {
+      console.error("Error fetching StorePay token:", error);
+    }
+  };
+
+  const createStorePayInvoice = async () => {
+    const token = await getStorePayToken();
+    if (!token) {
+      console.error("Failed to retrieve token");
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/storepay/invoice", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          token,
+          invoice_code: "MY_INVOICE_CODE",
+          sender_invoice_no: `INV-${Date.now()}`,
+          amount: totalPrice, // Pass the total price
+          callback_url: "https://yourwebsite.com/callback", // Set your callback URL
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("Error creating StorePay invoice:", errorText);
+        return;
+      }
+
+      const data = await response.json();
+      console.log("StorePay Invoice Response:", data);
+    } catch (error) {
+      console.error("Error creating StorePay invoice:", error);
+    }
+  };
+
+  console.log(selected);
   return (
     <Dialog
       onOpenChange={(isOpen) => {
@@ -371,7 +421,12 @@ export function CartDialog({
                   if (validate2()) {
                     handleSubmit(e);
                     handleSubmitForMethod();
-                    createQPayInvoice();
+                    if (selected == "qpay") {
+                      createQPayInvoice();
+                    } else {
+                      createStorePayInvoice();
+                    }
+
                     setStep(3);
                   }
                 }}
@@ -384,21 +439,18 @@ export function CartDialog({
           <>
             <div className="w-[512px] h-[854px]">
               {" "}
-              <p>
-                Your order has been created! To complete the payment, click the
-                link below:
-              </p>
-              <a
-                href={paymentQPayImg}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <Button className="mt-4">QPay-аар төлөх</Button>
-              </a>
-              <img
-                src={`data:image/png;base64,${paymentQPayImg}`}
-                alt="QPay QR Code"
-              />
+              {selected == "qpay" ? (
+                <div>
+                  {" "}
+                  <p className="mt-4">QPay-аар төлөх</p>
+                  <img
+                    src={`data:image/png;base64,${paymentQRImg}`}
+                    alt="QPay QR Code"
+                  />
+                </div>
+              ) : (
+                <div></div>
+              )}
               <Button
                 variant="outline"
                 className="text-2xl  py-4"
