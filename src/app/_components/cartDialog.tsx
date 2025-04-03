@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -23,13 +23,12 @@ export function CartDialog({
 }) {
   const [cartItems, setCartItems] = useState<any[]>([]);
   const [totalPrice, setTotalPrice] = useState(0);
-  const cartFromStorage = localStorage.getItem("cart");
   const [isConfirmed, setIsConfirmed] = useState(false);
   const [includeVAT, setIncludeVAT] = useState(false);
   const [isDelivered, setIsDelivered] = useState(false);
   const [methodError, setMethodError] = useState("");
   const [selected, setSelected] = useState("");
-  const [paymentUrl, setPaymentUrl] = useState<string>("");
+  const [paymentQPayImg, setPaymentQPayImg] = useState<string>("");
 
   const [formData, setFormData] = useState({
     address: "",
@@ -38,18 +37,27 @@ export function CartDialog({
     phone2: "",
   });
   const [errors, setErrors] = useState<any>({});
-  useEffect(() => {
-    // Retrieve cart data from localStorage
-    const items = JSON.parse(localStorage.getItem("cart") || "[]");
-    setCartItems(items);
+  const prevOpenRef = useRef(open); // Store the previous value of `open`
 
-    // Calculate total price
-    const total = items.reduce(
-      (sum: number, item: any) => sum + item.price * item.quantity,
-      0
-    );
-    setTotalPrice(total);
-  }, [cartFromStorage]);
+  useEffect(() => {
+    if (open !== prevOpenRef.current) {
+      // Check if `open` has changed
+      prevOpenRef.current = open; // Update the ref to the latest value of `open`
+
+      if (open) {
+        // Only fetch cart items when dialog is opened
+        const items = JSON.parse(localStorage.getItem("cart") || "[]");
+        setCartItems(items);
+
+        // Calculate total price
+        const total = items.reduce(
+          (sum: number, item: any) => sum + item.price * item.quantity,
+          0
+        );
+        setTotalPrice(total);
+      }
+    }
+  }, [open]); // Depend only on `open`
 
   const removeItem = (index: number) => {
     const updatedItems = [...cartItems];
@@ -130,7 +138,66 @@ export function CartDialog({
     }
   };
 
-  console.log(cartItems);
+  const getQPayToken = async () => {
+    const username = "OSGONMUNKH_S";
+    const password = "ecSN09kT";
+    const authString = btoa(`${username}:${password}`); // Encode credentials
+
+    try {
+      const response = await fetch("https://merchant.qpay.mn/v2/auth/token", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Basic ${authString}`, // Use Basic Auth
+        },
+      });
+
+      const data = await response.json();
+      console.log("QPay Auth Response:", data); // Debugging
+      return data.access_token;
+    } catch (error) {
+      console.error("Error fetching QPay token:", error);
+    }
+  };
+
+  const createQPayInvoice = async () => {
+    const token = await getQPayToken();
+    if (!token) {
+      console.error("Failed to retrieve token!");
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/qpay-invoice", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          token,
+          invoice_code: "OSGONMUNKH_S_INVOICE",
+          sender_invoice_no: `INV-${Date.now()}`,
+          amount: totalPrice,
+          callback_url: "https://yourwebsite.com/qpay-callback",
+        }),
+      });
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("QPay Invoice Error:", errorText);
+        return;
+      }
+
+      const data = await response.json();
+      console.log("QPay Invoice Response:", data);
+
+      setPaymentQPayImg(data.qr_image);
+    } catch (error) {
+      console.error("Error creating QPay invoice:", error);
+    }
+  };
+
+  console.log(paymentQPayImg);
   return (
     <Dialog
       onOpenChange={(isOpen) => {
@@ -304,7 +371,7 @@ export function CartDialog({
                   if (validate2()) {
                     handleSubmit(e);
                     handleSubmitForMethod();
-
+                    createQPayInvoice();
                     setStep(3);
                   }
                 }}
@@ -321,9 +388,17 @@ export function CartDialog({
                 Your order has been created! To complete the payment, click the
                 link below:
               </p>
-              <a href={paymentUrl} target="_blank" rel="noopener noreferrer">
-                Complete Payment with QPay
+              <a
+                href={paymentQPayImg}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Button className="mt-4">QPay-аар төлөх</Button>
               </a>
+              <img
+                src={`data:image/png;base64,${paymentQPayImg}`}
+                alt="QPay QR Code"
+              />
               <Button
                 variant="outline"
                 className="text-2xl  py-4"
