@@ -148,7 +148,7 @@ export function Page2({ product, setPage }: any) {
                   >
                     <p className="text-sm">{variation.name || "Төрөл"}</p>
                     <img
-                      className="h-16 w-16 rounded-full"
+                      className=" rounded-full bg-cover"
                       src={variation.image?.src || "./zurag.png"}
                       alt={variation.name || "Variation"}
                     />
@@ -195,7 +195,7 @@ export function Page2({ product, setPage }: any) {
           </Swiper>
 
           {/* Counter for quantity */}
-          <div className="border-4 border-[#ab3030] mx-auto px-8 flex gap-10 py-2 rounded-[15px]">
+          <div className="border-4 m-10 border-[#ab3030] mx-auto flex justify-center gap-10 py-2 rounded-[15px]">
             <button onClick={minusCount} className="text-5xl text-[#ab3030]">
               -
             </button>
@@ -213,7 +213,7 @@ export function Page2({ product, setPage }: any) {
               Хослуулж хэргэлвэл гал гарна
             </p>
 
-            <div className=" overflow-y-auto mt-2 h-[400px] ">
+            <div className=" overflow-y-auto w-full  mt-2 h-[400px] ">
               {" "}
               {/* display the upsell products */}
               {product?.upsell_ids.length > 0 ? (
@@ -233,7 +233,7 @@ export function Page2({ product, setPage }: any) {
                           />
                           <div>
                             <p>{upsell.name}</p>
-                            <span className="text-2xl block">
+                            <span className="text-2xl w-[200px] block">
                               (
                               {new Intl.NumberFormat("mn-MN").format(
                                 upsell.regular_price
