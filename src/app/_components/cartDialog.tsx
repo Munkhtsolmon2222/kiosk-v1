@@ -175,6 +175,9 @@ export function CartDialog({
 			console.error("Failed to retrieve token!");
 			return;
 		}
+		console.log(includeVAT);
+
+		console.log(totalPrice);
 		setQpayToken(token); // ✅ Save token to state
 		try {
 			const response = await fetch("/api/qpay-invoice", {
