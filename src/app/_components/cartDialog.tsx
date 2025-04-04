@@ -40,6 +40,8 @@ export function CartDialog({
 	const prevOpenRef = useRef(open); // Store the previous value of `open`
 	const [qpayToken, setQpayToken] = useState("");
 	const [qpayInvoiceId, setQpayInvoiceId] = useState("");
+	const [storePayToken, setStorePayToken] = useState("");
+	const [storePayInvoiceId, setStorePayInvoiceId] = useState("");
 
 	useEffect(() => {
 		if (open !== prevOpenRef.current) {
@@ -176,7 +178,7 @@ export function CartDialog({
 			return;
 		}
 		console.log(includeVAT);
-
+		const finalPrice = includeVAT ? Math.floor(totalPrice * 0.9) : totalPrice;
 		console.log(totalPrice);
 		setQpayToken(token); // ✅ Save token to state
 		try {
@@ -189,7 +191,7 @@ export function CartDialog({
 					token,
 					invoice_code: "OSGONMUNKH_S_INVOICE",
 					sender_invoice_no: `INV-${Date.now()}`,
-					amount: totalPrice,
+					amount: finalPrice,
 					callback_url: `${process.env.NEXT_PUBLIC_DEPLOYED_URL}/api/qpay-callback`,
 				}),
 			});
@@ -215,6 +217,7 @@ export function CartDialog({
 	useEffect(() => {
 		let interval: NodeJS.Timeout;
 
+		// Polling for QPay if selected is "qpay"
 		if (step === 3 && selected === "qpay" && qpayToken && qpayInvoiceId) {
 			interval = setInterval(async () => {
 				try {
@@ -231,9 +234,59 @@ export function CartDialog({
 
 					const data = await res.json();
 
-					if (data.rows?.[0]?.payment_status === "PAID") {
-						setPaymentStatus("Төлбөр амжилттай!");
-						clearInterval(interval);
+					// Handle the response according to the API documentation
+					if (data.status === "Success" && data.value) {
+						setPaymentStatus(
+							"Төлбөр амжилттай! Нэхэмжлэх дугаар: " + data.value
+						);
+						clearInterval(interval); // Stop polling
+					} else if (data.status === "Failed" && data.msgList) {
+						console.error("Error: ", data.msgList);
+						setPaymentStatus(
+							"Нэхэмжлэх үүсгэгдээгүй: " + data.msgList.join(", ")
+						);
+						clearInterval(interval); // Stop polling
+					}
+				} catch (error) {
+					console.error("Polling error:", error);
+				}
+			}, 10000);
+		}
+
+		// Polling for StorePay if selected is "storepay"
+		if (
+			step === 3 &&
+			selected === "storepay" &&
+			storePayToken &&
+			storePayInvoiceId
+		) {
+			interval = setInterval(async () => {
+				try {
+					const res = await fetch("/api/storepay/status", {
+						method: "POST",
+						headers: {
+							"Content-Type": "application/json",
+						},
+						body: JSON.stringify({
+							token: storePayToken,
+							invoice_id: storePayInvoiceId,
+						}),
+					});
+
+					const data = await res.json();
+
+					// Handle the response for StorePay based on the documentation
+					if (data.status === "Success" && data.value) {
+						setPaymentStatus(
+							"Төлбөр амжилттай! Нэхэмжлэх дугаар: " + data.value
+						);
+						clearInterval(interval); // Stop polling
+					} else if (data.status === "Failed" && data.msgList) {
+						console.error("Error: ", data.msgList);
+						setPaymentStatus(
+							"Нэхэмжлэх үүсгэгдээгүй: " + data.msgList.join(", ")
+						);
+						clearInterval(interval); // Stop polling
 					}
 				} catch (error) {
 					console.error("Polling error:", error);
@@ -244,7 +297,14 @@ export function CartDialog({
 		return () => {
 			if (interval) clearInterval(interval);
 		};
-	}, [step, selected, qpayToken, qpayInvoiceId]);
+	}, [
+		step,
+		selected,
+		qpayToken,
+		qpayInvoiceId,
+		storePayToken,
+		storePayInvoiceId,
+	]);
 
 	const getStorePayToken = async () => {
 		try {
@@ -268,7 +328,7 @@ export function CartDialog({
 			console.error("Failed to retrieve token");
 			return;
 		}
-
+		setStorePayToken(token); // ✅ Save token to state
 		try {
 			const response = await fetch("/api/storepay/invoice", {
 				method: "POST",
@@ -276,11 +336,12 @@ export function CartDialog({
 					"Content-Type": "application/json",
 				},
 				body: JSON.stringify({
-					token,
-					invoice_code: "MY_INVOICE_CODE",
-					sender_invoice_no: `INV-${Date.now()}`,
-					amount: totalPrice, // Pass the total price
-					callback_url: "https://yourwebsite.com/callback", // Set your callback URL
+					storeId: "13214", // Replace with the actual storeId
+					mobileNumber: "88011648", // Replace with the actual customer's mobile number
+					description: "test", // Replace with the actual description
+					amount: totalPrice, // Pass the total price dynamically
+					callbackUrl: `${process.env.NEXT_PUBLIC_DEPLOYED_URL}/api/storepay/status`,
+					accessToken: token,
 				}),
 			});
 
@@ -292,6 +353,7 @@ export function CartDialog({
 
 			const data = await response.json();
 			console.log("StorePay Invoice Response:", data);
+			setStorePayInvoiceId(data.invoice_id); // ✅ Save invoice_id to state
 		} catch (error) {
 			console.error("Error creating StorePay invoice:", error);
 		}
