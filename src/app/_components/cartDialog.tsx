@@ -38,6 +38,8 @@ export function CartDialog({
 	});
 	const [errors, setErrors] = useState<any>({});
 	const prevOpenRef = useRef(open); // Store the previous value of `open`
+	const [qpayToken, setQpayToken] = useState("");
+	const [qpayInvoiceId, setQpayInvoiceId] = useState("");
 
 	useEffect(() => {
 		if (open !== prevOpenRef.current) {
@@ -173,7 +175,7 @@ export function CartDialog({
 			console.error("Failed to retrieve token!");
 			return;
 		}
-
+		setQpayToken(token); // ✅ Save token to state
 		try {
 			const response = await fetch("/api/qpay-invoice", {
 				method: "POST",
@@ -200,6 +202,7 @@ export function CartDialog({
 
 			setPaymentQRImg(data.qr_image);
 			setPaymentStatus("Pending payment confirmation..."); // Show pending until callback is received
+			setQpayInvoiceId(data.invoice_id); // ✅ Save invoice_id to state
 		} catch (error) {
 			console.error("Error creating QPay invoice:", error);
 			setPaymentStatus("Payment failed to initiate.");
@@ -209,26 +212,36 @@ export function CartDialog({
 	useEffect(() => {
 		let interval: NodeJS.Timeout;
 
-		if (step === 3 && selected === "qpay") {
+		if (step === 3 && selected === "qpay" && qpayToken && qpayInvoiceId) {
 			interval = setInterval(async () => {
 				try {
-					const res = await fetch("/api/qpay-status"); // replace with your actual endpoint
+					const res = await fetch("/api/qpay-status", {
+						method: "POST",
+						headers: {
+							"Content-Type": "application/json",
+						},
+						body: JSON.stringify({
+							token: qpayToken,
+							invoice_id: qpayInvoiceId,
+						}),
+					});
+
 					const data = await res.json();
 
-					if (data.status === "paid") {
+					if (data.payment_status === "PAID") {
 						setPaymentStatus("Төлбөр амжилттай!");
 						clearInterval(interval);
 					}
 				} catch (error) {
 					console.error("Polling error:", error);
 				}
-			}, 3000); // poll every 3 seconds
+			}, 10000);
 		}
 
 		return () => {
 			if (interval) clearInterval(interval);
 		};
-	}, [step, selected]);
+	}, [step, selected, qpayToken, qpayInvoiceId]);
 
 	const getStorePayToken = async () => {
 		try {
