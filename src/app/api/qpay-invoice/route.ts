@@ -33,11 +33,19 @@ export async function POST(req: NextRequest) {
       return new Response(errorText, { status: response.status });
     }
 
-    const email = req.cookies.get("email")?.value;
+    // Get the email cookie and decode it
+    const emailCookie = req.cookies.get("clientEmail")?.value;
+    if (!emailCookie) {
+      return new Response("Email cookie is missing", { status: 400 });
+    }
+
+    // Decode the email from the cookie (URL-decoding)
+    const email = decodeURIComponent(emailCookie);
     if (!email || !email.includes("@")) {
       return new Response("Invalid email address", { status: 400 });
     }
 
+    // Send email
     await sendEmail({
       to: email,
       subject: "Invoice Confirmation",
