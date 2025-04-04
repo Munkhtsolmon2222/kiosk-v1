@@ -205,6 +205,31 @@ export function CartDialog({
 			setPaymentStatus("Payment failed to initiate.");
 		}
 	};
+
+	useEffect(() => {
+		let interval: NodeJS.Timeout;
+
+		if (step === 3 && selected === "qpay") {
+			interval = setInterval(async () => {
+				try {
+					const res = await fetch("/api/qpay-status"); // replace with your actual endpoint
+					const data = await res.json();
+
+					if (data.status === "paid") {
+						setPaymentStatus("Төлбөр амжилттай!");
+						clearInterval(interval);
+					}
+				} catch (error) {
+					console.error("Polling error:", error);
+				}
+			}, 3000); // poll every 3 seconds
+		}
+
+		return () => {
+			if (interval) clearInterval(interval);
+		};
+	}, [step, selected]);
+
 	const getStorePayToken = async () => {
 		try {
 			const response = await fetch("/api/storepay/token", {
