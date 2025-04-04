@@ -21,7 +21,6 @@ export function CartDialog({
   step: any;
   setStep: any;
 }) {
-<<<<<<< HEAD
 	const [cartItems, setCartItems] = useState<any[]>([]);
 	const [totalPrice, setTotalPrice] = useState(0);
 	const [isConfirmed, setIsConfirmed] = useState(false);
@@ -43,27 +42,6 @@ export function CartDialog({
 	const [qpayInvoiceId, setQpayInvoiceId] = useState("");
 	const [storePayToken, setStorePayToken] = useState("");
 	const [storePayInvoiceId, setStorePayInvoiceId] = useState("");
-=======
-  const [cartItems, setCartItems] = useState<any[]>([]);
-  const [totalPrice, setTotalPrice] = useState(0);
-  const [isConfirmed, setIsConfirmed] = useState(false);
-  const [includeVAT, setIncludeVAT] = useState(false);
-  const [isDelivered, setIsDelivered] = useState(false);
-  const [methodError, setMethodError] = useState("");
-  const [selected, setSelected] = useState("");
-  const [paymentQRImg, setPaymentQRImg] = useState<string>("");
-  const [paymentStatus, setPaymentStatus] = useState(""); // Store payment status (e.g., success or failure)
-  const [formData, setFormData] = useState({
-    address: "",
-    phone: "",
-    email: "",
-    phone2: "",
-  });
-  const [errors, setErrors] = useState<any>({});
-  const prevOpenRef = useRef(open); // Store the previous value of `open`
-  const [qpayToken, setQpayToken] = useState("");
-  const [qpayInvoiceId, setQpayInvoiceId] = useState("");
->>>>>>> 2-boona
 
   useEffect(() => {
     if (open !== prevOpenRef.current) {
@@ -193,7 +171,6 @@ export function CartDialog({
     }
   };
 
-<<<<<<< HEAD
 	const createQPayInvoice = async () => {
 		const token = await getQPayToken();
 		if (!token) {
@@ -218,32 +195,6 @@ export function CartDialog({
 					callback_url: `${process.env.NEXT_PUBLIC_DEPLOYED_URL}/api/qpay-callback`,
 				}),
 			});
-=======
-  const createQPayInvoice = async () => {
-    const token = await getQPayToken();
-    if (!token) {
-      console.error("Failed to retrieve token!");
-      return;
-    }
-    console.log(includeVAT);
-
-    console.log(totalPrice);
-    setQpayToken(token); // ✅ Save token to state
-    try {
-      const response = await fetch("/api/qpay-invoice", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          token,
-          invoice_code: "OSGONMUNKH_S_INVOICE",
-          sender_invoice_no: `INV-${Date.now()}`,
-          amount: totalPrice,
-          callback_url: `${process.env.NEXT_PUBLIC_DEPLOYED_URL}/api/qpay-callback`,
-        }),
-      });
->>>>>>> 2-boona
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -266,7 +217,6 @@ export function CartDialog({
   useEffect(() => {
     let interval: NodeJS.Timeout;
 
-<<<<<<< HEAD
 		// Polling for QPay if selected is "qpay"
 		if (step === 3 && selected === "qpay" && qpayToken && qpayInvoiceId) {
 			interval = setInterval(async () => {
@@ -281,25 +231,9 @@ export function CartDialog({
 							invoice_id: qpayInvoiceId,
 						}),
 					});
-=======
-    if (step === 3 && selected === "qpay" && qpayToken && qpayInvoiceId) {
-      interval = setInterval(async () => {
-        try {
-          const res = await fetch("/api/qpay-status", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              token: qpayToken,
-              invoice_id: qpayInvoiceId,
-            }),
-          });
->>>>>>> 2-boona
 
           const data = await res.json();
 
-<<<<<<< HEAD
 					// Handle the response according to the API documentation
 					if (data.status === "Success" && data.value) {
 						setPaymentStatus(
@@ -371,22 +305,6 @@ export function CartDialog({
 		storePayToken,
 		storePayInvoiceId,
 	]);
-=======
-          if (data.rows?.[0]?.payment_status === "PAID") {
-            setPaymentStatus("Төлбөр амжилттай!");
-            clearInterval(interval);
-          }
-        } catch (error) {
-          console.error("Polling error:", error);
-        }
-      }, 10000);
-    }
-
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [step, selected, qpayToken, qpayInvoiceId]);
->>>>>>> 2-boona
 
   const getStorePayToken = async () => {
     try {
@@ -404,7 +322,6 @@ export function CartDialog({
     }
   };
 
-<<<<<<< HEAD
 	const createStorePayInvoice = async () => {
 		const token = await getStorePayToken();
 		if (!token) {
@@ -427,29 +344,6 @@ export function CartDialog({
 					accessToken: token,
 				}),
 			});
-=======
-  const createStorePayInvoice = async () => {
-    const token = await getStorePayToken();
-    if (!token) {
-      console.error("Failed to retrieve token");
-      return;
-    }
-
-    try {
-      const response = await fetch("/api/storepay/invoice", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          token,
-          invoice_code: "MY_INVOICE_CODE",
-          sender_invoice_no: `INV-${Date.now()}`,
-          amount: totalPrice, // Pass the total price
-          callback_url: "https://yourwebsite.com/callback", // Set your callback URL
-        }),
-      });
->>>>>>> 2-boona
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -457,7 +351,6 @@ export function CartDialog({
         return;
       }
 
-<<<<<<< HEAD
 			const data = await response.json();
 			console.log("StorePay Invoice Response:", data);
 			setStorePayInvoiceId(data.invoice_id); // ✅ Save invoice_id to state
@@ -465,14 +358,6 @@ export function CartDialog({
 			console.error("Error creating StorePay invoice:", error);
 		}
 	};
-=======
-      const data = await response.json();
-      console.log("StorePay Invoice Response:", data);
-    } catch (error) {
-      console.error("Error creating StorePay invoice:", error);
-    }
-  };
->>>>>>> 2-boona
 
   console.log(selected);
   return (
