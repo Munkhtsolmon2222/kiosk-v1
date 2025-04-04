@@ -7,8 +7,7 @@ import { useEffect, useState } from "react";
 import { Autoplay, Navigation, Pagination } from "swiper/modules";
 import DOMPurify from "dompurify";
 import { useProducts } from "../../../providers/productContext";
-import { CartDialog } from "./cartDialog";
-
+import { useCart } from "../../../providers/cartContext";
 export function Page2({ product, setPage }: any) {
   const [orderProducts, setOrderProducts] = useState(1);
   const [upsellOrderCounts, setUpsellOrderCounts] = useState<{
@@ -21,6 +20,7 @@ export function Page2({ product, setPage }: any) {
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState(1);
+  const { addToCart } = useCart();
   const minusCount = () => {
     setOrderProducts((prev) => (prev > 1 ? prev - 1 : 1));
   };
@@ -126,6 +126,7 @@ export function Page2({ product, setPage }: any) {
 
     cart.push(cartItem, ...upsellItems);
     localStorage.setItem("cart", JSON.stringify(cart));
+    addToCart(cartItem);
     console.log("Cart Updated:", cart);
     setPage(3);
   };
@@ -375,13 +376,6 @@ export function Page2({ product, setPage }: any) {
                 Сагсанд хийх
               </Button>
             </DialogClose>
-
-            <CartDialog
-              open={open}
-              setOpen={setOpen}
-              step={step}
-              setStep={setStep}
-            />
           </div>
         </div>
       )}

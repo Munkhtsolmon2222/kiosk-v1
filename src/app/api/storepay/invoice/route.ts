@@ -17,11 +17,11 @@ export async function POST(req: NextRequest) {
 
     // Construct the body for the invoice creation request
     const body = {
-      storeId: storeId || "11111", // Default value can be replaced with dynamic value if needed
-      mobileNumber: mobileNumber || "9090909", // Customer's mobile number
-      description: description || "test", // Description of the invoice
-      amount: amount || "100000", // Amount for the invoice
-      callbackUrl: callbackUrl || "", // Callback URL for the result (can be left empty or provide the URL)
+      storeId: storeId, // Default value can be replaced with dynamic value if needed
+      mobileNumber: mobileNumber, // Customer's mobile number
+      description: description, // Description of the invoice
+      amount: amount, // Amount for the invoice
+      callbackUrl: callbackUrl, // Callback URL for the result (can be left empty or provide the URL)
     };
 
     // Create the invoice by making a POST request to the /merchant/loan endpoint

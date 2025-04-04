@@ -15,14 +15,19 @@ export function CartDialog({
   setOpen,
   step,
   setStep,
+  setCartItems,
+  cartItems,
+  totalPrice,
 }: {
   open: any;
   setOpen: any;
   step: any;
   setStep: any;
+  setCartItems: any;
+  cartItems: any;
+  setTotalPrice: any;
+  totalPrice: any;
 }) {
-  const [cartItems, setCartItems] = useState<any[]>([]);
-  const [totalPrice, setTotalPrice] = useState(0);
   const [isConfirmed, setIsConfirmed] = useState(false);
   const [includeVAT, setIncludeVAT] = useState(false);
   const [isDelivered, setIsDelivered] = useState(false);
@@ -37,38 +42,13 @@ export function CartDialog({
     phone2: "",
   });
   const [errors, setErrors] = useState<any>({});
-  const prevOpenRef = useRef(open); // Store the previous value of `open`
   const [qpayToken, setQpayToken] = useState("");
   const [qpayInvoiceId, setQpayInvoiceId] = useState("");
   const [storePayToken, setStorePayToken] = useState("");
   const [storePayRequestId, setStorePayRequestId] = useState("");
-
-  useEffect(() => {
-    if (open !== prevOpenRef.current) {
-      // Check if `open` has changed
-      prevOpenRef.current = open; // Update the ref to the latest value of `open`
-
-      if (open) {
-        // Only fetch cart items when dialog is opened
-        const items = JSON.parse(localStorage.getItem("cart") || "[]");
-        setCartItems(items);
-
-        // Calculate total price
-        const total = items.reduce(
-          (sum: number, item: any) => sum + item.price * item.quantity,
-          0
-        );
-        setTotalPrice(total);
-      }
-    }
-  }, [open]); // Depend only on `open`
-  useEffect(() => {
-    const total = cartItems.reduce(
-      (sum: number, item: any) => sum + item.price * item.quantity,
-      0
-    );
-    setTotalPrice(total);
-  }, [cartItems]); // Dependency on cartItems to track changes
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [phoneError, setPhoneError] = useState<any>("");
+  const [qrImageLoading, setQRImageLoading] = useState(false);
 
   const removeItem = (index: number) => {
     const updatedItems = [...cartItems];
@@ -131,14 +111,27 @@ export function CartDialog({
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
+
+  const validatePhoneNumber = (number: string): any => {
+    const trimmed = number.trim();
+
+    if (trimmed === "") return "Утасны дугаараа оруулна уу";
+
+    const phoneRegex = /^\d{8}$/;
+    if (!phoneRegex.test(trimmed)) {
+      return "Зөвхөн 8 оронтой, зөв дугаар оруулна уу";
+    }
+
+    return true; // Valid number
+  };
   const handleSubmit = (e: any) => {
     e.preventDefault();
     if (validate()) {
       console.log("Form submitted", formData);
     }
   };
-  const hasBackorderItem = cartItems.some(
-    (item) => item.stock_status === "onbackorder"
+  const hasBackorderItem = cartItems?.some(
+    (item: any) => item.stock_status === "onbackorder"
   );
   const handleSubmitForMethod = () => {
     if (!selected) {
@@ -172,6 +165,8 @@ export function CartDialog({
   };
 
   const createQPayInvoice = async () => {
+    setStep(3);
+    setQRImageLoading(true); // Set QR image loading to true
     const token = await getQPayToken();
     if (!token) {
       console.error("Failed to retrieve token!");
@@ -180,6 +175,7 @@ export function CartDialog({
     console.log(includeVAT);
     const finalPrice = includeVAT ? Math.floor(totalPrice * 0.9) : totalPrice;
     console.log(totalPrice);
+    console.log(cartItems);
     setQpayToken(token); // ✅ Save token to state
     try {
       const response = await fetch("/api/qpay-invoice", {
@@ -193,6 +189,7 @@ export function CartDialog({
           sender_invoice_no: `INV-${Date.now()}`,
           amount: finalPrice,
           callback_url: `${process.env.NEXT_PUBLIC_DEPLOYED_URL}/api/qpay-callback`,
+          cartItems: cartItems,
         }),
       });
 
@@ -205,6 +202,7 @@ export function CartDialog({
         }
 
         console.error("QPay Invoice Error:", errorText);
+        setQRImageLoading(false); // Stop loading if there's an error
         return;
       }
 
@@ -212,17 +210,19 @@ export function CartDialog({
       console.log("QPay Invoice Response:", data);
 
       setPaymentQRImg(data.qr_image);
-      setPaymentStatus("Pending payment confirmation..."); // Show pending until callback is received
+      setPaymentStatus("Төлбөр баталгаажихыг хүлээж байна..."); // Show pending until callback is received
       setQpayInvoiceId(data.invoice_id); // ✅ Save invoice_id to state
     } catch (error) {
       console.error("Error creating QPay invoice:", error);
-      setPaymentStatus("Payment failed to initiate.");
+      setPaymentStatus("Төлбөр эхлүүлэхэд алдаа гарсан.");
+    } finally {
+      setQRImageLoading(false); // Stop QR image loading once done
     }
   };
 
   useEffect(() => {
     let interval: NodeJS.Timeout;
-
+    const finalPrice = includeVAT ? Math.floor(totalPrice * 0.9) : totalPrice;
     // Polling for QPay if selected is "qpay"
     if (step === 3 && selected === "qpay" && qpayToken && qpayInvoiceId) {
       interval = setInterval(async () => {
@@ -235,6 +235,10 @@ export function CartDialog({
             body: JSON.stringify({
               token: qpayToken,
               invoice_id: qpayInvoiceId,
+              cartItems: cartItems,
+              amount: finalPrice,
+              formData: formData,
+              isDelivered: isDelivered,
             }),
           });
 
@@ -274,6 +278,10 @@ export function CartDialog({
             body: JSON.stringify({
               token: storePayToken,
               requestId: storePayRequestId,
+              cartItems: cartItems,
+              amount: finalPrice,
+              formData: formData,
+              isDelivered: isDelivered,
             }),
           });
 
@@ -325,46 +333,54 @@ export function CartDialog({
   };
 
   const createStorePayInvoice = async () => {
-    const token = await getStorePayToken();
-    if (!token) {
-      console.error("Failed to retrieve token");
-      return;
-    }
-    setStorePayToken(token); // ✅ Save token to state
-
-    try {
-      const response = await fetch("/api/storepay/invoice", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          storeId: "13214",
-          mobileNumber: "88011648",
-          description: "test",
-          amount: totalPrice,
-          callbackUrl: `${process.env.NEXT_PUBLIC_DEPLOYED_URL}/api/storepay/status`,
-          accessToken: token,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error("Error creating StorePay invoice:", errorText);
+    const result = validatePhoneNumber(phoneNumber);
+    if (result === true) {
+      setStep(3);
+      const token = await getStorePayToken();
+      if (!token) {
+        console.error("Failed to retrieve token");
         return;
       }
+      setStorePayToken(token); // ✅ Save token to state
 
-      const data = await response.json();
-      console.log("StorePay Invoice Response:", data);
+      try {
+        const response = await fetch("/api/storepay/invoice", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            storeId: "13214",
+            mobileNumber: phoneNumber,
+            description: "test",
+            amount: totalPrice,
+            callbackUrl: `${process.env.NEXT_PUBLIC_DEPLOYED_URL}/api/storepay/status`,
+            accessToken: token,
+          }),
+        });
 
-      setStorePayRequestId(data.value); // ✅ Save requestId
-    } catch (error) {
-      console.error("Error creating StorePay invoice:", error);
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error("Error creating StorePay invoice:", errorText);
+          return;
+        }
+
+        const data = await response.json();
+        console.log("StorePay Invoice Response:", data);
+
+        setStorePayRequestId(data.value); // ✅ Save requestId
+      } catch (error) {
+        console.error("Error creating StorePay invoice:", error);
+      }
+    } else {
+      setPhoneError(result); // show error in UI
+      return; // prevent proceeding
     }
   };
 
   console.log(selected);
   console.log(paymentStatus);
+  console.log(formData);
   return (
     <Dialog
       onOpenChange={(isOpen) => {
@@ -382,8 +398,8 @@ export function CartDialog({
         {step === 1 ? (
           <>
             <div className="overflow-y-auto mt-2 h-[400px]">
-              {cartItems.length > 0 ? (
-                cartItems.map((item, index) => (
+              {cartItems?.length > 0 ? (
+                cartItems?.map((item: any, index: any) => (
                   <div key={index} className="flex gap-4 mt-4">
                     <img
                       className="h-16 w-16 rounded-2xl"
@@ -523,6 +539,10 @@ export function CartDialog({
               selected={selected}
               setSelected={setSelected}
               handleSubmitForMethod={handleSubmitForMethod}
+              setPhoneNumber={setPhoneNumber}
+              phoneNumber={phoneNumber}
+              setPhoneError={setPhoneError}
+              phoneError={phoneError}
             />
             <div className="flex justify-between mt-10 w-[90%] mx-auto">
               <Button
@@ -545,8 +565,6 @@ export function CartDialog({
                     } else {
                       createStorePayInvoice();
                     }
-
-                    setStep(3);
                   }
                 }}
               >
@@ -562,10 +580,16 @@ export function CartDialog({
                 <div>
                   {" "}
                   <p className="mt-4">QPay-аар төлөх</p>
-                  <img
-                    src={`data:image/png;base64,${paymentQRImg}`}
-                    alt="QPay QR Code"
-                  />
+                  {qrImageLoading ? (
+                    <div className="w-[200px] mx-auto my-[100px]">
+                      QR Зураг ачааллаж байна...
+                    </div>
+                  ) : (
+                    <img
+                      src={`data:image/png;base64,${paymentQRImg}`}
+                      alt="QPay QR Code"
+                    />
+                  )}
                 </div>
               ) : (
                 <div className="w-[200px] h-[200px] m-auto">

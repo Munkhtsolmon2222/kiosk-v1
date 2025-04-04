@@ -85,6 +85,8 @@ export const CategoryProvider = ({ children }: { children: ReactNode }) => {
     refetchInterval:
       typeof window !== "undefined" && navigator.onLine ? false : 1000,
     initialPageParam: 1,
+    staleTime: 300000,
+    gcTime: 600000,
   });
 
   return (

@@ -7,6 +7,7 @@ import { useProducts } from "../../providers/productContext";
 import Link from "next/link";
 import { getCookie } from "cookies-next/client";
 export default function Home() {
+  console.log("hihihihi");
   const [isConnected, setIsConnected] = useState(true);
   const [setting, setSetting] = useState(false);
 

@@ -32,29 +32,21 @@ export default function PaymentMethods({
   selected,
   setSelected,
   handleSubmitForMethod,
+  setPhoneNumber,
+  phoneNumber,
+  setPhoneError,
+  phoneError,
 }: {
   methodError: any;
   setMethodError: any;
   selected: any;
   setSelected: any;
   handleSubmitForMethod: any;
+  setPhoneNumber: any;
+  phoneNumber: any;
+  setPhoneError: any;
+  phoneError: any;
 }) {
-  const [phoneNumber, setPhoneNumber] = useState("");
-  const [phoneError, setPhoneError] = useState("");
-
-  const validatePhoneNumber = (number: any) => {
-    const phoneRegex = /^\d{8}$/;
-    return phoneRegex.test(number);
-  };
-
-  const handlePhoneChange = (e: any) => {
-    const value = e.target.value;
-    setPhoneNumber(value);
-    setPhoneError(
-      validatePhoneNumber(value) ? "" : "Зөвхөн 8 оронтой тоо оруулна уу"
-    );
-  };
-
   return (
     <div className="p-4 max-w-md mx-auto">
       <h2 className="text-lg font-semibold mb-4">ТӨЛБӨРИЙН ХЭРЭГСЭЛ</h2>
@@ -96,7 +88,7 @@ export default function PaymentMethods({
                 <Input
                   type="text"
                   value={phoneNumber}
-                  onChange={handlePhoneChange}
+                  onChange={(e) => setPhoneNumber(e.target.value)}
                   placeholder="Утасны дугаар"
                   className="mt-1 w-full border ${phoneError ? 'border-red-500' : 'border-gray-300'}"
                 />

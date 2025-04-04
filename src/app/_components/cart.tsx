@@ -1,14 +1,44 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { AiOutlineShoppingCart } from "react-icons/ai";
 import { CartDialog } from "./cartDialog";
+import { useCart } from "../../../providers/cartContext";
 
 export function Cart() {
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState(1);
   const [items, setItems] = useState<number>(0);
+  const prevOpenRef = useRef(open); // Store the previous value of `open`
+  const [totalPrice, setTotalPrice] = useState(0);
+  const { cartItems, setCartItems } = useCart();
 
+  // useEffect(() => {
+  //   if (open !== prevOpenRef.current) {
+  //     // Check if `open` has changed
+  //     prevOpenRef.current = open; // Update the ref to the latest value of `open`
+
+  //     if (open) {
+  //       // Only fetch cart items when dialog is opened
+  //       const items = JSON.parse(localStorage.getItem("cart") || "[]");
+  //       setCartItems(items);
+
+  //       // Calculate total price
+  //       const total = items.reduce(
+  //         (sum: number, item: any) => sum + item.price * item.quantity,
+  //         0
+  //       );
+  //       setTotalPrice(total);
+  //     }
+  //   }
+  // }, [open]); // Depend only on `open`
+  useEffect(() => {
+    const total = cartItems.reduce(
+      (sum: number, item: any) => sum + item.price * item.quantity,
+      0
+    );
+    setTotalPrice(total);
+  }, [cartItems, open]); // Dependency on cartItems to track changes
   useEffect(() => {
     const storedItems = localStorage.getItem("cart");
 
@@ -26,7 +56,7 @@ export function Cart() {
     } else {
       console.log("No items found in localStorage.");
     }
-  }, []); // Зөвхөн нэг удаа component mount болсны дараа // Зөвхөн нэг удаа mount үед ажиллана
+  }, [cartItems]);
 
   console.log(items);
 
@@ -46,7 +76,16 @@ export function Cart() {
         )}
         <AiOutlineShoppingCart className="text-[#ab3030] size-10" />
       </Button>
-      <CartDialog open={open} setOpen={setOpen} step={step} setStep={setStep} />
+      <CartDialog
+        open={open}
+        setOpen={setOpen}
+        step={step}
+        setStep={setStep}
+        setCartItems={setCartItems}
+        cartItems={cartItems}
+        setTotalPrice={setTotalPrice}
+        totalPrice={totalPrice}
+      />
     </div>
   );
 }
