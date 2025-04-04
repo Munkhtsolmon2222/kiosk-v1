@@ -21,27 +21,27 @@ export function CartDialog({
   step: any;
   setStep: any;
 }) {
-	const [cartItems, setCartItems] = useState<any[]>([]);
-	const [totalPrice, setTotalPrice] = useState(0);
-	const [isConfirmed, setIsConfirmed] = useState(false);
-	const [includeVAT, setIncludeVAT] = useState(false);
-	const [isDelivered, setIsDelivered] = useState(false);
-	const [methodError, setMethodError] = useState("");
-	const [selected, setSelected] = useState("");
-	const [paymentQRImg, setPaymentQRImg] = useState<string>("");
-	const [paymentStatus, setPaymentStatus] = useState(""); // Store payment status (e.g., success or failure)
-	const [formData, setFormData] = useState({
-		address: "",
-		phone: "",
-		email: "",
-		phone2: "",
-	});
-	const [errors, setErrors] = useState<any>({});
-	const prevOpenRef = useRef(open); // Store the previous value of `open`
-	const [qpayToken, setQpayToken] = useState("");
-	const [qpayInvoiceId, setQpayInvoiceId] = useState("");
-	const [storePayToken, setStorePayToken] = useState("");
-	const [storePayInvoiceId, setStorePayInvoiceId] = useState("");
+  const [cartItems, setCartItems] = useState<any[]>([]);
+  const [totalPrice, setTotalPrice] = useState(0);
+  const [isConfirmed, setIsConfirmed] = useState(false);
+  const [includeVAT, setIncludeVAT] = useState(false);
+  const [isDelivered, setIsDelivered] = useState(false);
+  const [methodError, setMethodError] = useState("");
+  const [selected, setSelected] = useState("");
+  const [paymentQRImg, setPaymentQRImg] = useState<string>("");
+  const [paymentStatus, setPaymentStatus] = useState(""); // Store payment status (e.g., success or failure)
+  const [formData, setFormData] = useState({
+    address: "",
+    phone: "",
+    email: "",
+    phone2: "",
+  });
+  const [errors, setErrors] = useState<any>({});
+  const prevOpenRef = useRef(open); // Store the previous value of `open`
+  const [qpayToken, setQpayToken] = useState("");
+  const [qpayInvoiceId, setQpayInvoiceId] = useState("");
+  const [storePayToken, setStorePayToken] = useState("");
+  const [storePayRequestId, setStorePayRequestId] = useState("");
 
   useEffect(() => {
     if (open !== prevOpenRef.current) {
@@ -171,33 +171,39 @@ export function CartDialog({
     }
   };
 
-	const createQPayInvoice = async () => {
-		const token = await getQPayToken();
-		if (!token) {
-			console.error("Failed to retrieve token!");
-			return;
-		}
-		console.log(includeVAT);
-		const finalPrice = includeVAT ? Math.floor(totalPrice * 0.9) : totalPrice;
-		console.log(totalPrice);
-		setQpayToken(token); // ✅ Save token to state
-		try {
-			const response = await fetch("/api/qpay-invoice", {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-				},
-				body: JSON.stringify({
-					token,
-					invoice_code: "OSGONMUNKH_S_INVOICE",
-					sender_invoice_no: `INV-${Date.now()}`,
-					amount: finalPrice,
-					callback_url: `${process.env.NEXT_PUBLIC_DEPLOYED_URL}/api/qpay-callback`,
-				}),
-			});
+  const createQPayInvoice = async () => {
+    const token = await getQPayToken();
+    if (!token) {
+      console.error("Failed to retrieve token!");
+      return;
+    }
+    console.log(includeVAT);
+    const finalPrice = includeVAT ? Math.floor(totalPrice * 0.9) : totalPrice;
+    console.log(totalPrice);
+    setQpayToken(token); // ✅ Save token to state
+    try {
+      const response = await fetch("/api/qpay-invoice", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          token,
+          invoice_code: "OSGONMUNKH_S_INVOICE",
+          sender_invoice_no: `INV-${Date.now()}`,
+          amount: finalPrice,
+          callback_url: `${process.env.NEXT_PUBLIC_DEPLOYED_URL}/api/qpay-callback`,
+        }),
+      });
 
       if (!response.ok) {
         const errorText = await response.text();
+
+        // Check if the error text indicates missing email cookie
+        if (errorText.includes("Email cookie is missing")) {
+          alert("Дэлгүүрийн ажилтан имэйл хаягаа оруулаагүй байна");
+        }
+
         console.error("QPay Invoice Error:", errorText);
         return;
       }
@@ -217,94 +223,90 @@ export function CartDialog({
   useEffect(() => {
     let interval: NodeJS.Timeout;
 
-		// Polling for QPay if selected is "qpay"
-		if (step === 3 && selected === "qpay" && qpayToken && qpayInvoiceId) {
-			interval = setInterval(async () => {
-				try {
-					const res = await fetch("/api/qpay-status", {
-						method: "POST",
-						headers: {
-							"Content-Type": "application/json",
-						},
-						body: JSON.stringify({
-							token: qpayToken,
-							invoice_id: qpayInvoiceId,
-						}),
-					});
+    // Polling for QPay if selected is "qpay"
+    if (step === 3 && selected === "qpay" && qpayToken && qpayInvoiceId) {
+      interval = setInterval(async () => {
+        try {
+          const res = await fetch("/api/qpay-status", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              token: qpayToken,
+              invoice_id: qpayInvoiceId,
+            }),
+          });
 
           const data = await res.json();
 
-					// Handle the response according to the API documentation
-					if (data.status === "Success" && data.value) {
-						setPaymentStatus(
-							"Төлбөр амжилттай! Нэхэмжлэх дугаар: " + data.value
-						);
-						clearInterval(interval); // Stop polling
-					} else if (data.status === "Failed" && data.msgList) {
-						console.error("Error: ", data.msgList);
-						setPaymentStatus(
-							"Нэхэмжлэх үүсгэгдээгүй: " + data.msgList.join(", ")
-						);
-						clearInterval(interval); // Stop polling
-					}
-				} catch (error) {
-					console.error("Polling error:", error);
-				}
-			}, 10000);
-		}
+          // Handle the response according to the API documentation
+          if (data.rows?.[0]?.payment_status === "PAID") {
+            setPaymentStatus("Төлбөр амжилттай!");
+            clearInterval(interval); // Stop polling
+          } else if (data.status === "Failed" && data.msgList) {
+            console.error("Error: ", data.msgList);
+            setPaymentStatus(
+              "Нэхэмжлэх үүсгэгдээгүй: " + data.msgList.join(", ")
+            );
+            clearInterval(interval); // Stop polling
+          }
+        } catch (error) {
+          console.error("Polling error:", error);
+        }
+      }, 10000);
+    }
 
-		// Polling for StorePay if selected is "storepay"
-		if (
-			step === 3 &&
-			selected === "storepay" &&
-			storePayToken &&
-			storePayInvoiceId
-		) {
-			interval = setInterval(async () => {
-				try {
-					const res = await fetch("/api/storepay/status", {
-						method: "POST",
-						headers: {
-							"Content-Type": "application/json",
-						},
-						body: JSON.stringify({
-							token: storePayToken,
-							invoice_id: storePayInvoiceId,
-						}),
-					});
+    // Polling for StorePay if selected is "storepay"
+    if (
+      step === 3 &&
+      selected === "storepay" &&
+      storePayToken &&
+      storePayRequestId
+    ) {
+      interval = setInterval(async () => {
+        try {
+          const res = await fetch("/api/storepay/status", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              token: storePayToken,
+              requestId: storePayRequestId,
+            }),
+          });
 
-					const data = await res.json();
+          const data = await res.json();
 
-					// Handle the response for StorePay based on the documentation
-					if (data.status === "Success" && data.value) {
-						setPaymentStatus(
-							"Төлбөр амжилттай! Нэхэмжлэх дугаар: " + data.value
-						);
-						clearInterval(interval); // Stop polling
-					} else if (data.status === "Failed" && data.msgList) {
-						console.error("Error: ", data.msgList);
-						setPaymentStatus(
-							"Нэхэмжлэх үүсгэгдээгүй: " + data.msgList.join(", ")
-						);
-						clearInterval(interval); // Stop polling
-					}
-				} catch (error) {
-					console.error("Polling error:", error);
-				}
-			}, 10000);
-		}
+          // Handle the response for StorePay based on the documentation
+          if (data.status === "Success" && data.value) {
+            setPaymentStatus("Төлбөр амжилттай!");
+            clearInterval(interval); // Stop polling
+          } else if (data.status === "Failed" && data.msgList) {
+            console.error("Error: ", data.msgList);
+            setPaymentStatus(
+              "Нэхэмжлэх үүсгэгдээгүй: " + data.msgList.join(", ")
+            );
+            clearInterval(interval); // Stop polling
+          }
+        } catch (error) {
+          console.error("Polling error:", error);
+        }
+      }, 10000);
+    }
 
-		return () => {
-			if (interval) clearInterval(interval);
-		};
-	}, [
-		step,
-		selected,
-		qpayToken,
-		qpayInvoiceId,
-		storePayToken,
-		storePayInvoiceId,
-	]);
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [
+    step,
+    selected,
+    qpayToken,
+    qpayInvoiceId,
+    storePayToken,
+    storePayRequestId,
+  ]);
 
   const getStorePayToken = async () => {
     try {
@@ -322,28 +324,29 @@ export function CartDialog({
     }
   };
 
-	const createStorePayInvoice = async () => {
-		const token = await getStorePayToken();
-		if (!token) {
-			console.error("Failed to retrieve token");
-			return;
-		}
-		setStorePayToken(token); // ✅ Save token to state
-		try {
-			const response = await fetch("/api/storepay/invoice", {
-				method: "POST",
-				headers: {
-					"Content-Type": "application/json",
-				},
-				body: JSON.stringify({
-					storeId: "13214", // Replace with the actual storeId
-					mobileNumber: "88011648", // Replace with the actual customer's mobile number
-					description: "test", // Replace with the actual description
-					amount: totalPrice, // Pass the total price dynamically
-					callbackUrl: `${process.env.NEXT_PUBLIC_DEPLOYED_URL}/api/storepay/status`,
-					accessToken: token,
-				}),
-			});
+  const createStorePayInvoice = async () => {
+    const token = await getStorePayToken();
+    if (!token) {
+      console.error("Failed to retrieve token");
+      return;
+    }
+    setStorePayToken(token); // ✅ Save token to state
+
+    try {
+      const response = await fetch("/api/storepay/invoice", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          storeId: "13214",
+          mobileNumber: "88011648",
+          description: "test",
+          amount: totalPrice,
+          callbackUrl: `${process.env.NEXT_PUBLIC_DEPLOYED_URL}/api/storepay/status`,
+          accessToken: token,
+        }),
+      });
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -351,15 +354,17 @@ export function CartDialog({
         return;
       }
 
-			const data = await response.json();
-			console.log("StorePay Invoice Response:", data);
-			setStorePayInvoiceId(data.invoice_id); // ✅ Save invoice_id to state
-		} catch (error) {
-			console.error("Error creating StorePay invoice:", error);
-		}
-	};
+      const data = await response.json();
+      console.log("StorePay Invoice Response:", data);
+
+      setStorePayRequestId(data.value); // ✅ Save requestId
+    } catch (error) {
+      console.error("Error creating StorePay invoice:", error);
+    }
+  };
 
   console.log(selected);
+  console.log(paymentStatus);
   return (
     <Dialog
       onOpenChange={(isOpen) => {
