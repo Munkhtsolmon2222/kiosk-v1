@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
       to: email,
       subject: "Invoice Confirmation",
       html: `
-        <h3>Сайн байна уу, ${name}!</h3>
+        <h3>Сайн байна уу, Эрчүүдийн дэлгүүр !</h3>
         <p>Таны <strong>${amount}₮</strong>-ийн худалдан авалтын нэхэмжлэл амжилттай үүсгэгдлээ.</p>
         <p>Баярлалаа!</p>
       `,
