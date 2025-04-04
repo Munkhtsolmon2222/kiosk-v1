@@ -228,7 +228,7 @@ export function CartDialog({
 
 					const data = await res.json();
 
-					if (data.payment_status === "PAID") {
+					if (data.rows?.[0]?.payment_status === "PAID") {
 						setPaymentStatus("Төлбөр амжилттай!");
 						clearInterval(interval);
 					}
@@ -488,7 +488,7 @@ export function CartDialog({
 					<>
 						<div className="w-[512px] h-[854px]">
 							{" "}
-							{selected == "qpay" ? (
+							{selected == "qpay" && paymentStatus !== "Төлбөр амжилттай!" ? (
 								<div>
 									{" "}
 									<p className="mt-4">QPay-аар төлөх</p>
@@ -496,14 +496,16 @@ export function CartDialog({
 										src={`data:image/png;base64,${paymentQRImg}`}
 										alt="QPay QR Code"
 									/>
-									{paymentStatus && (
-										<div className="mt-4">
-											<p>{paymentStatus}</p>
-										</div>
-									)}
 								</div>
 							) : (
-								<div></div>
+								<div className="w-[200px] h-[200px] m-auto">
+									<p className="text-[30px] font-extrabold">{paymentStatus}</p>
+								</div>
+							)}
+							{paymentStatus && (
+								<div className="mt-4">
+									<p>{paymentStatus}</p>
+								</div>
 							)}
 							<Button
 								variant="outline"
