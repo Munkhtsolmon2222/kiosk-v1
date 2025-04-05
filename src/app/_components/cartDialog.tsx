@@ -157,10 +157,6 @@ export function CartDialog({
   };
 
   const getQPayToken = async () => {
-    const clientEmail = getCookie("clientEmail");
-    if (clientEmail) {
-      alert("Дэлгүүрийн ажилтан имэйл хаягаа оруулаагүй байна");
-    }
     const username = process.env.NEXT_PUBLIC_QPAY_USERNAME;
     const password = process.env.NEXT_PUBLIC_QPAY_PASSWORD;
     const authString = btoa(`${username}:${password}`); // Encode credentials
@@ -353,11 +349,7 @@ export function CartDialog({
 
   const getStorePayToken = async () => {
     setPaymentStatus("");
-    const clientEmail = getCookie("clientEmail");
-    if (clientEmail) {
-      alert("Дэлгүүрийн ажилтан имэйл хаягаа оруулаагүй байна");
-      return;
-    }
+
     try {
       const response = await fetch("/api/storepay/token", {
         method: "POST",
