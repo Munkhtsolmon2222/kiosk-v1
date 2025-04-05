@@ -356,6 +356,7 @@ export function CartDialog({
     const clientEmail = getCookie("clientEmail");
     if (clientEmail) {
       alert("Дэлгүүрийн ажилтан имэйл хаягаа оруулаагүй байна");
+      return;
     }
     try {
       const response = await fetch("/api/storepay/token", {
