@@ -42,7 +42,7 @@ export default function Page() {
   return (
     <div className="mt-44 ml-60">
       <IdleRedirect
-        timeout={isLongerIdleTimeoutNeeded ? 610000 : 5000}
+        timeout={isLongerIdleTimeoutNeeded ? 610000 : 30000}
         redirectPath="/"
         excludePaths={["/"]}
         dialogOpen={open} // Pass dialog state to IdleRedirect

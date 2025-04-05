@@ -12,7 +12,7 @@ interface IdleRedirectProps {
 }
 
 const IdleRedirect = ({
-  timeout = 5000, // Default to 5000 if not provided
+  timeout = 30000, // Default to 30000 if not provided
   redirectPath = "/",
   excludePaths = [],
   dialogOpen = false, // Default to false if not provided
