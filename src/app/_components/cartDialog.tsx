@@ -311,9 +311,9 @@ export function CartDialog({
           });
 
           const data = await res.json();
-
+          console.log(data);
           // Handle the response for StorePay based on the documentation
-          if (data.status === "Success" && data.data?.value === true) {
+          if (data.data?.status === "Success" && data.data?.value === true) {
             setPaymentStatus("Төлбөр амжилттай!");
             setCartItems([]);
             localStorage.removeItem("cart");
