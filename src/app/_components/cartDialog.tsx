@@ -353,6 +353,10 @@ export function CartDialog({
 
   const getStorePayToken = async () => {
     setPaymentStatus("");
+    const clientEmail = getCookie("clientEmail");
+    if (clientEmail) {
+      alert("Дэлгүүрийн ажилтан имэйл хаягаа оруулаагүй байна");
+    }
     try {
       const response = await fetch("/api/storepay/token", {
         method: "POST",
