@@ -6,6 +6,7 @@ import { getCookie } from "cookies-next/client";
 import { AiFillSetting } from "react-icons/ai";
 import ProductCard from "./_components/product";
 import Link from "next/link";
+import { Settings } from "./_components/settings";
 
 export default function Home() {
   const [setting, setSetting] = useState(false);
@@ -23,10 +24,16 @@ export default function Home() {
         <div className="relative">
           <Link href={`/category/${defaultCategory}`}>
             <img src="./zurag.png" className="w-full h-[60vh]" />
+            <img
+              src="https://res.cloudinary.com/ds9r4eovz/image/upload/v1743849351/cld-sample-2.jpg"
+              className="w-[90vw] h-[60vh]"
+            />
           </Link>
         </div>
       ) : (
-        <div></div>
+        <div>
+          <Settings />
+        </div>
       )}
 
       {/* Products */}
