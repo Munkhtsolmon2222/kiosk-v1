@@ -4,9 +4,10 @@ import { Button } from "@/components/ui/button";
 import { AiOutlineShoppingCart } from "react-icons/ai";
 import { CartDialog } from "./cartDialog";
 import { useCart } from "../../../providers/cartContext";
+import { useIsOpen } from "../../../providers/isOpenContext";
 
 export function Cart() {
-  const [open, setOpen] = useState(false);
+  const { open, setOpen } = useIsOpen(); // Use context values
   const [step, setStep] = useState(1);
   const [items, setItems] = useState<number>(0);
   const prevOpenRef = useRef(open); // Store the previous value of `open`

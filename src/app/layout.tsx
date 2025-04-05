@@ -7,6 +7,7 @@ import { ProductProvider } from "../../providers/productContext";
 import { CategoryProvider } from "../../providers/CategoriesContext";
 import { Cart } from "./_components/cart";
 import { CartProvider } from "../../providers/cartContext";
+import { IsOpenProvider } from "../../providers/isOpenContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -35,9 +36,12 @@ export default function RootLayout({
           <ProductProvider>
             <CategoryProvider>
               <CartProvider>
-                <Navigation />
-                {children}
-                <Cart />{" "}
+                <IsOpenProvider>
+                  {" "}
+                  <Navigation />
+                  {children}
+                  <Cart />{" "}
+                </IsOpenProvider>
               </CartProvider>
             </CategoryProvider>{" "}
             {/* ✅ Wrap the application with ProductProvider */}

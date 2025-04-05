@@ -4,30 +4,49 @@ import ProductCard from "@/app/_components/product";
 import { useParams } from "next/navigation";
 import { useProducts } from "../../../../providers/productContext";
 import { useCategories } from "../../../../providers/CategoriesContext";
+import IdleRedirect from "@/app/_components/idleRedirect";
+import { useIsOpen } from "../../../../providers/isOpenContext";
+import { useEffect, useState } from "react";
 
 export default function Page() {
-  const params = useParams(); // Get dynamic parameters from the URL
-  const { id } = params; // Destructure to get the 'id' from the URL
+  const params = useParams();
+  const { id } = params;
   const { data, isLoading, error } = useProducts();
   const { data1 } = useCategories();
+  const { open, setOpen } = useIsOpen();
+  const [isLongerIdleTimeoutNeeded, setIsLongerIdleTimeoutNeeded] =
+    useState<boolean>(false);
 
   if (isLoading) return <div>Loading...</div>;
   if (error) return <div>Error: {error.message}</div>;
 
-  // Ensure bigData is always an array
-  const bigData = data?.pages.flatMap((page) => page.data) || []; // ✅ Fix applied
+  const bigData = data?.pages.flatMap((page) => page.data) || [];
   const dataSpread = [...bigData];
 
-  // Filter the products based on the 'id' parameter from the URL (category id)
   const filteredProducts = dataSpread.filter((product: any) =>
     product?.categories?.some((category: any) => category.id.toString() === id)
   );
   const categoriesData = data1;
 
-  console.log(filteredProducts);
+  useEffect(() => {
+    // Ensure that isLongerIdleTimeoutNeeded is set based on the dialog's state
+    if (open) {
+      console.log("Dialog opened, extending timeout");
+      setIsLongerIdleTimeoutNeeded(true);
+    } else {
+      console.log("Dialog closed, restoring default timeout");
+      setIsLongerIdleTimeoutNeeded(false);
+    }
+  }, [open]); // Depend on `open` state change
 
   return (
     <div className="mt-44 ml-60">
+      <IdleRedirect
+        timeout={isLongerIdleTimeoutNeeded ? 610000 : 5000}
+        redirectPath="/"
+        excludePaths={["/"]}
+        dialogOpen={open} // Pass dialog state to IdleRedirect
+      />
       {categoriesData
         ?.filter((category) => category.id.toString() == id)
         .map((category, i) => (

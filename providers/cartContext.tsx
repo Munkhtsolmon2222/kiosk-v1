@@ -48,8 +48,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
   }, []);
 
   // Calculate total number of items in the cart
-  const totalItems = cartItems.reduce((acc, item) => acc + item.quantity, 0);
-
+  const totalItems = cartItems?.length;
   // Add item to cart
   const addToCart = (item: CartItem) => {
     const updatedCart = [...cartItems, item];

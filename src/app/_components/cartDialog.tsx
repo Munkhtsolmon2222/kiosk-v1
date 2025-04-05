@@ -9,6 +9,8 @@ import {
 } from "@/components/ui/dialog";
 import { DeliveryAddress } from "./deliveryAddress";
 import PaymentMethods from "./paymentMethods";
+import IdleRedirect from "./idleRedirect";
+import { useRouter } from "next/navigation";
 
 export function CartDialog({
   open,
@@ -49,6 +51,7 @@ export function CartDialog({
   const [phoneNumber, setPhoneNumber] = useState("");
   const [phoneError, setPhoneError] = useState<any>("");
   const [qrImageLoading, setQRImageLoading] = useState(false);
+  const router = useRouter();
 
   const removeItem = (index: number) => {
     const updatedItems = [...cartItems];
@@ -146,7 +149,7 @@ export function CartDialog({
     const username = process.env.NEXT_PUBLIC_QPAY_USERNAME;
     const password = process.env.NEXT_PUBLIC_QPAY_PASSWORD;
     const authString = btoa(`${username}:${password}`); // Encode credentials
-
+    setPaymentStatus("");
     try {
       const response = await fetch("https://merchant.qpay.mn/v2/auth/token", {
         method: "POST",
@@ -166,6 +169,7 @@ export function CartDialog({
 
   const createQPayInvoice = async () => {
     setStep(3);
+
     setQRImageLoading(true); // Set QR image loading to true
     const token = await getQPayToken();
     if (!token) {
@@ -224,6 +228,10 @@ export function CartDialog({
     let interval: NodeJS.Timeout;
     const finalPrice = includeVAT ? Math.floor(totalPrice * 0.9) : totalPrice;
     // Polling for QPay if selected is "qpay"
+    const closeDialog = () => {
+      setOpen(false); // Close the dialog
+      setStep(1);
+    };
     if (step === 3 && selected === "qpay" && qpayToken && qpayInvoiceId) {
       interval = setInterval(async () => {
         try {
@@ -247,7 +255,13 @@ export function CartDialog({
           // Handle the response according to the API documentation
           if (data.rows?.[0]?.payment_status === "PAID") {
             setPaymentStatus("Төлбөр амжилттай!");
+            setCartItems([]);
+            localStorage.removeItem("cart");
             clearInterval(interval); // Stop polling
+            setTimeout(() => {
+              closeDialog();
+              router.push("/"); // Change to the desired redirect path
+            }, 5000);
           } else if (data.status === "Failed" && data.msgList) {
             console.error("Error: ", data.msgList);
             setPaymentStatus(
@@ -290,7 +304,13 @@ export function CartDialog({
           // Handle the response for StorePay based on the documentation
           if (data.status === "Success" && data.value) {
             setPaymentStatus("Төлбөр амжилттай!");
+            setCartItems([]);
+            localStorage.removeItem("cart");
             clearInterval(interval); // Stop polling
+            setTimeout(() => {
+              closeDialog();
+              router.push("/"); // Change to the desired redirect path
+            }, 5000);
           } else if (data.status === "Failed" && data.msgList) {
             console.error("Error: ", data.msgList);
             setPaymentStatus(
@@ -317,6 +337,7 @@ export function CartDialog({
   ]);
 
   const getStorePayToken = async () => {
+    setPaymentStatus("");
     try {
       const response = await fetch("/api/storepay/token", {
         method: "POST",
@@ -384,11 +405,12 @@ export function CartDialog({
   return (
     <Dialog
       onOpenChange={(isOpen) => {
-        setOpen();
+        setOpen(false);
         if (!isOpen) setStep(1); // Reset page to 1 when dialog closes
       }}
       open={open}
     >
+      <IdleRedirect timeout={600000} redirectPath="/" />
       <DialogContent className="p-6">
         <DialogHeader>
           <DialogTitle className="text-3xl font-bold">
