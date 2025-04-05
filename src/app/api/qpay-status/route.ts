@@ -67,15 +67,16 @@ export async function POST(req: NextRequest) {
     );
 
     // If there are backorder items, include form data in the email
-    const formDataSection = hasBackorderItems
-      ? `
+    const formDataSection =
+      hasBackorderItems || isDelivered
+        ? `
 	  <h4>Захиалгын мэдээлэл:</h4>
 	  <p><strong>Хаяг:</strong> ${formData.address}</p>
 	  <p><strong>Утас 1:</strong> ${formData.phone}</p>
 	  <p><strong>Утас 2:</strong> ${formData.phone2}</p>
 	  <p><strong>Имэйл:</strong> ${formData.email}</p>
 	`
-      : "";
+        : "";
 
     // Send email
     await sendEmail({
