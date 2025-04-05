@@ -313,7 +313,7 @@ export function CartDialog({
           const data = await res.json();
 
           // Handle the response for StorePay based on the documentation
-          if (data.status === "Success" && data.value) {
+          if (data.status === "Success" && data.data?.value === true) {
             setPaymentStatus("Төлбөр амжилттай!");
             setCartItems([]);
             localStorage.removeItem("cart");
@@ -635,12 +635,21 @@ export function CartDialog({
                   <p>{paymentStatus}</p>
                 </div>
               )}
-              {selected == "storepay" && (
+              {selected == "storepay" &&
+              paymentStatus !== "Төлбөр амжилттай!" ? (
+                <div className="w-[200px] h-[200px] m-auto">
+                  <p className="text-[30px] font-extrabold">{paymentStatus}</p>
+                  <p className="text-[30px]">
+                    Захиалгаа Storepay app-аар үргэлжлүүлэн төлбөрөө төлнө үү.
+                    Төлбөр амжилттай төлөгдсөн бол захиалга баталгаажна.
+                  </p>
+                </div>
+              ) : (
                 <div className="w-[200px] h-[200px] m-auto">
                   <p className="text-[30px] font-extrabold">
                     Боловсруулж байна...
                   </p>
-                  <p className="text-[30px] font-extrabold">
+                  <p className="text-[30px]">
                     Захиалгаа Storepay app-аар үргэлжлүүлэн төлбөрөө төлнө үү.
                     Төлбөр амжилттай төлөгдсөн бол захиалга баталгаажна.
                   </p>
