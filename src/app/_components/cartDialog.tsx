@@ -11,7 +11,18 @@ import { DeliveryAddress } from "./deliveryAddress";
 import PaymentMethods from "./paymentMethods";
 import IdleRedirect from "./idleRedirect";
 import { useRouter } from "next/navigation";
-
+import {
+  getCookie,
+  getCookies,
+  setCookie,
+  deleteCookie,
+  hasCookie,
+  useGetCookies,
+  useSetCookie,
+  useHasCookie,
+  useDeleteCookie,
+  useGetCookie,
+} from "cookies-next/client";
 export function CartDialog({
   open,
   setOpen,
@@ -146,6 +157,10 @@ export function CartDialog({
   };
 
   const getQPayToken = async () => {
+    const clientEmail = getCookie("clientEmail");
+    if (clientEmail) {
+      alert("Дэлгүүрийн ажилтан имэйл хаягаа оруулаагүй байна");
+    }
     const username = process.env.NEXT_PUBLIC_QPAY_USERNAME;
     const password = process.env.NEXT_PUBLIC_QPAY_PASSWORD;
     const authString = btoa(`${username}:${password}`); // Encode credentials
