@@ -16,7 +16,7 @@ export async function POST(req: NextRequest) {
         sender_invoice_no,
         invoice_receiver_code: "guest",
         invoice_description: "Kiosk худалдан авалт",
-        amount: 10,
+        amount,
         callback_url,
       }),
     });
