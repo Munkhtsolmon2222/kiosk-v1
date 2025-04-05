@@ -31,8 +31,14 @@ export default function Home() {
           </Link>
         </div>
       ) : (
-        <div>
-          <Settings />
+        <div className="relative">
+          <Link href={`/category/71`}>
+            <img src="./zurag.png" className="w-full h-[60vh]" />
+            <img
+              src="https://res.cloudinary.com/ds9r4eovz/image/upload/v1743849351/cld-sample-2.jpg"
+              className="w-[90vw] h-[60vh]"
+            />
+          </Link>
         </div>
       )}
 
