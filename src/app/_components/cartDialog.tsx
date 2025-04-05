@@ -635,6 +635,14 @@ export function CartDialog({
                   <p>{paymentStatus}</p>
                 </div>
               )}
+              {selected == "storepay" && (
+                <div className="w-[400px] h-[200px] mx-auto mb-[100px]">
+                  <p className="text-[20px]">
+                    Захиалгаа Storepay app-аар үргэлжлүүлэн төлбөрөө төлнө үү.
+                    Төлбөр амжилттай төлөгдсөн бол захиалга баталгаажна.
+                  </p>
+                </div>
+              )}
               {selected == "storepay" &&
                 paymentStatus == "Төлбөр амжилттай!" && (
                   <div className="w-[200px] h-[200px] m-auto">
@@ -643,12 +651,6 @@ export function CartDialog({
                     </p>
                   </div>
                 )}
-              {selected == "storepay" && (
-                <p className="text-[30px]">
-                  Захиалгаа Storepay app-аар үргэлжлүүлэн төлбөрөө төлнө үү.
-                  Төлбөр амжилттай төлөгдсөн бол захиалга баталгаажна.
-                </p>
-              )}
               <Button
                 variant="outline"
                 className="text-2xl  py-4"
