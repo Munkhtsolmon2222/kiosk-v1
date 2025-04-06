@@ -304,7 +304,7 @@ export function CartDialog({
               token: storePayToken,
               requestId: storePayRequestId,
               cartItems: cartItems,
-              amount: finalPrice,
+              amount: totalPrice,
               formData: formData,
               isDelivered: isDelivered,
             }),

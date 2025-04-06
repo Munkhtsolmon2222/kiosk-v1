@@ -20,11 +20,13 @@ export function Page2({ product, setPage }: any) {
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState(1);
-  const { addToCart } = useCart();
+  const { setCartItems } = useCart();
   const minusCount = () => {
     setOrderProducts((prev) => (prev > 1 ? prev - 1 : 1));
   };
-
+  const [lubricatorOrderCounts, setLubricatorOrderCounts] = useState<{
+    [key: number]: number;
+  }>({});
   const plusCount = () => {
     setOrderProducts((prev) => prev + 1);
   };
@@ -34,6 +36,18 @@ export function Page2({ product, setPage }: any) {
       [upsellId]: isIncrement
         ? (prev[upsellId] || 0) + 1
         : Math.max((prev[upsellId] || 0) - 1, 0),
+    }));
+  };
+
+  const handleLubricatorCount = (
+    lubricatorId: number,
+    isIncrement: boolean
+  ) => {
+    setLubricatorOrderCounts((prev) => ({
+      ...prev,
+      [lubricatorId]: isIncrement
+        ? (prev[lubricatorId] || 0) + 1
+        : Math.max((prev[lubricatorId] || 0) - 1, 0),
     }));
   };
 
@@ -102,37 +116,39 @@ export function Page2({ product, setPage }: any) {
     };
 
     // Add upsell products but exclude those that are out of stock
-    const upsellItems = Object.entries(upsellOrderCounts)
-      .filter(([id, count]) => count > 0)
+    const upsellItems = Object.entries(lubricatorOrderCounts)
+      .filter(([id, count]) => count > 0) // Only add lubricators with count > 0
       .map(([id, count]) => {
-        const upsellProduct = data?.pages
-          .flatMap((page) => page.data)
-          .find((p) => p.id == id);
-
-        if (upsellProduct?.stock_status === "outofstock") {
-          return null; // Skip out-of-stock upsell items
+        console.log(id);
+        const lubricator = dataSpread.find((p) => p.id == id);
+        console.log(lubricator);
+        if (lubricator && lubricator.stock_status !== "outofstock") {
+          return {
+            id: lubricator.id,
+            name: lubricator.name,
+            price: lubricator.regular_price,
+            quantity: count,
+            image: lubricator.images?.[0]?.src || "zurag.png",
+            stock_status: lubricator.stock_status,
+          };
         }
-
-        return {
-          id: upsellProduct.id,
-          name: upsellProduct.name,
-          price: upsellProduct.regular_price,
-          quantity: count,
-          image: upsellProduct.images?.[0]?.src || "zurag.png",
-          stock_status: upsellProduct.stock_status,
-        };
+        return null; // Skip out-of-stock lubricators
       })
-      .filter(Boolean); // Remove null values (out-of-stock items)
+      .filter(Boolean); // Remove null values
 
     cart.push(cartItem, ...upsellItems);
     localStorage.setItem("cart", JSON.stringify(cart));
-    addToCart(cartItem);
+    setCartItems(cart);
     console.log("Cart Updated:", cart);
     setPage(3);
   };
-
+  const lubricators = dataSpread.filter((product: any) =>
+    product?.categories?.some(
+      (category: any) => category.id.toString() === "63"
+    )
+  );
   console.log(product);
-  console.log(selectedVariation);
+  console.log(lubricators);
   return (
     <div>
       {loading ? (
@@ -286,9 +302,74 @@ export function Page2({ product, setPage }: any) {
             </p>
 
             <div className=" overflow-y-auto w-full  mt-2 h-[400px] ">
-              {" "}
+              {lubricators.map((lubricator: any) => (
+                <div
+                  key={lubricator.id}
+                  className="flex gap-4 items-center my-[10px] border-b border-gray"
+                >
+                  <div className="flex gap-4 w-fit mb-[5px]">
+                    {" "}
+                    {lubricator.images
+                      ?.slice(0, 1)
+                      .map((image: any, index: any) => (
+                        <img
+                          key={index}
+                          src={image.src}
+                          alt="Aaviin Baraa"
+                          className="w-20 h-20 object-cover mx-auto rounded-full"
+                        />
+                      ))}
+                    <div className="">
+                      <p>{lubricator.name}</p>
+                      <span className="text-2xl w-[100px] block">
+                        (
+                        {new Intl.NumberFormat("mn-MN").format(
+                          lubricator.regular_price
+                        )}
+                        ₮)
+                      </span>
+                    </div>{" "}
+                    <h5
+                      className={`${
+                        lubricator?.stock_status == "instock"
+                          ? "text-[#5dc477]"
+                          : lubricator?.stock_status == "onbackorder"
+                          ? "text-[#00b3fa]"
+                          : "text-[#ab3030]"
+                      } text-center w-3 mt-1`}
+                    >
+                      {lubricator?.stock_status == "instock"
+                        ? "Бэлэн"
+                        : lubricator?.stock_status == "onbackorder"
+                        ? "Захиалгаар"
+                        : "Дууссан"}
+                    </h5>
+                  </div>
+
+                  <div className="border-4 border-[#ab3030] mx-auto mr-4 px-8 flex items-center gap-10 py-2 rounded-[15px]">
+                    <button
+                      onClick={() =>
+                        handleLubricatorCount(lubricator.id, false)
+                      }
+                      className="text-xl text-[#ab3030]"
+                    >
+                      -
+                    </button>
+                    <span className="text-xl text-[#ab3030]">
+                      {lubricatorOrderCounts[lubricator.id] || 0}
+                    </span>
+                    <button
+                      onClick={() => handleLubricatorCount(lubricator.id, true)}
+                      className="text2xl text-[#ab3030]"
+                    >
+                      +
+                    </button>
+                  </div>
+                </div>
+              ))}
+
               {/* display the upsell products */}
-              {product?.upsell_ids.length > 0 ? (
+              {/* {product?.upsell_ids.length > 0 ? (
                 <div className="flex flex-col gap-4 mt-4">
                   {product?.upsell_ids.map((upsell_id: any) =>
                     dataSpread
@@ -353,7 +434,7 @@ export function Page2({ product, setPage }: any) {
                 </div>
               ) : (
                 <div></div>
-              )}
+              )} */}
             </div>
           </div>
 
