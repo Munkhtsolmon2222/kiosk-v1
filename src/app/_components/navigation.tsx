@@ -119,7 +119,7 @@ export function Navigation() {
             </div>
           </Link>
 
-          <nav className="hidden md:flex gap-10 text-red-700 font-bold">
+          <nav className="md:flex gap-10 text-red-700 font-bold">
             {["Эрэгтэй", "Эмэгтэй", "Хосуудад", "Парти тоглоом"].map(
               (category) => (
                 <button
