@@ -303,7 +303,7 @@ export function Page2({ product, setPage }: any) {
 
             <div className=" overflow-y-auto w-full  mt-2 h-[400px] ">
               {lubricators.map((lubricator: any) => (
-                <div key={lubricator.id} className="flex gap-4 items-center">
+                <div key={lubricator.id} className="flex items-center p-2">
                   {/* <img
                     className="h-16 w-16 rounded-2xl"
                     src={lubricator.images?.[0]?.src || "zurag.png"}
@@ -319,7 +319,7 @@ export function Page2({ product, setPage }: any) {
                         className="w-20 h-20 object-cover mx-auto rounded-full"
                       />
                     ))}
-                  <div>
+                  <div className="ml-[-50px]">
                     <p>{lubricator.name}</p>
                     <span className="text-2xl w-[100px] block">
                       (
@@ -349,16 +349,16 @@ export function Page2({ product, setPage }: any) {
                       onClick={() =>
                         handleLubricatorCount(lubricator.id, false)
                       }
-                      className="text-2xl text-[#ab3030]"
+                      className="text-xl text-[#ab3030]"
                     >
                       -
                     </button>
-                    <span className="text-2xl text-[#ab3030]">
+                    <span className="text-xl text-[#ab3030]">
                       {lubricatorOrderCounts[lubricator.id] || 0}
                     </span>
                     <button
                       onClick={() => handleLubricatorCount(lubricator.id, true)}
-                      className="text-2xl text-[#ab3030]"
+                      className="text2xl text-[#ab3030]"
                     >
                       +
                     </button>

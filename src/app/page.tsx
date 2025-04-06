@@ -9,9 +9,6 @@ import Link from "next/link";
 import { Settings } from "./_components/settings";
 
 export default function Home() {
-  const [setting, setSetting] = useState(false);
-  const [idleTime, setIdleTime] = useState(0);
-  const [isClient, setIsClient] = useState(false); // To check if we're on the client-side
   const { data, isLoading, error } = useProducts();
   const defaultCategory = getCookie("defaultCategory");
 
@@ -54,15 +51,6 @@ export default function Home() {
             ))} */}
         </div>
       )}
-
-      {/* Settings Button */}
-      <button
-        onClick={() => setSetting((prev) => !prev)}
-        className="absolute top-4 right-4 p-2 bg-gray-800 text-white rounded"
-      >
-        <AiFillSetting />
-      </button>
-      {setting && <div>Settings Panel</div>}
     </div>
   );
 }
