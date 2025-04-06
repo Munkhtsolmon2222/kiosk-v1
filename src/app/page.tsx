@@ -31,6 +31,7 @@ export default function Home() {
         }
       } catch (error) {
         console.error("Error fetching images:", error);
+
         setImages(["./zurag.png"]);
       }
     };
