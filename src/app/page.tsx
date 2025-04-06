@@ -59,7 +59,7 @@ export default function Home() {
           <Link href={`/category/${defaultCategory}`}>
             <img
               src={images[currentIndex] || "./zurag.png"} // Display image based on current index
-              className="w-full h-screen mx-auto object-cover "
+              className="w-[90vw] h-screen mx-auto object-cover "
               alt="Category Image"
             />
           </Link>
@@ -69,7 +69,7 @@ export default function Home() {
           <Link href={`/category/53`}>
             <img
               src={images[currentIndex] || "./zurag.png"} // Display image based on current index
-              className="w-full h-screen mx-auto object-cover rounded-xl"
+              className="w-[90vw] h-screen mx-auto object-cover rounded-xl"
               alt="Category Image"
             />
           </Link>
