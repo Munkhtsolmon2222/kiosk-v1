@@ -111,7 +111,11 @@ export function Navigation() {
         <div className="container mx-auto flex items-center justify-between px-4 py-4 max-w-full">
           <Link href={`/`}>
             <div className="flex items-center justify-start">
-              <img src="./png.png" alt="Logo" className="h-25" />
+              <img
+                src="https://res.cloudinary.com/drp3yksbi/image/upload/v1743913810/jpg_z1n364.jpg"
+                alt="Logo"
+                className="h-25"
+              />
             </div>
           </Link>
 
