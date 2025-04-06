@@ -112,7 +112,7 @@ export function Navigation() {
           <Link href={`/`}>
             <div className="flex items-center justify-start">
               <img
-                src="https://res.cloudinary.com/drp3yksbi/image/upload/v1743913810/jpg_z1n364.jpg"
+                src="https://res.cloudinary.com/drp3yksbi/image/upload/v1743924416/Logo_mrf73b.jpg"
                 alt="Logo"
                 className="h-25"
               />
