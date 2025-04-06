@@ -305,7 +305,7 @@ export function Page2({ product, setPage }: any) {
               {lubricators.map((lubricator: any) => (
                 <div
                   key={lubricator.id}
-                  className="flex items-center my-[10px]"
+                  className="flex gap-4 items-center my-[10px]"
                 >
                   <div className="flex gap-4 w-fit">
                     {" "}
