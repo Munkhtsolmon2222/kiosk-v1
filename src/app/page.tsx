@@ -17,7 +17,7 @@ export default function Home() {
 
   if (isLoading) return <div>Loading...</div>;
   if (error) return <div>Error: {error.message}</div>;
-
+  console.log(data);
   return (
     <div className="mt-44 ml-64">
       {defaultCategory ? (
@@ -32,7 +32,7 @@ export default function Home() {
         </div>
       ) : (
         <div className="relative">
-          <Link href={`/category/71`}>
+          <Link href={`/category/53`}>
             <img src="./zurag.png" className="w-full h-[60vh]" />
             <img
               src="https://res.cloudinary.com/ds9r4eovz/image/upload/v1743849351/cld-sample-2.jpg"
