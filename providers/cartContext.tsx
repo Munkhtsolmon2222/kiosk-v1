@@ -50,9 +50,9 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
   // Calculate total number of items in the cart
   const totalItems = cartItems?.length;
   // Add item to cart
-  const addToCart = (item: CartItem) => {
-    const updatedCart = [...cartItems, item];
-    setCartItems(updatedCart);
+  const addToCart = (item: any) => {
+    const updatedCart = [...cartItems, ...item];
+    setCartItems([...updatedCart]);
     localStorage.setItem("cart", JSON.stringify(updatedCart)); // Save to localStorage
   };
 

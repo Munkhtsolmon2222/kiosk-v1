@@ -17,19 +17,8 @@ export default function Page() {
   const [isLongerIdleTimeoutNeeded, setIsLongerIdleTimeoutNeeded] =
     useState<boolean>(false);
 
-  if (isLoading) return <div>Loading...</div>;
-  if (error) return <div>Error: {error.message}</div>;
-
-  const bigData = data?.pages.flatMap((page) => page.data) || [];
-  const dataSpread = [...bigData];
-
-  const filteredProducts = dataSpread.filter((product: any) =>
-    product?.categories?.some((category: any) => category.id.toString() === id)
-  );
-  const categoriesData = data1;
-
+  // ✅ Always call hooks before any returns
   useEffect(() => {
-    // Ensure that isLongerIdleTimeoutNeeded is set based on the dialog's state
     if (open) {
       console.log("Dialog opened, extending timeout");
       setIsLongerIdleTimeoutNeeded(true);
@@ -37,7 +26,18 @@ export default function Page() {
       console.log("Dialog closed, restoring default timeout");
       setIsLongerIdleTimeoutNeeded(false);
     }
-  }, [open]); // Depend on `open` state change
+  }, [open]);
+
+  // ❌ These were before some hooks — now placed below
+  if (isLoading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error.message}</div>;
+
+  const bigData = data?.pages.flatMap((page) => page.data) || [];
+  const dataSpread = [...bigData];
+  const filteredProducts = dataSpread.filter((product: any) =>
+    product?.categories?.some((category: any) => category.id.toString() === id)
+  );
+  const categoriesData = data1;
 
   return (
     <div className="mt-44 ml-60">
@@ -45,7 +45,7 @@ export default function Page() {
         timeout={isLongerIdleTimeoutNeeded ? 610000 : 30000}
         redirectPath="/"
         excludePaths={["/"]}
-        dialogOpen={open} // Pass dialog state to IdleRedirect
+        dialogOpen={open}
       />
       {categoriesData
         ?.filter((category) => category.id.toString() == id)

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { getCookie } from "cookies-next/client";
 import Link from "next/link";
+import { useProducts } from "../../providers/productContext";
 
 // Define types for image data
 type ImageData = {
@@ -45,6 +46,11 @@ export default function Home() {
 
     return () => clearInterval(interval); // Clean up the interval on component unmount
   }, [images]);
+  const { data, isLoading, error } = useProducts();
+
+  if (isLoading) return <div>Loading...</div>;
+  if (error) return <div>Error: {error.message}</div>;
+  console.log(data);
   console.log(images);
   return (
     <div className="">
@@ -60,7 +66,7 @@ export default function Home() {
         </div>
       ) : (
         <div className="relative">
-          <Link href={`/category/71`}>
+          <Link href={`/category/53`}>
             <img
               src={images[currentIndex] || "./zurag.png"} // Display image based on current index
               className="w-full h-screen mx-auto object-cover rounded-xl"

@@ -35,7 +35,7 @@ export function Cart() {
   // }, [open]); // Depend only on `open`
   useEffect(() => {
     const total = cartItems.reduce(
-      (sum: number, item: any) => sum + item.price * item.quantity,
+      (sum: number, item: any) => sum + Number(item.price) * item.quantity,
       0
     );
     setTotalPrice(total);
