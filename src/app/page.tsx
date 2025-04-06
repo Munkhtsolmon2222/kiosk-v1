@@ -56,7 +56,7 @@ export default function Home() {
   return (
     <div className="">
       {defaultCategory ? (
-        <div className="relative">
+        <div className="relative object-contain  ">
           <Link href={`/category/${defaultCategory}`}>
             <img
               src={images[currentIndex] || "./zurag.png"} // Display image based on current index
@@ -70,7 +70,7 @@ export default function Home() {
           <Link href={`/category/53`}>
             <img
               src={images[currentIndex] || "./zurag.png"} // Display image based on current index
-              className="w-[100vw] h-screen mx-auto object-cover rounded-xl"
+              className="w-full h-screen mx-auto object-cover"
               alt="Category Image"
             />
           </Link>

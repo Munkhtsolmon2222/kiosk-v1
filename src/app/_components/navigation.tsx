@@ -130,7 +130,7 @@ export function Navigation() {
                   }}
                   className={`text-[20px] font-semibold py-2 px-4 rounded-lg transition-all duration-300 ${
                     selectedMainCategoryActive === category
-                      ? "bg-blue-500 text-white"
+                      ? "bg-gray-700 text-white"
                       : "bg-transparent hover:bg-blue-100"
                   }`}
                 >
@@ -170,7 +170,7 @@ export function Navigation() {
                   }}
                   className={`text-start p-3 rounded-lg text-lg transition-all duration-300 ${
                     selectedCategory === category.id
-                      ? "bg-blue-500 text-white"
+                      ? "bg-gray-800  text-white"
                       : "bg-transparent hover:bg-blue-100"
                   }`}
                 >
@@ -191,7 +191,7 @@ export function Navigation() {
                           <button
                             className={`mt-2 ml-5 px-2 text-md text-start transition-all duration-300 ${
                               selectedSubCategory === subCategory.id
-                                ? "bg-blue-900 text-white rounded-2xl"
+                                ? "bg-gray-700 text-white rounded-2xl"
                                 : "bg-amber-900 text-white hover:bg-blue-700 rounded-2xl"
                             }`}
                             onClick={() => {
@@ -231,7 +231,7 @@ export function Navigation() {
                                   key={thirdCategory.id}
                                   className={`mt-2 ml-10 px-2 text-sm text-start transition-all duration-300 ${
                                     selectedThirdCategory === thirdCategory.id
-                                      ? "bg-blue-700 text-white rounded-xl"
+                                      ? "bg-gray-700 text-white rounded-xl"
                                       : "bg-gray-700 text-white hover:bg-blue-500 rounded-xl"
                                   }`}
                                   onClick={() => {
