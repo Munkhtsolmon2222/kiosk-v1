@@ -303,32 +303,34 @@ export function Page2({ product, setPage }: any) {
 
             <div className=" overflow-y-auto w-full  mt-2 h-[400px] ">
               {lubricators.map((lubricator: any) => (
-                <div key={lubricator.id} className="flex items-center p-2">
-                  {/* <img
-                    className="h-16 w-16 rounded-2xl"
-                    src={lubricator.images?.[0]?.src || "zurag.png"}
-                    alt={lubricator.name}
-                  /> */}
-                  {lubricator.images
-                    ?.slice(0, 1)
-                    .map((image: any, index: any) => (
-                      <img
-                        key={index}
-                        src={image.src}
-                        alt="Aaviin Baraa"
-                        className="w-20 h-20 object-cover mx-auto rounded-full"
-                      />
-                    ))}
-                  <div className="ml-[-50px]">
-                    <p>{lubricator.name}</p>
-                    <span className="text-2xl w-[100px] block">
-                      (
-                      {new Intl.NumberFormat("mn-MN").format(
-                        lubricator.regular_price
-                      )}
-                      ₮)
-                    </span>
+                <div
+                  key={lubricator.id}
+                  className="flex items-center my-[10px]"
+                >
+                  <div className="flex gap-4 w-fit">
+                    {" "}
+                    {lubricator.images
+                      ?.slice(0, 1)
+                      .map((image: any, index: any) => (
+                        <img
+                          key={index}
+                          src={image.src}
+                          alt="Aaviin Baraa"
+                          className="w-20 h-20 object-cover mx-auto rounded-full"
+                        />
+                      ))}
+                    <div className="">
+                      <p>{lubricator.name}</p>
+                      <span className="text-2xl w-[100px] block">
+                        (
+                        {new Intl.NumberFormat("mn-MN").format(
+                          lubricator.regular_price
+                        )}
+                        ₮)
+                      </span>
+                    </div>
                   </div>
+
                   <h5
                     className={`${
                       lubricator?.stock_status == "instock"
