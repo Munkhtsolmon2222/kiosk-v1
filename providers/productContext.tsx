@@ -99,8 +99,8 @@ export const ProductProvider = ({
       return undefined;
     },
     initialPageParam: 1,
-    staleTime: 300000,
-    gcTime: 600000,
+    staleTime: 1800000, // 30 minutes
+    gcTime: 3600000, // 1 hour
   });
 
   useEffect(() => {
