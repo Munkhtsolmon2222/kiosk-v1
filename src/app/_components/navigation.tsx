@@ -151,32 +151,40 @@ export function Navigation() {
         <nav className="flex flex-col gap-6 p-4">
           {categories
             .filter((category) => category.parent === parentId)
-            .map((category) => (
+            .map((category: any) => (
               <div key={category.id}>
-                <button
-                  onClick={() => {
-                    const subCategories = categories.filter(
-                      (sub) => sub.parent === category.id
-                    );
-                    if (subCategories.length === 0) {
-                      router.push(`/category/${category.id}`);
-                      setSelectedCategory(category.id);
-                    } else {
-                      setActiveParentId(
-                        activeParentId === category.id ? null : category.id
+                {" "}
+                <div className="flex items-center">
+                  {category?.image?.src && (
+                    <img
+                      className="w-[30px] h-[30px] rounded-[10px]"
+                      src={category?.image?.src}
+                    />
+                  )}{" "}
+                  <button
+                    onClick={() => {
+                      const subCategories = categories.filter(
+                        (sub) => sub.parent === category.id
                       );
-                      setSelectedCategory(category.id);
-                    }
-                  }}
-                  className={`text-start p-3 rounded-lg text-lg transition-all duration-300 ${
-                    selectedCategory === category.id
-                      ? "bg-gray-800  text-white"
-                      : "bg-transparent hover:bg-blue-100"
-                  }`}
-                >
-                  {category.name}
-                </button>
-
+                      if (subCategories.length === 0) {
+                        router.push(`/category/${category.id}`);
+                        setSelectedCategory(category.id);
+                      } else {
+                        setActiveParentId(
+                          activeParentId === category.id ? null : category.id
+                        );
+                        setSelectedCategory(category.id);
+                      }
+                    }}
+                    className={`text-start p-3 rounded-lg text-lg transition-all duration-300 ${
+                      selectedCategory === category.id
+                        ? "bg-gray-800  text-white"
+                        : "bg-transparent hover:bg-blue-100"
+                    }`}
+                  >
+                    {category.name}
+                  </button>
+                </div>
                 {/* Render subcategories when the parent is active */}
                 {activeParentId === category.id &&
                   categories
