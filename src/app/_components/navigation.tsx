@@ -153,14 +153,14 @@ export function Navigation() {
             .filter((category) => category.parent === parentId)
             .map((category: any) => (
               <div key={category.id}>
+                {" "}
                 <div className="flex items-center">
                   {category?.image?.src && (
                     <img
                       className="w-[30px] h-[30px] rounded-[10px]"
                       src={category?.image?.src}
                     />
-                  )}
-
+                  )}{" "}
                   <button
                     onClick={() => {
                       const subCategories = categories.filter(
@@ -185,7 +185,6 @@ export function Navigation() {
                     {category.name}
                   </button>
                 </div>
-
                 {/* Render subcategories when the parent is active */}
                 {activeParentId === category.id &&
                   categories
