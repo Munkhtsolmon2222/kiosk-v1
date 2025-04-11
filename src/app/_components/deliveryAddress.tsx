@@ -19,6 +19,7 @@ export function DeliveryAddress({
         </label>
         <input
           id="address"
+          className="border border-gray-300"
           value={formData.address}
           onChange={(e) =>
             setFormData({ ...formData, address: e.target.value })
@@ -36,6 +37,7 @@ export function DeliveryAddress({
         </label>
         <input
           id="phone"
+          className="border border-gray-300"
           value={formData.phone}
           onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
           required
@@ -50,6 +52,7 @@ export function DeliveryAddress({
         </label>
         <input
           id="email"
+          className="border border-gray-300"
           value={formData.email}
           onChange={(e) => setFormData({ ...formData, email: e.target.value })}
           type="email"
@@ -63,6 +66,7 @@ export function DeliveryAddress({
         </label>
         <input
           id="phone2"
+          className="border border-gray-300"
           value={formData.phone2}
           onChange={(e) => setFormData({ ...formData, phone2: e.target.value })}
           required

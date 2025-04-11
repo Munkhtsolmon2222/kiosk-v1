@@ -31,6 +31,7 @@ export default function Home() {
         }
       } catch (error) {
         console.error("Error fetching images:", error);
+
         setImages(["./zurag.png"]);
       }
     };
@@ -59,7 +60,7 @@ export default function Home() {
           <Link href={`/category/${defaultCategory}`}>
             <img
               src={images[currentIndex] || "./zurag.png"} // Display image based on current index
-              className="w-full h-screen mx-auto object-cover "
+              className="w-[100vw] h-screen mx-auto object-cover "
               alt="Category Image"
             />
           </Link>
