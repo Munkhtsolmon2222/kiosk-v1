@@ -107,8 +107,8 @@ export function Navigation() {
 
   return (
     <div>
-      <header className="w-full h-32 bg-white shadow-md fixed right-10 left-0 top-0 z-50">
-        <div className="container mx-auto flex items-center justify-between px-4 py-4 max-w-full">
+      <header className="w-full h-48 bg-[#f7eaea] border-[3px] border-black font-semibold rounded-b-xl shadow-md fixed right-10 left-0 top-0 z-50">
+        <div className="container mx-auto flex items-center justify-around px-4 py-4 max-w-full">
           <Link href={`/`}>
             <div className="flex items-center justify-start">
               <img
@@ -120,20 +120,27 @@ export function Navigation() {
           </Link>
 
           <nav className="md:flex gap-10 text-red-700 font-bold">
-            {["Эрэгтэй", "Эмэгтэй", "Хосуудад", "Парти тоглоом"].map(
-              (category) => (
+            {["Эрэгтэй", "Эмэгтэй", "Хосуудад", "Парти "].map(
+              (category: any) => (
                 <button
                   key={category}
                   onClick={() => {
                     setSelectedMainCategoryActive(category);
                     handleCategorySelection(category);
                   }}
-                  className={`text-[20px] font-semibold py-2 px-4 rounded-lg transition-all duration-300 ${
+                  className={`text-[20px] w-[80px] h-[100px] font-semibold border border-[#ab3030] text-center whitespace-nowrap rounded-lg transition-all duration-300 ${
                     selectedMainCategoryActive === category
-                      ? "bg-gray-700 text-white"
+                      ? "bg-[#a58c8c] text-[#ab3030]"
                       : "bg-transparent hover:bg-blue-100"
                   }`}
                 >
+                  {category?.image?.src && (
+                    <img
+                      className="w-[30px] h-[30px] rounded-[10px]"
+                      src={category?.image?.src}
+                      alt={`${category} image`} // Alt text for accessibility
+                    />
+                  )}
                   {category}
                 </button>
               )
@@ -141,23 +148,23 @@ export function Navigation() {
             <Settings
               onSelectCategory={handleCategorySelection}
               onSubCategory={setSelectedSubCategory}
-              onThirdCategory={setSelectedThirdCategory} // Pass setSelectedThirdCategory as onThirdCategory
+              onThirdCategory={setSelectedThirdCategory}
             />
           </nav>
         </div>
       </header>
 
-      <aside className="fixed top-32 left-0 h-full bg-[#ab3030] text-white transition-all w-56">
+      <aside className="fixed top-48 left-0 h-full bg-[#ab3030] text-white rounded-3xl transition-all w-80">
         <nav className="flex flex-col gap-6 p-4">
           {categories
             .filter((category) => category.parent === parentId)
             .map((category: any) => (
               <div key={category.id}>
                 {" "}
-                <div className="flex items-center">
+                <div className="flex border-white border rounded-2xl justify-center items-center">
                   {category?.image?.src && (
                     <img
-                      className="w-[30px] h-[30px] rounded-[10px]"
+                      className="w-[30px] h-[30px] border-white border rounded-[10px]"
                       src={category?.image?.src}
                     />
                   )}{" "}
@@ -176,10 +183,10 @@ export function Navigation() {
                         setSelectedCategory(category.id);
                       }
                     }}
-                    className={`text-start p-3 rounded-lg text-lg transition-all duration-300 ${
+                    className={`text-start p-3 rounded-lg text-lg transition-all  duration-300 ${
                       selectedCategory === category.id
                         ? "bg-gray-800  text-white"
-                        : "bg-transparent hover:bg-blue-100"
+                        : "bg-transparent "
                     }`}
                   >
                     {category.name}

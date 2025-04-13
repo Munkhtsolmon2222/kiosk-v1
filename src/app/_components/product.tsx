@@ -44,18 +44,20 @@ export default function ProductCard({ product }: any) {
       }}
     >
       <DialogTrigger asChild>
-        <div className="flex w-60 justify-center mt-10">
+        <div className="flex w-52 justify-center mt-10">
           <div className="w-60 h-auto bg-[#f1f1f1] rounded-2xl p-4">
             {images?.slice(0, 1).map((image: any, index: any) => (
               <img
                 key={index}
                 src={image.src}
                 alt="Aaviin Baraa"
-                className="w-20 h-20 object-cover mx-auto rounded-full"
+                className="w-24 h-24 object-cover mx-auto rounded-2xl"
               />
             ))}
 
-            <h2 className="text-[#ab3030] text-center mt-4">{product?.name}</h2>
+            <h2 className="text-[#ab3030] text-center font-semibold mt-4">
+              {product?.name}
+            </h2>
             <h3 className="text-black text-center mt-2">
               {product.sale_price ? (
                 <>
@@ -138,7 +140,9 @@ export default function ProductCard({ product }: any) {
               <DialogTitle className="text-4xl font-bold flex justify-between p-4">
                 <div>
                   <p className="text-2xl text-gray-500">Код: {product?.id}</p>
-                  <p className="text-4xl font-bold">{product?.name}</p>
+                  <p className="text-4xl font-bold text-[#ab3030] ">
+                    {product?.name}
+                  </p>
                 </div>
                 <div className="text-center">
                   <p className="text-3xl mt-4 font-bold">
@@ -184,7 +188,7 @@ export default function ProductCard({ product }: any) {
                   </Button>
                 </DialogClose>
                 <Button
-                  className="text-2xl px-8 py-4 bg-green-500 text-white"
+                  className="text-2xl px-8 py-4 bg-[#ab3030] text-white"
                   onClick={() => setPage(2)}
                 >
                   Үргэлжлүүлэх

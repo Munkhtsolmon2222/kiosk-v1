@@ -588,7 +588,7 @@ export function CartDialog({
               </Button>
               <Button
                 variant="outline"
-                className="text-2xl px-8 py-4 bg-blue-500 text-white"
+                className="text-2xl px-8 py-4 bg-[#ab3030] text-white"
                 onClick={(e) => {
                   e.preventDefault(); // Prevents default form submission
                   if (validate2()) {

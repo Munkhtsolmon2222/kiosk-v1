@@ -54,7 +54,7 @@ export default function Home() {
   console.log(data);
   console.log(images);
   return (
-    <div className="">
+    <div>
       {defaultCategory ? (
         <div className="relative object-contain  ">
           <Link href={`/category/${defaultCategory}`}>
