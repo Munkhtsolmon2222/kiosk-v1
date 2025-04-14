@@ -171,7 +171,6 @@ export function Navigation() {
             .filter((category) => category.parent === parentId)
             .map((category: any) => (
               <div key={category.id}>
-                {" "}
                 <div className="flex rounded-2xl justify-center items-center">
                   <button
                     onClick={() => {
