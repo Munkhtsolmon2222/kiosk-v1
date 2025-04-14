@@ -40,11 +40,7 @@ export default function Page() {
   const categoriesData = data1;
 
   return (
-<<<<<<< HEAD
     <div className="mt-[220px] ml-45">
-=======
-    <div className="mt-[200px] ml-60">
->>>>>>> 2-boona
       <IdleRedirect
         timeout={isLongerIdleTimeoutNeeded ? 610000 : 30000}
         redirectPath="/"
@@ -56,7 +52,7 @@ export default function Page() {
         .map((category, i) => (
           <div
             key={i}
-            className="text-[#ab3030] bg-[#f1f1f1] text-center p-3 rounded-2xl font-bold mx-auto w-[15vw] text-[24px]"
+            className="text-[#ab3030] bg-[#f1f1f1] text-center p-3 rounded-2xl font-bold mx-auto w-fit text-[24px]"
           >
             {category.name}
           </div>
