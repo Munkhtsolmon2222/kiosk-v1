@@ -154,20 +154,14 @@ export function Navigation() {
         </div>
       </header>
 
-      <aside className="fixed top-48 left-0 h-full bg-[#ab3030] text-white rounded-3xl transition-all w-80">
-        <nav className="flex flex-col gap-6 p-4">
+      <aside className="fixed top-48 left-0 h-full bg-[#ab3030] text-white rounded-3xl transition-all w-64">
+        <nav className="flex flex-col gap-6 pt-4">
           {categories
             .filter((category) => category.parent === parentId)
             .map((category: any) => (
               <div key={category.id}>
                 {" "}
-                <div className="flex border-white border rounded-2xl justify-center items-center">
-                  {category?.image?.src && (
-                    <img
-                      className="w-[30px] h-[30px] border-white border rounded-[10px]"
-                      src={category?.image?.src}
-                    />
-                  )}{" "}
+                <div className="flex rounded-2xl justify-center items-center">
                   <button
                     onClick={() => {
                       const subCategories = categories.filter(
@@ -183,12 +177,18 @@ export function Navigation() {
                         setSelectedCategory(category.id);
                       }
                     }}
-                    className={`text-start p-3 rounded-lg text-lg transition-all  duration-300 ${
+                    className={`text-start w-[200px] p-3 flex gap-3 border border-gray-100 rounded-lg text-lg transition-all  duration-300 ${
                       selectedCategory === category.id
-                        ? "bg-gray-800  text-white"
-                        : "bg-transparent "
+                        ? "bg-[#d84949]  text-white"
+                        : "bg-[#ca4242c9] "
                     }`}
                   >
+                    {category?.image?.src && (
+                      <img
+                        className="w-[40px] h-[40px] border-white border rounded-[10px]"
+                        src={category?.image?.src}
+                      />
+                    )}{" "}
                     {category.name}
                   </button>
                 </div>
@@ -196,7 +196,7 @@ export function Navigation() {
                 {activeParentId === category.id &&
                   categories
                     .filter((sub) => sub.parent === category.id)
-                    .map((subCategory) => {
+                    .map((subCategory: any) => {
                       const hasThirdCategories = categories.some(
                         (child) => child.parent === subCategory.id
                       );
@@ -204,10 +204,10 @@ export function Navigation() {
                       return (
                         <div key={subCategory.id}>
                           <button
-                            className={`mt-2 ml-5 px-2 text-md text-start transition-all duration-300 ${
+                            className={`mt-2 ml-14 w-[170px] flex gap-3 p-3 text-md text-start items-center transition-all duration-300 ${
                               selectedSubCategory === subCategory.id
-                                ? "bg-gray-700 text-white rounded-2xl"
-                                : "bg-amber-900 text-white hover:bg-blue-700 rounded-2xl"
+                                ? "bg-[#d84949] text-white border border-white rounded-lg"
+                                : "bg-[#ca4242c9] text-white rounded-lg"
                             }`}
                             onClick={() => {
                               router.push(`/category/${subCategory.id}`);
@@ -232,6 +232,12 @@ export function Navigation() {
                               }
                             }}
                           >
+                            {subCategory?.image?.src && (
+                              <img
+                                className="w-[40px] h-[40px] border-white border rounded-[10px]"
+                                src={subCategory?.image?.src}
+                              />
+                            )}
                             {subCategory.name}
                           </button>
 
@@ -247,7 +253,7 @@ export function Navigation() {
                                   className={`mt-2 ml-10 px-2 text-sm text-start transition-all duration-300 ${
                                     selectedThirdCategory === thirdCategory.id
                                       ? "bg-gray-700 text-white rounded-xl"
-                                      : "bg-gray-700 text-white hover:bg-blue-500 rounded-xl"
+                                      : "bg-gray-700 text-white "
                                   }`}
                                   onClick={() => {
                                     router.push(

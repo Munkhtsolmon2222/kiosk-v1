@@ -84,18 +84,18 @@ export default function ProductCard({ product }: any) {
       }}
     >
       <DialogTrigger asChild>
-        <div className="flex w-52 justify-center mt-10">
-          <div className="w-60 h-auto bg-[#f1f1f1] rounded-2xl p-4">
+        <div className="flex w-52 justify-center mt-10 ">
+          <div className="w-60 h-auto bg-[#f1f1f1] rounded-2xl p-2">
             {images?.slice(0, 1).map((image: any, index: any) => (
               <img
                 key={index}
                 src={image.src}
                 alt="Aaviin Baraa"
-                className="w-24 h-24 object-cover mx-auto rounded-2xl"
+                className="w-28 h-28 object-cover mx-auto rounded-2xl"
               />
             ))}
 
-            <h2 className="text-[#ab3030] text-center font-semibold mt-4">
+            <h2 className="text-[#ab3030] text-center text-2xl font-semibold ">
               {product?.name}
             </h2>
             <h3 className="text-black text-center mt-2">
@@ -108,11 +108,11 @@ export default function ProductCard({ product }: any) {
                     ₮
                   </span>
                   <span className="text-red-500 text-2xl block">
-                    {new Intl.NumberFormat("mn-MN").format(product.sale_price)}₮
+                    {new Intl.NumberFormat("mn-MN").format(product.sale_price)}
                   </span>
                 </>
               ) : (
-                <span className="text-2xl font-bold block">{price}₮</span>
+                <span className="text-2xl font-bold block">{price}</span>
               )}
             </h3>
             <h5
@@ -120,9 +120,9 @@ export default function ProductCard({ product }: any) {
                 product?.stock_status == "instock"
                   ? "text-[#5dc477]"
                   : product?.stock_status == "onbackorder"
-                  ? "text-[#00b3fa]"
+                  ? "text-[#7389e9]"
                   : "text-[#ab3030]"
-              } text-center mt-1`}
+              } text-center  `}
             >
               {product?.stock_status == "instock"
                 ? "Бэлэн"
@@ -134,11 +134,11 @@ export default function ProductCard({ product }: any) {
         </div>
       </DialogTrigger>
 
-      <DialogContent className="p-6 min-w-[70vw] min-h-[80vh] flex flex-col ">
+      <DialogContent className="p-6 min-w-[70vw] min-h-[80vh] opacity-95  flex flex-col ">
         {page === 1 ? (
           // Page 1: Product Details
-          <>
-            <div className="flex justify-end">
+          <div>
+            <div className="flex justify-end ">
               <DialogClose asChild>
                 <Button
                   variant="outline"
@@ -227,7 +227,7 @@ export default function ProductCard({ product }: any) {
                 </Button>
               </div>
             </div>
-          </>
+          </div>
         ) : (
           // Page 2: Additional Content
           <Page2 setPage={setPage} product={product} />

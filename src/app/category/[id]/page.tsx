@@ -42,7 +42,7 @@ export default function Page() {
   return (
     <div className="mt-[220px] ml-60">
       <IdleRedirect
-        timeout={isLongerIdleTimeoutNeeded ? 610000 : 30000}
+        timeout={isLongerIdleTimeoutNeeded ? 610000 : 3000000}
         redirectPath="/"
         excludePaths={["/"]}
         dialogOpen={open}
@@ -52,7 +52,7 @@ export default function Page() {
         .map((category, i) => (
           <div
             key={i}
-            className="text-[#ab3030] bg-gray-200 text-center p-3 rounded-2xl font-bold mx-auto w-[15vw] text-[24px]"
+            className="text-[#ab3030] bg-[#f1f1f1] text-center p-3 rounded-2xl font-bold mx-auto w-[15vw] text-[24px]"
           >
             {category.name}
           </div>

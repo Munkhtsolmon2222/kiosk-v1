@@ -423,7 +423,7 @@ export function CartDialog({
       open={open}
     >
       <IdleRedirect timeout={600000} redirectPath="/" />
-      <DialogContent className="p-6">
+      <DialogContent className="p-6 ">
         <DialogHeader>
           <DialogTitle className="text-3xl font-bold">
             {step === 1 ? "Таны сагс" : "Төлбөр төлөх"}
@@ -448,7 +448,7 @@ export function CartDialog({
                             item?.stock_status == "instock"
                               ? "text-[#5dc477]"
                               : item?.stock_status == "onbackorder"
-                              ? "text-[#00b3fa]"
+                              ? "text-[#35629c]"
                               : "text-[#ab3030]"
                           } text-center items-center w-4 mt-1`}
                         >
