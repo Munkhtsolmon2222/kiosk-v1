@@ -23,7 +23,7 @@ export default function ProductCard({ product }: any) {
   const [sanitizedDescription, setSanitizedDescription] = useState<any>("");
   const images = product?.images;
   const [orderProducts, setOrderProducts] = useState(0);
-
+  const [price, setPrice] = useState<any>(0);
   const plusCount = () => {
     setOrderProducts(orderProducts + 1);
   };
@@ -35,6 +35,55 @@ export default function ProductCard({ product }: any) {
     if (product) {
       setSanitizedDescription(DOMPurify.sanitize(product?.description));
     }
+  }, [product]);
+
+  useEffect(() => {
+    async function fetchVariationPrices() {
+      if (product?.type === "variable") {
+        try {
+          const consumerKey = process.env.NEXT_PUBLIC_WC_CONSUMER_KEY;
+          const consumerSecret = process.env.NEXT_PUBLIC_WC_CONSUMER_SECRET;
+
+          if (!consumerKey || !consumerSecret) {
+            throw new Error("WooCommerce API keys are missing");
+          }
+
+          const authHeader =
+            typeof window === "undefined"
+              ? Buffer.from(`${consumerKey}:${consumerSecret}`).toString(
+                  "base64"
+                )
+              : btoa(`${consumerKey}:${consumerSecret}`);
+
+          const response = await fetch(
+            `https://erchuudiindelguur.mn/wp-json/wc/v3/products/${product.id}/variations?per_page=100`,
+            {
+              headers: {
+                Authorization: `Basic ${authHeader}`,
+              },
+            }
+          );
+
+          if (!response.ok) {
+            throw new Error(`Error ${response.status}: ${response.statusText}`);
+          }
+
+          const variations = await response.json();
+
+          if (variations.length > 0) {
+            setPrice(
+              new Intl.NumberFormat("mn-MN").format(variations[0].price)
+            );
+          }
+        } catch (error) {
+          console.error("Failed to fetch variations", error);
+        }
+      } else {
+        setPrice(new Intl.NumberFormat("mn-MN").format(product.regular_price));
+      }
+    }
+
+    fetchVariationPrices();
   }, [product]);
 
   return (
@@ -72,10 +121,7 @@ export default function ProductCard({ product }: any) {
                   </span>
                 </>
               ) : (
-                <span className="text-2xl font-bold block">
-                  {new Intl.NumberFormat("mn-MN").format(product.regular_price)}
-                  ₮
-                </span>
+                <span className="text-2xl font-bold block">{price}₮</span>
               )}
             </h3>
             <h5
@@ -162,12 +208,7 @@ export default function ProductCard({ product }: any) {
                         </span>
                       </>
                     ) : (
-                      <span className="text-2xl block">
-                        {new Intl.NumberFormat("mn-MN").format(
-                          product.regular_price
-                        )}
-                        ₮
-                      </span>
+                      <span className="text-2xl block">{price}₮</span>
                     )}
                   </p>
                 </div>
