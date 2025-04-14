@@ -283,7 +283,7 @@ export function Page2({ product, setPage }: any) {
           </Swiper>
 
           {/* Counter for quantity */}
-          <div className="border-4 m-10 border-[#ab3030] mx-auto flex justify-center gap-10 py-2 rounded-[15px]">
+          <div className="border-4 m-10 w-2/5 border-[#ab3030] mx-auto flex justify-center gap-10 py-2 rounded-[15px]">
             <button onClick={minusCount} className="text-5xl text-[#ab3030]">
               -
             </button>
@@ -334,7 +334,7 @@ export function Page2({ product, setPage }: any) {
                         lubricator?.stock_status == "instock"
                           ? "text-[#5dc477]"
                           : lubricator?.stock_status == "onbackorder"
-                          ? "text-[#00b3fa]"
+                          ? "text-[#4882f0]"
                           : "text-[#ab3030]"
                       } text-center w-3 mt-1`}
                     >
@@ -346,7 +346,7 @@ export function Page2({ product, setPage }: any) {
                     </h5>
                   </div>
 
-                  <div className="border-4 border-[#ab3030] mx-auto mr-4 px-8 flex items-center gap-10 py-2 rounded-[15px]">
+                  <div className="border-4 border-[#ab3030] mx-auto w-[130px] mr-5 px-8 flex items-center gap-5 py-2 rounded-[15px]">
                     <button
                       onClick={() =>
                         handleLubricatorCount(lubricator.id, false)
@@ -452,7 +452,7 @@ export function Page2({ product, setPage }: any) {
                 onClick={() => {
                   handleAddToCart();
                 }}
-                className="text-2xl px-8 py-4 bg-blue-500 text-white"
+                className="text-2xl px-8 py-4 bg-[#ab3030] text-white"
               >
                 Сагсанд хийх
               </Button>

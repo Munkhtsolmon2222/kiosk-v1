@@ -40,9 +40,9 @@ export default function Page() {
   const categoriesData = data1;
 
   return (
-    <div className="mt-44 ml-60">
+    <div className="mt-[220px] ml-60">
       <IdleRedirect
-        timeout={isLongerIdleTimeoutNeeded ? 610000 : 30000}
+        timeout={isLongerIdleTimeoutNeeded ? 610000 : 3000000}
         redirectPath="/"
         excludePaths={["/"]}
         dialogOpen={open}
@@ -52,7 +52,7 @@ export default function Page() {
         .map((category, i) => (
           <div
             key={i}
-            className="text-[#ab3030] font-bold mx-auto w-[40vw] text-[24px]"
+            className="text-[#ab3030] bg-[#f1f1f1] text-center p-3 rounded-2xl font-bold mx-auto w-[15vw] text-[24px]"
           >
             {category.name}
           </div>
@@ -60,7 +60,7 @@ export default function Page() {
       {filteredProducts.length === 0 ? (
         <p>No products found.</p>
       ) : (
-        <div className="grid gap-3 grid-cols-2">
+        <div className="grid grid-cols-2 ml-32">
           {filteredProducts.map((product: any) => (
             <ProductCard key={product.id} product={product} />
           ))}
