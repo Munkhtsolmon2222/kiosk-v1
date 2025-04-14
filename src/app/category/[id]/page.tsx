@@ -40,9 +40,13 @@ export default function Page() {
   const categoriesData = data1;
 
   return (
+<<<<<<< HEAD
     <div className="mt-[220px] ml-45">
+=======
+    <div className="mt-[200px] ml-60">
+>>>>>>> 2-boona
       <IdleRedirect
-        timeout={isLongerIdleTimeoutNeeded ? 610000 : 3000000}
+        timeout={isLongerIdleTimeoutNeeded ? 610000 : 30000}
         redirectPath="/"
         excludePaths={["/"]}
         dialogOpen={open}

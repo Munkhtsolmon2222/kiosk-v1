@@ -5,7 +5,10 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Settings } from "./settings";
 import Link from "next/link";
+import { PiGenderMaleBold } from "react-icons/pi";
 import { getCookie } from "cookies-next/client";
+import { IoFemaleOutline } from "react-icons/io5";
+import Image from "next/image";
 
 export function Navigation() {
   const {
@@ -107,7 +110,7 @@ export function Navigation() {
 
   return (
     <div>
-      <header className="w-full h-48 bg-[#f7eaea] border-[3px] border-black font-semibold rounded-b-xl shadow-md fixed right-10 left-0 top-0 z-50">
+      <header className="w-full h-40 bg-[#f3eded] border-[3px] border-black font-semibold rounded-b-xl shadow-md fixed right-10 left-0 top-0 z-50">
         <div className="container mx-auto flex items-center justify-around px-4 py-4 max-w-full">
           <Link href={`/`}>
             <div className="flex items-center justify-start">
@@ -120,30 +123,38 @@ export function Navigation() {
           </Link>
 
           <nav className="md:flex gap-10 text-red-700 font-bold">
-            {["Эрэгтэй", "Эмэгтэй", "Хосуудад", "Парти "].map(
-              (category: any) => (
-                <button
-                  key={category}
-                  onClick={() => {
-                    setSelectedMainCategoryActive(category);
-                    handleCategorySelection(category);
-                  }}
-                  className={`text-[20px] w-[80px] h-[100px] font-semibold border border-[#ab3030] text-center whitespace-nowrap rounded-lg transition-all duration-300 ${
-                    selectedMainCategoryActive === category
-                      ? "bg-[#a58c8c] text-[#ab3030]"
-                      : "bg-transparent hover:bg-blue-100"
-                  }`}
-                >
-                  {category?.image?.src && (
-                    <img
-                      className="w-[30px] h-[30px] rounded-[10px]"
-                      src={category?.image?.src}
-                      alt={`${category} image`} // Alt text for accessibility
-                    />
-                  )}
-                  {category}
-                </button>
-              )
+            {["Эрэгтэй", "Эмэгтэй", "Хосуудад", "Парти"].map(
+              (category: any) => {
+                return (
+                  <button
+                    key={category}
+                    onClick={() => {
+                      setSelectedMainCategoryActive(category);
+                      handleCategorySelection(category);
+                    }}
+                    className={`text-[20px] w-[80px] h-[100px] font-semibold border border-[#ab3030] text-center whitespace-nowrap rounded-lg transition-all duration-300 ${
+                      selectedMainCategoryActive === category
+                        ? "bg-[#a58c8c] text-[#ab3030]"
+                        : "bg-white "
+                    }`}
+                  >
+                    {category === "Эрэгтэй" ? (
+                      <PiGenderMaleBold className="text-[#ab3030] border ml-5 p-1 size-9 border-[#ab3030] bg-white rounded-lg " />
+                    ) : category === "Эмэгтэй" ? (
+                      <IoFemaleOutline className="text-[#ab3030] border ml-5 p-1 size-9 border-[#ab3030] bg-white rounded-lg " />
+                    ) : (
+                      <Image
+                        alt="hh"
+                        width={20}
+                        height={20}
+                        className="text-[#ab3030] border ml-5 size-9 p-1 border-[#ab3030] bg-white rounded-lg "
+                        src="/gender1.png"
+                      />
+                    )}
+                    {category}
+                  </button>
+                );
+              }
             )}
             <Settings
               onSelectCategory={handleCategorySelection}
@@ -154,7 +165,7 @@ export function Navigation() {
         </div>
       </header>
 
-      <aside className="fixed top-48 left-0 h-full bg-[#ab3030] text-white rounded-3xl transition-all w-64">
+      <aside className="fixed top-40 left-0 h-full bg-[#ab3030] text-white rounded-xl transition-all w-64">
         <nav className="flex flex-col gap-6 pt-4">
           {categories
             .filter((category) => category.parent === parentId)
