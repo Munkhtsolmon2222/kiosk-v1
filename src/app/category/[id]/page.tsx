@@ -40,9 +40,9 @@ export default function Page() {
   const categoriesData = data1;
 
   return (
-    <div className="mt-[220px] ml-60">
+    <div className="mt-[200px] ml-60">
       <IdleRedirect
-        timeout={isLongerIdleTimeoutNeeded ? 610000 : 3000000}
+        timeout={isLongerIdleTimeoutNeeded ? 610000 : 30000}
         redirectPath="/"
         excludePaths={["/"]}
         dialogOpen={open}
