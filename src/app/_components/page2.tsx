@@ -8,6 +8,7 @@ import { Autoplay, Navigation, Pagination } from "swiper/modules";
 import DOMPurify from "dompurify";
 import { useProducts } from "../../../providers/productContext";
 import { useCart } from "../../../providers/cartContext";
+import Lubricator from "./lubricator";
 export function Page2({ product, setPage }: any) {
   const [orderProducts, setOrderProducts] = useState(1);
   const [upsellOrderCounts, setUpsellOrderCounts] = useState<{
@@ -20,6 +21,7 @@ export function Page2({ product, setPage }: any) {
   const [loading, setLoading] = useState(false);
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState(1);
+  const [lubVariationPrice, setLubVariationPrice] = useState<any>();
   const { setCartItems } = useCart();
   const minusCount = () => {
     setOrderProducts((prev) => (prev > 1 ? prev - 1 : 1));
@@ -123,6 +125,16 @@ export function Page2({ product, setPage }: any) {
         const lubricator = dataSpread.find((p) => p.id == id);
         console.log(lubricator);
         if (lubricator && lubricator.stock_status !== "outofstock") {
+          if (lubricator.type == "variable") {
+            return {
+              id: lubricator.id,
+              name: lubricator.name,
+              price: lubricator.price,
+              quantity: count,
+              image: lubricator.images?.[0]?.src || "zurag.png",
+              stock_status: lubricator.stock_status,
+            };
+          }
           return {
             id: lubricator.id,
             name: lubricator.name,
@@ -303,69 +315,12 @@ export function Page2({ product, setPage }: any) {
 
             <div className=" overflow-y-auto w-full  mt-2 h-[400px] ">
               {lubricators.map((lubricator: any) => (
-                <div
+                <Lubricator
                   key={lubricator.id}
-                  className="flex gap-4 items-center my-[10px] border-b border-gray"
-                >
-                  <div className="flex gap-4 w-fit mb-[5px]">
-                    {" "}
-                    {lubricator.images
-                      ?.slice(0, 1)
-                      .map((image: any, index: any) => (
-                        <img
-                          key={index}
-                          src={image.src}
-                          alt="Aaviin Baraa"
-                          className="w-20 h-20 object-cover mx-auto rounded-full"
-                        />
-                      ))}
-                    <div className="">
-                      <p>{lubricator.name}</p>
-                      <span className="text-2xl w-[100px] block">
-                        (
-                        {new Intl.NumberFormat("mn-MN").format(
-                          lubricator.regular_price
-                        )}
-                        ₮)
-                      </span>
-                    </div>{" "}
-                    <h5
-                      className={`${
-                        lubricator?.stock_status == "instock"
-                          ? "text-[#5dc477]"
-                          : lubricator?.stock_status == "onbackorder"
-                          ? "text-[#4882f0]"
-                          : "text-[#ab3030]"
-                      } text-center w-3 mt-1`}
-                    >
-                      {lubricator?.stock_status == "instock"
-                        ? "Бэлэн"
-                        : lubricator?.stock_status == "onbackorder"
-                        ? "Захиалгаар"
-                        : "Дууссан"}
-                    </h5>
-                  </div>
-
-                  <div className="border-4 border-[#ab3030] mx-auto w-[130px] mr-5 px-8 flex items-center gap-5 py-2 rounded-[15px]">
-                    <button
-                      onClick={() =>
-                        handleLubricatorCount(lubricator.id, false)
-                      }
-                      className="text-xl text-[#ab3030]"
-                    >
-                      -
-                    </button>
-                    <span className="text-xl text-[#ab3030]">
-                      {lubricatorOrderCounts[lubricator.id] || 0}
-                    </span>
-                    <button
-                      onClick={() => handleLubricatorCount(lubricator.id, true)}
-                      className="text2xl text-[#ab3030]"
-                    >
-                      +
-                    </button>
-                  </div>
-                </div>
+                  lubricator={lubricator}
+                  handleLubricatorCount={handleLubricatorCount}
+                  lubricatorOrderCounts={lubricatorOrderCounts}
+                />
               ))}
 
               {/* display the upsell products */}

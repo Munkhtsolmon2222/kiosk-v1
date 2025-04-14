@@ -38,52 +38,43 @@ export default function ProductCard({ product }: any) {
   }, [product]);
 
   useEffect(() => {
-    async function fetchVariationPrices() {
-      if (product?.type === "variable") {
-        try {
-          const consumerKey = process.env.NEXT_PUBLIC_WC_CONSUMER_KEY;
-          const consumerSecret = process.env.NEXT_PUBLIC_WC_CONSUMER_SECRET;
-
-          if (!consumerKey || !consumerSecret) {
-            throw new Error("WooCommerce API keys are missing");
-          }
-
-          const authHeader =
-            typeof window === "undefined"
-              ? Buffer.from(`${consumerKey}:${consumerSecret}`).toString(
-                  "base64"
-                )
-              : btoa(`${consumerKey}:${consumerSecret}`);
-
-          const response = await fetch(
-            `https://erchuudiindelguur.mn/wp-json/wc/v3/products/${product.id}/variations?per_page=100`,
-            {
-              headers: {
-                Authorization: `Basic ${authHeader}`,
-              },
-            }
-          );
-
-          if (!response.ok) {
-            throw new Error(`Error ${response.status}: ${response.statusText}`);
-          }
-
-          const variations = await response.json();
-
-          if (variations.length > 0) {
-            setPrice(
-              new Intl.NumberFormat("mn-MN").format(variations[0].price)
-            );
-          }
-        } catch (error) {
-          console.error("Failed to fetch variations", error);
-        }
-      } else {
-        setPrice(new Intl.NumberFormat("mn-MN").format(product.regular_price));
+    if (product?.type === "variable") {
+      try {
+        // const consumerKey = process.env.NEXT_PUBLIC_WC_CONSUMER_KEY;
+        // const consumerSecret = process.env.NEXT_PUBLIC_WC_CONSUMER_SECRET;
+        // if (!consumerKey || !consumerSecret) {
+        //   throw new Error("WooCommerce API keys are missing");
+        // }
+        // const authHeader =
+        //   typeof window === "undefined"
+        //     ? Buffer.from(`${consumerKey}:${consumerSecret}`).toString(
+        //         "base64"
+        //       )
+        //     : btoa(`${consumerKey}:${consumerSecret}`);
+        // const response = await fetch(
+        //   `https://erchuudiindelguur.mn/wp-json/wc/v3/products/${product.id}/variations?per_page=100`,
+        //   {
+        //     headers: {
+        //       Authorization: `Basic ${authHeader}`,
+        //     },
+        //   }
+        // );
+        // if (!response.ok) {
+        //   throw new Error(`Error ${response.status}: ${response.statusText}`);
+        // }
+        // const variations = await response.json();
+        // if (variations.length > 0) {
+        //   setPrice(
+        //     new Intl.NumberFormat("mn-MN").format(variations[0].price)
+        //   );
+        // }
+        setPrice(new Intl.NumberFormat("mn-MN").format(product.price));
+      } catch (error) {
+        console.error("Failed to fetch variations", error);
       }
+    } else {
+      setPrice(new Intl.NumberFormat("mn-MN").format(product.regular_price));
     }
-
-    fetchVariationPrices();
   }, [product]);
 
   return (
