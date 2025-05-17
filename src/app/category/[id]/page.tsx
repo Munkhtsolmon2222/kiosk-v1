@@ -58,7 +58,7 @@ export default function Page() {
           </div>
         ))}
       {filteredProducts.length === 0 ? (
-        <p>No products found.</p>
+        <p className="w-fit mt-10 mx-auto">Та түр хүлээнэ үү.</p>
       ) : (
         <div className="grid grid-cols-2 ml-32">
           {filteredProducts.map((product: any) => (

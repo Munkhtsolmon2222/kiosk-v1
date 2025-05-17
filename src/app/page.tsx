@@ -11,33 +11,49 @@ type ImageData = {
 };
 
 export default function Home() {
-  const [images, setImages] = useState<string[]>([]);
+  const images = [
+    "./bogj/1.jpg",
+    "./bogj/2.jpg",
+    "./bogj/3.jpg",
+    "./bogj/4.jpg",
+    "./bogj/5.jpg",
+    "./bogj/6.jpg",
+    "./bogj/7.jpg",
+    "./bogj/8.jpg",
+    "./bogj/9.jpg",
+    "./bogj/10.jpg",
+    "./bogj/11.jpg",
+    "./bogj/12.jpg",
+    "./bogj/13.jpg",
+    "./bogj/14.jpg",
+    "./bogj/15.jpg",
+  ];
   const [currentIndex, setCurrentIndex] = useState<number>(0); // State to keep track of the current image index
   const defaultCategory = getCookie("defaultCategory");
 
-  useEffect(() => {
-    const fetchImages = async () => {
-      try {
-        const res = await fetch("/api/fetchImages");
-        const data = await res.json();
+  // useEffect(() => {
+  //   const fetchImages = async () => {
+  //     try {
+  //       const res = await fetch("/api/fetchImages");
+  //       const data = await res.json();
 
-        if (data.resources && data.resources.length > 0) {
-          const imageUrls = data.resources.map(
-            (item: ImageData) => item.secure_url
-          );
-          setImages(imageUrls);
-        } else {
-          setImages(["./zurag.png"]);
-        }
-      } catch (error) {
-        console.error("Error fetching images:", error);
+  //       if (data.resources && data.resources.length > 0) {
+  //         const imageUrls = data.resources.map(
+  //           (item: ImageData) => item.secure_url
+  //         );
+  //         setImages(imageUrls);
+  //       } else {
+  //         setImages(["./zurag.png"]);
+  //       }
+  //     } catch (error) {
+  //       console.error("Error fetching images:", error);
 
-        setImages(["./zurag.png"]);
-      }
-    };
+  //       setImages(["./zurag.png"]);
+  //     }
+  //   };
 
-    fetchImages();
-  }, []);
+  //   fetchImages();
+  // }, []);
 
   // Function to change image every 3 seconds
   useEffect(() => {

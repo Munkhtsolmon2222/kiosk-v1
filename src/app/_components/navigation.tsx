@@ -110,14 +110,16 @@ export function Navigation() {
 
   return (
     <div>
-      <header className="w-full h-40 bg-[#f3eded] border-[3px] border-black font-semibold rounded-b-xl shadow-md fixed right-10 left-0 top-0 z-50">
+      <header className="w-full h-40 bg-[#f3eded] border-b-[3px] border-black font-semibold shadow-md fixed right-10 left-0 top-0 z-50">
         <div className="container mx-auto flex items-center justify-around px-4 py-4 max-w-full">
           <Link href={`/`}>
             <div className="flex items-center justify-start">
-              <img
-                src="https://res.cloudinary.com/drp3yksbi/image/upload/v1743924416/Logo_mrf73b.jpg"
+              <Image
+                width={100}
+                height={200}
+                src="/logo.png"
                 alt="Logo"
-                className="h-25"
+                className="h-28"
               />
             </div>
           </Link>
@@ -132,22 +134,22 @@ export function Navigation() {
                       setSelectedMainCategoryActive(category);
                       handleCategorySelection(category);
                     }}
-                    className={`text-[20px] w-[80px] h-[100px] font-semibold border border-[#ab3030] text-center whitespace-nowrap rounded-lg transition-all duration-300 ${
+                    className={`text-[20px] w-[100px] h-[100px] font-semibold border border-[#ab3030] text-center whitespace-nowrap rounded-lg transition-all duration-300 ${
                       selectedMainCategoryActive === category
                         ? "bg-[#a58c8c] text-[#ab3030]"
                         : "bg-white "
                     }`}
                   >
                     {category === "Эрэгтэй" ? (
-                      <PiGenderMaleBold className="text-[#ab3030] border ml-5 p-1 size-9 border-[#ab3030] bg-white rounded-lg " />
+                      <PiGenderMaleBold className="text-[#ab3030] border mx-auto p-1 size-9 border-[#ab3030] bg-white rounded-lg " />
                     ) : category === "Эмэгтэй" ? (
-                      <IoFemaleOutline className="text-[#ab3030] border ml-5 p-1 size-9 border-[#ab3030] bg-white rounded-lg " />
+                      <IoFemaleOutline className="text-[#ab3030] border mx-auto p-1 size-9 border-[#ab3030] bg-white rounded-lg " />
                     ) : (
                       <Image
                         alt="hh"
                         width={20}
                         height={20}
-                        className="text-[#ab3030] border ml-5 size-9 p-1 border-[#ab3030] bg-white rounded-lg "
+                        className="text-[#ab3030] border mx-auto size-9 p-1 border-[#ab3030] bg-white rounded-lg "
                         src="/gender1.png"
                       />
                     )}
@@ -165,7 +167,7 @@ export function Navigation() {
         </div>
       </header>
 
-      <aside className="fixed top-40 left-0 h-full bg-[#ab3030] text-white rounded-xl transition-all w-64">
+      <aside className="fixed top-40 left-0 h-full bg-[#ab3030] text-white transition-all w-64">
         <nav className="flex flex-col gap-6 pt-4">
           {categories
             .filter((category) => category.parent === parentId)
