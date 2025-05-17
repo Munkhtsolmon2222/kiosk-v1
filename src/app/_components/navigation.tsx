@@ -189,7 +189,7 @@ export function Navigation() {
                         setSelectedCategory(category.id);
                       }
                     }}
-                    className={`text-start w-[200px] p-3 flex gap-3 border border-gray-100 rounded-lg text-lg transition-all  duration-300 ${
+                    className={`text-start w-[200px] items-center p-3 flex gap-3 border border-gray-100 rounded-lg text-lg transition-all  duration-300 ${
                       selectedCategory === category.id
                         ? "bg-[#d84949]  text-white"
                         : "bg-[#ca4242c9] "

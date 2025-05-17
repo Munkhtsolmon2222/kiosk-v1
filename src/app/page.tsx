@@ -4,6 +4,15 @@ import { useEffect, useState } from "react";
 import { getCookie } from "cookies-next/client";
 import Link from "next/link";
 import { useProducts } from "../../providers/productContext";
+// import { imagesKegel, imagesUtree } from "@/lib/images";
+// import { imagesShodoi } from "@/lib/images";
+// import { imagesBelgevch } from "@/lib/images";
+// import { imagesBDSM } from "@/lib/images";
+// import { imagesPartyToy } from "@/lib/images";
+// import { imagesHiimelShodoi } from "@/lib/images";
+// import { imagesHuhniiPump } from "@/lib/images";
+// import { imagesTaviltUdaashruulagch } from "@/lib/images";
+// import { imagesDotuurhuvtsas } from "@/lib/images";
 
 // Define types for image data
 type ImageData = {
@@ -11,26 +20,30 @@ type ImageData = {
 };
 
 export default function Home() {
-  const images = [
-    "./bogj/1.jpg",
-    "./bogj/2.jpg",
-    "./bogj/3.jpg",
-    "./bogj/4.jpg",
-    "./bogj/5.jpg",
-    "./bogj/6.jpg",
-    "./bogj/7.jpg",
-    "./bogj/8.jpg",
-    "./bogj/9.jpg",
-    "./bogj/10.jpg",
-    "./bogj/11.jpg",
-    "./bogj/12.jpg",
-    "./bogj/13.jpg",
-    "./bogj/14.jpg",
-    "./bogj/15.jpg",
-  ];
   const [currentIndex, setCurrentIndex] = useState<number>(0); // State to keep track of the current image index
   const defaultCategory = getCookie("defaultCategory");
-
+  // const department = getCookie("department");
+  // let selectedImages: any;
+  // if (department == "Kegel") {
+  //   selectedImages = imagesKegel;
+  // } else if (department == "Utree") {
+  //   selectedImages = imagesUtree;
+  // } else if (department == "Shodoi") {
+  //   selectedImages = imagesShodoi;
+  // } else if (department == "Belgevch") {
+  //   selectedImages = imagesBelgevch;
+  // } else if (department == "Party") {
+  //   selectedImages = imagesPartyToy;
+  // } else if (department == "HiimelShodoi") {
+  //   selectedImages = imagesHiimelShodoi;
+  // } else if (department == "HuhniiPump") {
+  //   selectedImages = imagesHuhniiPump;
+  // } else if (department == "TaviltUdaashruulagch") {
+  //   selectedImages = imagesTaviltUdaashruulagch;
+  // } else if (department == "DotuurHuvtsas") {
+  //   selectedImages = imagesDotuurhuvtsas;
+  // }
+  const images = ["./tsahimZovloh.jpg"];
   // useEffect(() => {
   //   const fetchImages = async () => {
   //     try {
@@ -75,7 +88,7 @@ export default function Home() {
         <div className="relative object-contain  ">
           <Link href={`/category/${defaultCategory}`}>
             <img
-              src={images[currentIndex] || "./zurag.png"} // Display image based on current index
+              src={images[currentIndex] || "./tsahimZovloh.jpg"} // Display image based on current index
               className="w-[100vw] h-screen mx-auto object-cover "
               alt="Category Image"
             />
@@ -85,7 +98,7 @@ export default function Home() {
         <div className="relative">
           <Link href={`/category/53`}>
             <img
-              src={images[currentIndex] || "./zurag.png"} // Display image based on current index
+              src={images[currentIndex] || "./tsahimZovloh.jpg"} // Display image based on current index
               className="w-full h-screen mx-auto object-cover"
               alt="Category Image"
             />
