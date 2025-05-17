@@ -397,7 +397,7 @@ export function Page2({ product, setPage }: any) {
           <div className="flex justify-between mt-10 w-2/3 mx-auto">
             <Button
               variant="outline"
-              className="text-2xl px-8 py-4"
+              className="text-2xl px-8 py-4 active:bg-gray-300"
               onClick={() => setPage(1)}
             >
               Буцах
@@ -407,7 +407,7 @@ export function Page2({ product, setPage }: any) {
                 onClick={() => {
                   handleAddToCart();
                 }}
-                className="text-2xl px-8 py-4 bg-[#ab3030] text-white"
+                className="text-2xl px-8 py-4 bg-[#ab3030] text-white active:bg-red-600"
               >
                 Сагсанд хийх
               </Button>

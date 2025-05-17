@@ -91,7 +91,7 @@ export default function Lubricator({
       <div className="border-4 border-[#ab3030] mx-auto w-[130px] mr-5 px-8 flex items-center gap-5 py-2 rounded-[15px]">
         <button
           onClick={() => handleLubricatorCount(lubricator.id, false)}
-          className="text-xl text-[#ab3030]"
+          className="text-2xl text-[#ab3030]"
         >
           -
         </button>
@@ -100,7 +100,7 @@ export default function Lubricator({
         </span>
         <button
           onClick={() => handleLubricatorCount(lubricator.id, true)}
-          className="text2xl text-[#ab3030]"
+          className="text-2xl text-[#ab3030]"
         >
           +
         </button>

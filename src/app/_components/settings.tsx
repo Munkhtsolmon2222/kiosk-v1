@@ -50,6 +50,8 @@ export function Settings({
     subCategory: false,
     thirdCategory: false,
   });
+  const [departmentError, setDepartmentError] = useState(false);
+  const [department, setDepartment] = useState<any>("kegel");
 
   const handleOpen = () => {
     setOpen(true);
@@ -77,7 +79,7 @@ export function Settings({
       subCategory: false,
       thirdCategory: false,
     });
-
+    setDepartmentError(false);
     // Check if categories are selected properly (not the placeholder option)
     if (selectedCategory === "choose category") {
       valid = false;
@@ -116,6 +118,9 @@ export function Settings({
       setCookie("defaultCategoryThird", selectedThirdCategory, {
         maxAge: 3650 * 24 * 60 * 60,
       });
+      setCookie("department", department, {
+        maxAge: 3650 * 24 * 60 * 60,
+      });
       setCookie("clientEmail", email, { maxAge: 3650 * 24 * 60 * 60 });
       console.log("setting", selectedThirdCategory);
     } else {
@@ -129,6 +134,9 @@ export function Settings({
         maxAge: 3650 * 24 * 60 * 60,
       });
       setCookie("defaultCategoryThird", selectedThirdCategory, {
+        maxAge: 3650 * 24 * 60 * 60,
+      });
+      setCookie("department", department, {
         maxAge: 3650 * 24 * 60 * 60,
       });
       setCookie("clientEmail", email, { maxAge: 3650 * 24 * 60 * 60 });
@@ -201,7 +209,7 @@ export function Settings({
                 />
                 <button
                   onClick={handleVerifyCode}
-                  className="mt-4 p-2 bg-blue-500 text-white rounded w-full"
+                  className="mt-4 p-2 bg-blue-500 text-white rounded w-full active:bg-blue-700"
                 >
                   Нэвтрэх
                 </button>
@@ -296,13 +304,45 @@ export function Settings({
                     )}
                   </div>
                 )}
+
+                {/* Department Selection */}
+                <div>
+                  <select
+                    className={`border p-2 w-full ${
+                      departmentError ? "border-red-500" : ""
+                    }`}
+                    value={department}
+                    onChange={(e) => setDepartment(e.target.value)}
+                  >
+                    <option value="Kegel">Kegel</option>
+                    <option value="Utree">Үтрээ</option>
+                    <option value="Shodoi">Шодой томруулах багц сет</option>
+                    <option value="Belgevch">Бэлгэвч</option>
+                    <option value="Party">Парти тоглоом</option>
+                    <option value="HiimelShodoi">Хиймэл шодой</option>
+                    <option value="HuhniiPump">Хөхний памп</option>
+                    <option value="TaviltUdaashruulagch">
+                      Тавилт удаашруулагч
+                    </option>
+                    <option value="DotuurHuvtsas">Дотуур хувцас</option>
+                  </select>
+                  {departmentError && (
+                    <p className="text-red-500 text-sm mt-1">
+                      Please select a department.
+                    </p>
+                  )}
+                </div>
               </div>
             )}
 
             {/* Save and Close Buttons */}
             {isCodeVerified && (
               <DialogFooter className="flex justify-end gap-2">
-                <Button variant="outline" onClick={handleClose}>
+                <Button
+                  className="active:bg-gray-300"
+                  variant="outline"
+                  onClick={handleClose}
+                >
                   Болих
                 </Button>
                 <Button
@@ -311,6 +351,7 @@ export function Settings({
                     selectedCategory === "choose category" ||
                     selectedSubCategory === "choose category"
                   }
+                  className="active:bg-gray-800"
                 >
                   Хадгалах
                 </Button>

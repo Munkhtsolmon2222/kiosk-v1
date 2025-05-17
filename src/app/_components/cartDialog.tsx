@@ -528,7 +528,7 @@ export function CartDialog({
             <div className="flex justify-between gap-6 mt-10 w-2/3 mx-auto">
               <Button
                 variant="outline"
-                className="text-2xl px-8 py-4"
+                className="text-2xl px-8 py-4 active:bg-gray-500"
                 onClick={() => setOpen(false)}
               >
                 Хаах

@@ -95,8 +95,8 @@ export function Page1({ product, setPage }: any) {
         </div>
 
         <div className="flex justify-between mt-10 w-2/3 mx-auto pb-5 ">
-          <DialogClose asChild>
-            <Button variant="outline" className="text-2xl px-8 py-4">
+          <DialogClose className="active:bg-gray-300" asChild>
+            <Button variant="outline" className="text-2xl px-8 py-4 ">
               Хаах
             </Button>
           </DialogClose>
