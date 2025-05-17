@@ -96,7 +96,7 @@ export default function Home() {
         </div>
       ) : (
         <div className="relative">
-          <Link href={`/category/53`}>
+          <Link href={`/category/45`}>
             <img
               src={images[currentIndex] || "./tsahimZovloh.jpg"} // Display image based on current index
               className="w-full h-screen mx-auto object-cover"

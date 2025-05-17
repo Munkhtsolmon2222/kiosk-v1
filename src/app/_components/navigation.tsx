@@ -82,10 +82,24 @@ export function Navigation() {
       const subCategories = categories.filter(
         (sub) => sub.parent === mainCat.id
       );
+      let firstSubCategory: any;
       if (subCategories.length > 0) {
-        const firstSubCategory = subCategories[0];
-        setSelectedSubCategory(firstSubCategory.name);
-        router.push(`/category/${firstSubCategory.id}`);
+        if (category == "Эрэгтэй") {
+          firstSubCategory = subCategories[6];
+          setSelectedSubCategory(firstSubCategory.name);
+          router.push(`/category/${firstSubCategory.id}`);
+        } else if (category == "Эмэгтэй") {
+          firstSubCategory = subCategories[2];
+          setSelectedSubCategory(firstSubCategory.name);
+          router.push(`/category/${firstSubCategory.id}`);
+        } else {
+          firstSubCategory = subCategories[0];
+          setSelectedSubCategory(firstSubCategory.name);
+          router.push(`/category/${firstSubCategory.id}`);
+        }
+        // const firstSubCategory = subCategories[0];
+        // setSelectedSubCategory(firstSubCategory.name);
+        // router.push(`/category/${firstSubCategory.id}`);
 
         const thirdCategories = categories.filter(
           (third) => third.parent === firstSubCategory.id
