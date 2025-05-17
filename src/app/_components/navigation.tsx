@@ -129,11 +129,11 @@ export function Navigation() {
           <Link href={`/`}>
             <div className="flex items-center justify-start">
               <Image
-                width={100}
-                height={200}
+                width={150}
+                height={400}
                 src="/logo.png"
                 alt="Logo"
-                className="h-28"
+                className="h-36"
               />
             </div>
           </Link>
