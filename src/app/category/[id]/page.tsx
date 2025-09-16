@@ -41,12 +41,12 @@ export default function Page() {
 
   return (
     <div className="mt-[220px] w-[750px] ml-65">
-      {/* <IdleRedirect
+      <IdleRedirect
         timeout={isLongerIdleTimeoutNeeded ? 610000 : 30000}
         redirectPath="/"
         excludePaths={["/"]}
         dialogOpen={open}
-      /> */}
+      />
       {categoriesData
         ?.filter((category) => category.id.toString() == id)
         .map((category, i) => (

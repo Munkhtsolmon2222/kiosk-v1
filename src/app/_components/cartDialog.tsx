@@ -422,7 +422,7 @@ export function CartDialog({
       }}
       open={open}
     >
-      {/* <IdleRedirect timeout={600000} redirectPath="/" /> */}
+      <IdleRedirect timeout={600000} redirectPath="/" />
       <DialogContent className="p-6 ">
         <DialogHeader>
           <DialogTitle className="text-3xl font-bold">
