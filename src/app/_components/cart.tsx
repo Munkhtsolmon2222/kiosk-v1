@@ -66,7 +66,7 @@ export function Cart() {
       <Button
         variant="outline"
         onClick={() => setOpen(true)}
-        className="px-5 py-10 rounded-xl shadow-lg bg-white border border-gray-600"
+        className="px-5 py-10 rounded-xl shadow-lg bg-white border border-gray-600 "
       >
         {items > 0 ? (
           <div className="fixed right-4 bottom-96 rounded-full h-5 w-5 bg-[#ab3030] text-white pt-1 text-[10px] ">

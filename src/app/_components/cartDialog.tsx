@@ -550,7 +550,7 @@ export function CartDialog({
           </>
         ) : step === 2 ? (
           <>
-            <div className="flex flex-col space-y-4 mt-4">
+            <div className="flex flex-col space-y-4 mt-4 ">
               {
                 // If an onbackorder item exists & delivery is NOT selected, force address input
                 hasBackorderItem && !isDelivered && (
@@ -608,10 +608,10 @@ export function CartDialog({
           </>
         ) : (
           <>
-            <div className="w-[512px] h-[854px]">
+            <div className="w-[450px] h-[854px]">
               {" "}
               {selected == "qpay" && paymentStatus !== "Төлбөр амжилттай!" ? (
-                <div>
+                <div className=" w-full flex flex-col p-20 text-center ">
                   {" "}
                   <p className="mt-4">QPay-аар төлөх</p>
                   {qrImageLoading ? (

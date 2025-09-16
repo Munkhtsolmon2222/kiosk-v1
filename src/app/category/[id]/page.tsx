@@ -40,7 +40,7 @@ export default function Page() {
   const categoriesData = data1;
 
   return (
-    <div className="mt-[220px] ml-45">
+    <div className="mt-[220px] w-[830px] flex flex-col justify-center ml-[250px]">
       <IdleRedirect
         timeout={isLongerIdleTimeoutNeeded ? 610000 : 30000}
         redirectPath="/"
@@ -60,7 +60,7 @@ export default function Page() {
       {filteredProducts.length === 0 ? (
         <p className="w-fit mt-10 mx-auto">Та түр хүлээнэ үү.</p>
       ) : (
-        <div className="grid grid-cols-2 ml-32">
+        <div className="grid grid-cols-2">
           {filteredProducts.map((product: any) => (
             <ProductCard key={product.id} product={product} />
           ))}
