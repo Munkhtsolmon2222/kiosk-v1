@@ -60,7 +60,7 @@ export default function Page() {
       {filteredProducts.length === 0 ? (
         <p className="w-fit mt-10 mx-auto">Та түр хүлээнэ үү.</p>
       ) : (
-        <div className="grid grid-cols-2 ml-32">
+        <div className="grid grid-cols-2">
           {filteredProducts.map((product: any) => (
             <ProductCard key={product.id} product={product} />
           ))}

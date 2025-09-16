@@ -84,14 +84,14 @@ export default function ProductCard({ product }: any) {
       }}
     >
       <DialogTrigger asChild>
-        <div className="flex w-52 justify-center mt-10 ">
-          <div className="w-60 h-auto bg-[#f1f1f1] rounded-2xl p-2">
+        <div className="flex  justify-center mt-10 ">
+          <div className="w-60 h-auto bg-[#f1f1f1] rounded-2xl p-2 shadow-xl ">
             {images?.slice(0, 1).map((image: any, index: any) => (
               <img
                 key={index}
                 src={image.src}
                 alt="Aaviin Baraa"
-                className="w-28 h-28 object-cover mx-auto rounded-2xl"
+                className=" object-cover mx-auto rounded-2xl"
               />
             ))}
 
