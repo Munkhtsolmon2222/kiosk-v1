@@ -167,7 +167,7 @@ export default function ProductCard({ product }: any) {
                   <img
                     src={image.src}
                     alt={`Product Image ${index + 1}`}
-                    className="rounded-lg w-[822px] h-[514px] object-cover"
+                    className="rounded-lg w-[822px] h-[1014px] object-cover"
                   />
                 </SwiperSlide>
               ))}

@@ -425,7 +425,7 @@ export function CartDialog({
       <IdleRedirect timeout={600000} redirectPath="/" />
       <DialogContent className="p-6 ">
         <DialogHeader>
-          <DialogTitle className="text-3xl font-bold">
+          <DialogTitle className="text-3xl font-bold margin-auto">
             {step === 1 ? "Таны сагс" : "Төлбөр төлөх"}
           </DialogTitle>
         </DialogHeader>
@@ -608,7 +608,7 @@ export function CartDialog({
           </>
         ) : (
           <>
-            <div className="w-[450px] h-[854px]">
+            <div className="w-[450px] h-[854px] text-center">
               {" "}
               {selected == "qpay" && paymentStatus !== "Төлбөр амжилттай!" ? (
                 <div className=" w-full flex flex-col p-20 text-center ">
@@ -631,7 +631,7 @@ export function CartDialog({
                 </div>
               )}
               {paymentStatus && (
-                <div className="mt-4">
+                <div className="mt-4 m-auto">
                   <p>{paymentStatus}</p>
                 </div>
               )}
@@ -653,7 +653,7 @@ export function CartDialog({
                 )}
               <Button
                 variant="outline"
-                className="text-2xl  py-4"
+                className="text-2xl  py-4 m-auto"
                 onClick={() => setStep(2)}
               >
                 Буцах
