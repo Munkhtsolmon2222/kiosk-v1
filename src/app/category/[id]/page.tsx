@@ -40,7 +40,7 @@ export default function Page() {
   const categoriesData = data1;
 
   return (
-    <div className="mt-[220px] ml-45">
+    <div className="mt-[220px] w-[750px] ml-65">
       {/* <IdleRedirect
         timeout={isLongerIdleTimeoutNeeded ? 610000 : 30000}
         redirectPath="/"
