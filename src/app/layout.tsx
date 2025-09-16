@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { QueryProvider } from "../../providers/queryProvider";
@@ -18,15 +18,18 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
+// ✅ Keep metadata only for SEO stuff
 export const metadata: Metadata = {
   title: "Create Next App",
   description: "call me baby 89005845",
-  viewport: {
-    width: "device-width",
-    initialScale: 1,
-    maximumScale: 1,
-    userScalable: false,
-  },
+};
+
+// ✅ Move viewport into its own export
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
 };
 
 export default function RootLayout({
