@@ -208,7 +208,7 @@ export default function ProductCard({ product }: any) {
             <div className="h-auto mb-[20px]">
               <div className="text-xl mt-4 px-4 w-full text-center">
                 <div
-                  className="product-description w-full p-4 font-medium text-[14px] overflow-y-auto max-h-[500px] " // Ensures enough space for content
+                  className="product-description w-full p-4 font-medium text-[18px] overflow-y-auto max-h-[500px] " // Ensures enough space for content
                   dangerouslySetInnerHTML={{ __html: sanitizedDescription }}
                 />
               </div>
