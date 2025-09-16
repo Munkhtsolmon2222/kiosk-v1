@@ -40,13 +40,13 @@ export default function Page() {
   const categoriesData = data1;
 
   return (
-    <div className="mt-[220px] w-[830px] flex flex-col justify-center ml-[250px]">
-      <IdleRedirect
+    <div className="mt-[220px] ml-45">
+      {/* <IdleRedirect
         timeout={isLongerIdleTimeoutNeeded ? 610000 : 30000}
         redirectPath="/"
         excludePaths={["/"]}
         dialogOpen={open}
-      />
+      /> */}
       {categoriesData
         ?.filter((category) => category.id.toString() == id)
         .map((category, i) => (
