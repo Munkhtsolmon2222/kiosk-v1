@@ -230,6 +230,9 @@ export function Settings({
                   )}
                 </div>
                 {/* Main Category Selection */}
+                <label className="block text-sm font-medium">
+                  Үндсэн ангилал
+                </label>
                 <div>
                   <select
                     className={`border p-2 w-full ${
@@ -254,6 +257,7 @@ export function Settings({
                 </div>
 
                 {/* Sub Category Selection */}
+                <label className="block text-sm font-medium">Дэд ангилал</label>
                 <div>
                   <select
                     className={`border p-2 w-full ${
@@ -279,6 +283,9 @@ export function Settings({
                 {/* Third Category Selection (Optional) */}
                 {thirdCategories.length > 0 && (
                   <div>
+                    <label className="block text-sm font-medium">
+                      Гуравдагч ангилал
+                    </label>
                     <select
                       className={`border p-2 w-full ${
                         categoryError.thirdCategory ? "border-red-500" : ""
@@ -306,6 +313,7 @@ export function Settings({
                 )}
 
                 {/* Department Selection */}
+                <label className="block text-sm font-medium">Тасаг</label>
                 <div>
                   <select
                     className={`border p-2 w-full ${
