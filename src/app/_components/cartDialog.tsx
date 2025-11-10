@@ -261,10 +261,44 @@ export function CartDialog({
             }),
           });
 
+          // Check if response is ok before parsing
+          if (!res.ok) {
+            const errorText = await res.text();
+            let errorData;
+            try {
+              errorData = JSON.parse(errorText);
+            } catch {
+              errorData = { error: errorText };
+            }
+            console.error("❌ QPay Status Check Failed:", {
+              status: res.status,
+              error: errorData.error || errorData.message || errorText,
+            });
+            
+            // Only stop polling on critical errors, not on temporary failures
+            if (res.status >= 500 || (errorData.status === "Failed" && errorData.error)) {
+              setPaymentStatus(
+                `Алдаа гарлаа: ${errorData.error || errorData.message || "Төлбөрийн статус шалгахад алдаа гарлаа"}`
+              );
+              // Don't clear interval immediately - might be temporary
+            }
+            return;
+          }
+
           const data = await res.json();
 
-          // Handle the response according to the API documentation
-          if (data.rows?.[0]?.payment_status === "PAID") {
+          // Handle the response according to the QPay API documentation
+          // Response structure: { count, paid_amount, rows[] }
+          // Each row has: payment_id, payment_status, payment_date, etc.
+          const paymentStatus = data.rows?.[0]?.payment_status;
+          
+          console.log("💳 QPay Payment Status:", {
+            payment_status: paymentStatus,
+            count: data.count,
+            paid_amount: data.paid_amount,
+          });
+
+          if (paymentStatus === "PAID") {
             setPaymentStatus("Төлбөр амжилттай!");
             setCartItems([]);
             localStorage.removeItem("cart");
@@ -273,15 +307,23 @@ export function CartDialog({
               closeDialog();
               router.push("/"); // Change to the desired redirect path
             }, 5000);
-          } else if (data.status === "Failed" && data.msgList) {
-            console.error("Error: ", data.msgList);
-            setPaymentStatus(
-              "Нэхэмжлэх үүсгэгдээгүй: " + data.msgList.join(", ")
-            );
+          } else if (paymentStatus === "FAILED") {
+            console.error("❌ Payment Failed");
+            setPaymentStatus("Төлбөр амжилтгүй боллоо");
+            clearInterval(interval); // Stop polling
+          } else if (data.status === "Failed") {
+            // Handle API-level errors
+            const errorMessage = data.error || 
+                                (data.msgList && Array.isArray(data.msgList) ? data.msgList.join(", ") : "Тодорхойгүй алдаа");
+            console.error("❌ QPay API Error:", errorMessage);
+            setPaymentStatus(`Алдаа: ${errorMessage}`);
             clearInterval(interval); // Stop polling
           }
+          // If payment_status is "NEW" or undefined, continue polling
         } catch (error) {
-          console.error("Polling error:", error);
+          console.error("❌ Polling error:", error);
+          // Don't stop polling on network errors - might be temporary
+          // Only log the error and continue
         }
       }, 10000);
     }
