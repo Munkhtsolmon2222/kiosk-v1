@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useCart } from "../../../providers/cartContext";
+import { useProducts } from "../../../providers/productContext";
 
 interface IdleRedirectProps {
   timeout?: number; // Timeout duration in milliseconds
@@ -21,7 +22,8 @@ const IdleRedirect = ({
   const pathname = usePathname();
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const { cartItems, setCartItems } = useCart();
-
+  const barcodeInput = document.getElementById('barcodeInput') as HTMLInputElement;
+  const { data, isLoading, error } = useProducts();
   const resetTimer = () => {
     // Clear any existing timer
     if (timerRef.current) clearTimeout(timerRef.current);
@@ -35,6 +37,29 @@ const IdleRedirect = ({
       }
     }, timeout);
   };
+  const filterbarcode = (barcodeInput : HTMLInputElement)=>{
+    const bigData = data?.pages.flatMap((page) => page.data) || [];
+   const dataSpread = [...bigData];
+   const filteredProduct = dataSpread.filter((product: any) =>
+    product?.sku===barcodeInput
+  );
+  return filteredProduct
+  }
+if (barcodeInput) {
+    barcodeInput.addEventListener('keydown', function(event) {
+        if (event.key === 'Enter') {
+            const barcodeValue = barcodeInput.value.trim();
+            console.log('Уншсан бар код:', barcodeValue);
+            barcodeInput.value = '';
+            barcodeInput.focus();
+        }
+    });
+
+    window.addEventListener('load', () => barcodeInput.focus());
+    filterbarcode(barcodeInput)
+} else {
+    console.error("barcodeInput элемент DOM-д олдсонгүй!");
+}
 
   useEffect(() => {
     // Don't trigger timeout if dialog is open
@@ -60,7 +85,7 @@ const IdleRedirect = ({
     };
   }, [timeout, dialogOpen, pathname, excludePaths, router, setCartItems]);
 
-  return null; // This component does not render anything
+  return (      <input id="barcodeinput" type="text" autoComplete="off" hidden placeholder="Кодоо оруулна уу" />   ); // This component does not render anything
 };
 
 export default IdleRedirect;

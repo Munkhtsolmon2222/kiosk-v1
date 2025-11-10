@@ -38,7 +38,6 @@ export default function Page() {
     product?.categories?.some((category: any) => category.id.toString() === id)
   );
   const categoriesData = data1;
-
   return (
     <div className="mt-[220px] w-[750px] ml-65">
       <IdleRedirect
