@@ -24,6 +24,16 @@ const paymentMethods = [
       "/Storepay-ээр төлж байгаа тохиолдолд НӨАТ хасахгүй/",
     ],
   },
+  {
+    id: "pos",
+    label: "Карт",
+    description: "Картаар шууд төлбөр төлөх",
+    extraInfo: [
+      "1. Картаа POS терминалд оруулна уу",
+      "2. PIN кодоо оруулна уу",
+      "3. Төлбөр амжилттай бол захиалга баталгаажна.",
+    ],
+  },
 ];
 
 export default function PaymentMethods({

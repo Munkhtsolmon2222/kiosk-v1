@@ -62,6 +62,8 @@ export function CartDialog({
   const [phoneNumber, setPhoneNumber] = useState("");
   const [phoneError, setPhoneError] = useState<any>("");
   const [qrImageLoading, setQRImageLoading] = useState(false);
+  const [posRequestId, setPosRequestId] = useState("");
+  const [posProcessing, setPosProcessing] = useState(false);
   const router = useRouter();
 
   const removeItem = (index: number) => {
@@ -411,6 +413,215 @@ export function CartDialog({
     }
   };
 
+  // POS Payment Functions
+  const checkPOSConnection = async () => {
+    try {
+      const response = await fetch("/api/pos/request", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          requestID: `CONN-${Date.now()}`,
+          portNo: process.env.NEXT_PUBLIC_POS_PORT_NO || "1",
+          timeout: "540000",
+          terminalID: process.env.NEXT_PUBLIC_POS_TERMINAL_ID || "13133707",
+          amount: "",
+          currencyCode: "496",
+          operationCode: "26", // Check connection
+          bandWidth: "115200",
+          cMode: "",
+          cMode2: "",
+          additionalData: "",
+          cardEntryMode: "",
+          fileData: "",
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("POS connection check failed");
+      }
+
+      const data = await response.json();
+      return data.responseCode === "0"; // 0 = SUCCESS
+    } catch (error) {
+      console.error("POS Connection Error:", error);
+      return false;
+    }
+  };
+
+  const processPOSPayment = async () => {
+    setStep(3);
+    setPosProcessing(true);
+    setPaymentStatus("POS терминалтай холбогдож байна...");
+
+    // First check connection
+    const isConnected = await checkPOSConnection();
+    if (!isConnected) {
+      setPaymentStatus("POS терминалтай холбогдож чадсангүй. Дахин оролдоно уу.");
+      setPosProcessing(false);
+      return;
+    }
+
+    setPaymentStatus("Картаа оруулна уу...");
+
+    // Calculate final amount
+    // According to spec: "1000" means 10.00 төгрөг displayed in POS
+    // So: amount field value / 100 = display amount
+    // To charge 1000 MNT, send "100000" (1000 * 100)
+    const finalPrice = includeVAT ? Math.floor(totalPrice * 0.9) : totalPrice;
+    const amountInSmallestUnit = Math.round(finalPrice * 100).toString();
+
+    const requestId = `PAY-${Date.now()}`;
+    setPosRequestId(requestId);
+
+    try {
+      const response = await fetch("/api/pos/request", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          requestID: requestId,
+          portNo: process.env.NEXT_PUBLIC_POS_PORT_NO || "1",
+          timeout: "540000",
+          terminalID: process.env.NEXT_PUBLIC_POS_TERMINAL_ID || "13133707",
+          amount: amountInSmallestUnit,
+          currencyCode: "496",
+          operationCode: "1", // Purchase
+          bandWidth: "115200",
+          cMode: "",
+          cMode2: "",
+          additionalData: "",
+          cardEntryMode: "",
+          fileData: "",
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        setPaymentStatus(`Алдаа: ${errorData.error || "Төлбөр боловсруулахад алдаа гарлаа"}`);
+        setPosProcessing(false);
+        return;
+      }
+
+      const data = await response.json();
+
+      // Handle response codes
+      if (data.responseCode === "0") {
+        // SUCCESS
+        setPaymentStatus("Төлбөр амжилттай!");
+        
+        // Send email notification
+        await sendPOSOrderEmail(finalPrice);
+
+        // Clear cart
+        setCartItems([]);
+        localStorage.removeItem("cart");
+
+        // Redirect after delay
+        setTimeout(() => {
+          setOpen(false);
+          setStep(1);
+          router.push("/");
+        }, 3000);
+      } else {
+        // Handle error codes
+        const errorMessages: { [key: string]: string } = {
+          "1": "Command mode 201",
+          "10": "Dclink error",
+          "11": "Dclink error",
+          "A0": "Буруу хүсэлт",
+          "A1": "Буруу токен",
+          "91": "Банкны системийн алдаа",
+          "99": "Бусад алдаа",
+        };
+
+        const errorMsg = errorMessages[data.responseCode] || data.responseDesc || "Төлбөр амжилтгүй боллоо";
+        setPaymentStatus(`Алдаа: ${errorMsg}`);
+      }
+
+      setPosProcessing(false);
+    } catch (error) {
+      console.error("POS Payment Error:", error);
+      setPaymentStatus("Төлбөр боловсруулахад алдаа гарлаа. Дахин оролдоно уу.");
+      setPosProcessing(false);
+    }
+  };
+
+  const sendPOSOrderEmail = async (amount: number) => {
+    try {
+      const emailCookie = document.cookie
+        .split("; ")
+        .find((row) => row.startsWith("clientEmail="))
+        ?.split("=")[1];
+
+      if (!emailCookie) {
+        console.error("Email cookie not found");
+        return;
+      }
+
+      const email = decodeURIComponent(emailCookie);
+
+      // Format email content (similar to QPay/StorePay)
+      const checkoutType = `<p><strong>Худалдан авалтын төрөл:</strong> ${
+        isDelivered ? "Хүргэлтээр" : "Бэлэнээр"
+      }</p>`;
+
+      const sortedCartItems = [
+        ...cartItems.filter((item: any) => item.stock_status === "instock"),
+        ...cartItems.filter((item: any) => item.stock_status === "onbackorder"),
+      ];
+
+      const cartItemsList = sortedCartItems
+        .map(
+          (item: any) =>
+            `<p><strong>${item.name}</strong> (Барааны код: ${item.id}) - ${
+              item.price
+            }₮, Ширхэг: ${item.quantity} <em>(${
+              item.stock_status === "onbackorder" ? "Захиалгаар" : "Бэлэн"
+            })</em></p>`
+        )
+        .join("");
+
+      const hasBackorderItems = cartItems.some(
+        (item: any) => item.stock_status === "onbackorder"
+      );
+
+      const formDataSection =
+        hasBackorderItems || isDelivered
+          ? `
+      <h4>Захиалгын мэдээлэл:</h4>
+      <p><strong>Хаяг:</strong> ${formData.address}</p>
+      <p><strong>Утас 1:</strong> ${formData.phone}</p>
+      <p><strong>Утас 2:</strong> ${formData.phone2}</p>
+      <p><strong>Имэйл:</strong> ${formData.email}</p>
+    `
+          : "";
+
+      // Send email via API
+      await fetch("/api/send-email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          to: email,
+          subject: "Шинэ худалдан авалт баталгаажлаа!",
+          html: `
+      <p>Үйлчлүүлэгчийн <strong>${amount}₮</strong>-ийн худалдан авалтын нэхэмжлэл амжилттай үүсгэгдлээ.</p>
+      ${checkoutType}
+      <h4>Сагсанд байгаа бүтээгдэхүүнүүд:</h4>
+      ${cartItemsList}
+      ${formDataSection}
+    `,
+        }),
+      });
+    } catch (error) {
+      console.error("Error sending POS order email:", error);
+    }
+  };
+
   console.log(selected);
   console.log(paymentStatus);
   console.log(formData);
@@ -596,8 +807,10 @@ export function CartDialog({
                     handleSubmitForMethod();
                     if (selected == "qpay") {
                       createQPayInvoice();
-                    } else {
+                    } else if (selected == "storepay") {
                       createStorePayInvoice();
+                    } else if (selected == "pos") {
+                      processPOSPayment();
                     }
                   }
                 }}
@@ -651,10 +864,28 @@ export function CartDialog({
                     </p>
                   </div>
                 )}
+              {selected == "pos" && (
+                <div className="w-[400px] h-[300px] mx-auto mb-[100px]">
+                  {posProcessing ? (
+                    <div className="flex flex-col items-center justify-center">
+                      <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-[#ab3030] mb-4"></div>
+                      <p className="text-[20px] font-semibold">{paymentStatus}</p>
+                      <p className="text-[16px] text-gray-600 mt-4">
+                        Картаа POS терминалд оруулж, PIN кодоо оруулна уу.
+                      </p>
+                    </div>
+                  ) : (
+                    <div>
+                      <p className="text-[30px] font-extrabold">{paymentStatus}</p>
+                    </div>
+                  )}
+                </div>
+              )}
               <Button
                 variant="outline"
                 className="text-2xl  py-4 m-auto"
                 onClick={() => setStep(2)}
+                disabled={posProcessing}
               >
                 Буцах
               </Button>
