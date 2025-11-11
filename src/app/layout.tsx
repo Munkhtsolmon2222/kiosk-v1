@@ -6,6 +6,7 @@ import { ProductProvider } from "../../providers/productContext";
 import { CategoryProvider } from "../../providers/CategoriesContext";
 import { CartProvider } from "../../providers/cartContext";
 import { IsOpenProvider } from "../../providers/isOpenContext";
+import { ScannedProductProvider } from "../../providers/scannedProductContext";
 import HideNavCartWrapper from "./_components/hideNavCartWrapper";
 
 const geistSans = Geist({
@@ -45,7 +46,9 @@ export default function RootLayout({
             <CategoryProvider>
               <CartProvider>
                 <IsOpenProvider>
-                  <HideNavCartWrapper>{children}</HideNavCartWrapper>
+                  <ScannedProductProvider>
+                    <HideNavCartWrapper>{children}</HideNavCartWrapper>
+                  </ScannedProductProvider>
                 </IsOpenProvider>
               </CartProvider>
             </CategoryProvider>
