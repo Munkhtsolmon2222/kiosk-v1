@@ -18,7 +18,7 @@ export function Page1({ product, setPage }: any) {
   }, [product]);
   return (
     <>
-      <div className="flex justify-end">
+      <div className="flex justify-end  ">
         <DialogClose asChild>
           <Button
             variant="outline"
@@ -47,7 +47,7 @@ export function Page1({ product, setPage }: any) {
             <img
               src={image.src}
               alt={`Product Image ${index + 1}`}
-              className="rounded-lg w-[822px] h-[514px] object-cover"
+              className="rounded-lg w-[822px] h-[514px] object-cover "
             />
           </SwiperSlide>
         ))}

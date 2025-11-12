@@ -167,7 +167,7 @@ export function Page2({ product, setPage }: any) {
         <p className="text-center text-gray-600">Түр хүлээнэ үү...</p>
       ) : (
         <div>
-          <div className="flex justify-end">
+          <div className="flex justify-end ">
             <DialogClose asChild>
               <Button
                 variant="outline"
@@ -214,7 +214,7 @@ export function Page2({ product, setPage }: any) {
                       : selectedVariation?.stock_status == "onbackorder"
                       ? "text-[#00b3fa]"
                       : "text-[#ab3030]"
-                  } text-center mt-1`}
+                  } text-center mt-1 text-2xl `}
                 >
                   {selectedVariation?.stock_status == "instock"
                     ? "Бэлэн"
@@ -230,7 +230,7 @@ export function Page2({ product, setPage }: any) {
                       : product?.stock_status == "onbackorder"
                       ? "text-[#00b3fa]"
                       : "text-[#ab3030]"
-                  } text-center mt-1`}
+                  } text-center mt-1 text-2xl `}
                 >
                   {product?.stock_status == "instock"
                     ? "Бэлэн"
@@ -257,7 +257,7 @@ export function Page2({ product, setPage }: any) {
                     : product?.stock_status == "onbackorder"
                     ? "text-[#00b3fa]"
                     : "text-[#ab3030]"
-                } text-center mt-1`}
+                } text-center mt-1 text-2xl `}
               >
                 {product?.stock_status == "instock"
                   ? "Бэлэн"
@@ -305,11 +305,11 @@ export function Page2({ product, setPage }: any) {
             </button>
           </div>
           <div>
-            <p className=" text-xl text-center ">
+            <p className=" text-xl text-center p-3 ">
               Хэрвээ та галзуу бэлгийн харилцааг хүсэж байвал дараах бараануудыг
               сонирхоод үзээрэй !!!
             </p>
-            <p className="text-2xl text-[#a3554b]">
+            <p className="text-2xl text-[#a3554b] p-6 ">
               Хослуулж хэргэлвэл гал гарна
             </p>
 
