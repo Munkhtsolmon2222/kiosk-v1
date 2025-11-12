@@ -26,7 +26,7 @@ const oswald = Oswald({
 
 // ✅ Keep metadata only for SEO stuff
 export const metadata: Metadata = {
-  title: "Create Next App",
+  title: " Erchuudiin delguur  ",
   description: "call me baby 89005845",
 };
 
