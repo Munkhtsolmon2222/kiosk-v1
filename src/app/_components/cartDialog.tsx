@@ -66,6 +66,365 @@ export function CartDialog({
   const [posProcessing, setPosProcessing] = useState(false);
   const router = useRouter();
 
+  const printReceipt = (
+    orderNumber: string,
+    paymentMethod: string,
+    deliveryAddress?: string
+  ) => {
+    // Create a hidden iframe for printing (better for kiosk environment)
+    const iframe = document.createElement("iframe");
+    iframe.style.position = "fixed";
+    iframe.style.right = "0";
+    iframe.style.bottom = "0";
+    iframe.style.width = "0";
+    iframe.style.height = "0";
+    iframe.style.border = "0";
+    document.body.appendChild(iframe);
+
+    // Get current date and time in format: YYYY-MM-DD HH:MM
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const day = String(now.getDate()).padStart(2, "0");
+    const hours = String(now.getHours()).padStart(2, "0");
+    const minutes = String(now.getMinutes()).padStart(2, "0");
+    const dateTimeStr = `${year}-${month}-${day} ${hours}:${minutes}`;
+
+    // Get contact info from cookies or form data
+    const emailCookie = getCookie("clientEmail") || formData.email || "";
+    const phone1 = formData.phone || "";
+    const phone2 = formData.phone2 || "";
+
+    // Calculate totals
+    // When includeVAT is true: VAT is removed (subtracted), so finalPrice = totalPrice * 0.9
+    // When includeVAT is false: VAT is included, so finalPrice = totalPrice
+    // totalPrice always represents the price WITH VAT included
+    const finalTotal = includeVAT ? Math.floor(totalPrice * 0.9) : totalPrice;
+    // VAT amount is always 10% of the original totalPrice (before removal)
+    const vat = Math.floor(finalTotal * 0.1);
+
+    // Format payment method
+    const paymentMethodText =
+      paymentMethod === "qpay"
+        ? "QPAY"
+        : paymentMethod === "storepay"
+        ? "STOREPAY"
+        : paymentMethod === "pos"
+        ? "КАРТ"
+        : paymentMethod.toUpperCase();
+
+    // Build items table rows
+    const itemsRows = cartItems
+      .map(
+        (item: any) => `
+      <tr>
+        <td style="text-align: left; padding: 4px 0;">${item.name}</td>
+        <td style="text-align: right; padding: 4px 0;">${item.price.toLocaleString()}</td>
+        <td style="text-align: center; padding: 4px 0;">${item.quantity}</td>
+        <td style="text-align: right; padding: 4px 0;">${(
+          item.price * item.quantity
+        ).toLocaleString()}</td>
+      </tr>`
+      )
+      .join("");
+
+    // Format delivery address
+    const deliveryAddressText =
+      isDelivered && deliveryAddress ? deliveryAddress : "Бэлэнээр";
+
+    const receiptHTML = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="UTF-8">
+          <title>Захиалгын баримт</title>
+          <style>
+            @media print {
+              @page {
+                size: A4;
+                margin: 10mm;
+              }
+              * {
+                font-size: inherit !important;
+              }
+              body {
+                margin: 0;
+                padding: 0;
+                font-size: 30px !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+              }
+              .receipt-container {
+                padding: 20px !important;
+                font-size: 30px !important;
+              }
+              .header-left {
+                font-size: 26px !important;
+                line-height: 1.8 !important;
+              }
+              .header-right {
+                width: 120px !important;
+                height: 120px !important;
+              }
+              .header-right img {
+                width: 100% !important;
+                height: 100% !important;
+                object-fit: contain !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+              }
+              .order-number {
+                font-size: 36px !important;
+                font-weight: bold !important;
+              }
+              .order-details {
+                font-size: 27px !important;
+                line-height: 2 !important;
+              }
+              .items-table {
+                font-size: 27px !important;
+              }
+              .items-table th {
+                font-size: 27px !important;
+                padding: 12px 8px !important;
+                font-weight: bold !important;
+              }
+              .items-table td {
+                padding: 10px 8px !important;
+                font-size: 27px !important;
+              }
+              .summary-row {
+                font-size: 30px !important;
+                padding: 8px 0 !important;
+              }
+              .summary-label {
+                font-size: 30px !important;
+                font-weight: bold !important;
+              }
+              .delivery-address-label {
+                font-size: 30px !important;
+                font-weight: bold !important;
+              }
+              .delivery-address-text {
+                font-size: 27px !important;
+                line-height: 1.8 !important;
+              }
+            }
+            body {
+              font-family: Arial, sans-serif;
+              font-size: 27px;
+              line-height: 1.6;
+              padding: 20px;
+              max-width: 210mm;
+              margin: 0 auto;
+              background-color: #f5f5f5;
+            }
+            .receipt-container {
+              background-color: white;
+              padding: 20px;
+              box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+              font-size: 27px;
+            }
+            .header {
+              display: flex;
+              justify-content: space-between;
+              align-items: flex-start;
+              margin-bottom: 20px;
+              padding-bottom: 15px;
+              border-bottom: 2px solid #000;
+            }
+            .header-left {
+              flex: 1;
+              font-size: 26px;
+              line-height: 1.8;
+            }
+            .header-right {
+              width: 120px;
+              height: 120px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+            }
+            .header-right img {
+              width: 100%;
+              height: 100%;
+              object-fit: contain;
+            }
+            .order-info {
+              margin: 20px 0;
+              padding: 15px 0;
+              border-bottom: 1px solid #ddd;
+            }
+            .order-number {
+              font-size: 33px;
+              font-weight: bold;
+              margin-bottom: 10px;
+            }
+            .order-details {
+              font-size: 25.5px;
+              line-height: 2;
+            }
+            .items-table {
+              width: 100%;
+              border-collapse: collapse;
+              margin: 20px 0;
+            }
+            .items-table th {
+              background-color: #f0f0f0;
+              padding: 12px 8px;
+              text-align: left;
+              font-weight: bold;
+              border-bottom: 2px solid #000;
+              font-size: 25.5px;
+            }
+            .items-table th:nth-child(2),
+            .items-table th:nth-child(4) {
+              text-align: right;
+            }
+            .items-table th:nth-child(3) {
+              text-align: center;
+            }
+            .items-table td {
+              padding: 10px 8px;
+              border-bottom: 1px solid #eee;
+              font-size: 25.5px;
+            }
+            .summary {
+              margin-top: 20px;
+              padding-top: 15px;
+              border-top: 1px solid #ddd;
+            }
+            .summary-row {
+              display: flex;
+              justify-content: space-between;
+              padding: 8px 0;
+              font-size: 27px;
+            }
+            .summary-label {
+              font-weight: bold;
+              font-size: 27px;
+            }
+            .delivery-address {
+              margin-top: 15px;
+              padding-top: 15px;
+              border-top: 1px solid #ddd;
+            }
+            .delivery-address-label {
+              font-weight: bold;
+              margin-bottom: 5px;
+              font-size: 27px;
+            }
+            .delivery-address-text {
+              font-size: 25.5px;
+              line-height: 1.8;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="receipt-container">
+            <div class="header">
+              <div class="header-left">
+                ТА ЭНЭХҮҮ БАРИМТЫГ КАССЫН АЖИЛТАНД
+                ӨГЧ БАРААГАА АВНА УУ БАЯРЛАЛАА
+              </div>
+              <div class="header-right">
+                <img src="/receipt-logo.jpg" alt="Logo" />
+              </div>
+            </div>
+
+            <div class="order-info">
+              <div class="order-number">ЗАХИАЛГЫН ДУГААР: ${orderNumber}</div>
+              <div class="order-details">
+                ОГНОО: ${dateTimeStr}<br>
+                ${emailCookie}<br>
+                ${phone1} ${phone2}
+              </div>
+            </div>
+
+            <table class="items-table">
+              <thead>
+                <tr>
+                  <th>БАРАА</th>
+                  <th>ҮНЭ</th>
+                  <th>ТОО</th>
+                  <th>НИЙТ ҮНЭ</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${itemsRows}
+              </tbody>
+            </table>
+
+            <div class="summary">
+              <div class="summary-row">
+                <span class="summary-label">НИЙТ</span>
+                <span>${finalTotal.toLocaleString()}</span>
+              </div>
+              ${
+                !includeVAT
+                  ? `
+              <div class="summary-row">
+                <span class="summary-label">НӨАТ</span>
+                <span>${vat.toLocaleString()}</span>
+              </div>
+              `
+                  : ""
+              }
+              <div class="summary-row">
+                <span class="summary-label">ТӨЛБӨРИЙН ХЭЛБЭР</span>
+                <span>${paymentMethodText}</span>
+              </div>
+            </div>
+
+            ${
+              isDelivered
+                ? `
+            <div class="delivery-address">
+              <div class="delivery-address-label">ХҮРГЭЛТИЙН ХАЯГ</div>
+              <div class="delivery-address-text">${deliveryAddressText}</div>
+            </div>
+            `
+                : ""
+            }
+          </div>
+        </body>
+      </html>
+    `;
+
+    const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+    if (!iframeDoc) {
+      document.body.removeChild(iframe);
+      return;
+    }
+
+    iframeDoc.open();
+    iframeDoc.write(receiptHTML);
+    iframeDoc.close();
+
+    // Wait for content to load, then trigger print
+    iframe.onload = () => {
+      setTimeout(() => {
+        iframe.contentWindow?.print();
+        // Remove iframe after printing
+        setTimeout(() => {
+          document.body.removeChild(iframe);
+        }, 1000);
+      }, 250);
+    };
+
+    // Fallback: trigger print even if onload doesn't fire
+    setTimeout(() => {
+      if (iframe.contentWindow) {
+        iframe.contentWindow.print();
+        setTimeout(() => {
+          if (iframe.parentNode) {
+            document.body.removeChild(iframe);
+          }
+        }, 1000);
+      }
+    }, 500);
+  };
+
   const removeItem = (index: number) => {
     const updatedItems = [...cartItems];
     updatedItems.splice(index, 1); // Remove item from the array
@@ -276,11 +635,18 @@ export function CartDialog({
               status: res.status,
               error: errorData.error || errorData.message || errorText,
             });
-            
+
             // Only stop polling on critical errors, not on temporary failures
-            if (res.status >= 500 || (errorData.status === "Failed" && errorData.error)) {
+            if (
+              res.status >= 500 ||
+              (errorData.status === "Failed" && errorData.error)
+            ) {
               setPaymentStatus(
-                `Алдаа гарлаа: ${errorData.error || errorData.message || "Төлбөрийн статус шалгахад алдаа гарлаа"}`
+                `Алдаа гарлаа: ${
+                  errorData.error ||
+                  errorData.message ||
+                  "Төлбөрийн статус шалгахад алдаа гарлаа"
+                }`
               );
               // Don't clear interval immediately - might be temporary
             }
@@ -293,7 +659,7 @@ export function CartDialog({
           // Response structure: { count, paid_amount, rows[] }
           // Each row has: payment_id, payment_status, payment_date, etc.
           const paymentStatus = data.rows?.[0]?.payment_status;
-          
+
           console.log("💳 QPay Payment Status:", {
             payment_status: paymentStatus,
             count: data.count,
@@ -302,6 +668,33 @@ export function CartDialog({
 
           if (paymentStatus === "PAID") {
             setPaymentStatus("Төлбөр амжилттай!");
+
+            // Generate order number from API
+            let orderNumber = "";
+            try {
+              const orderRes = await fetch("/api/generate-order-number");
+              if (orderRes.ok) {
+                const orderData = await orderRes.json();
+                orderNumber = orderData.orderNumber;
+              } else {
+                // Fallback to date-based number if API fails
+                const now = new Date();
+                const month = String(now.getMonth() + 1).padStart(2, "0");
+                const day = String(now.getDate()).padStart(2, "0");
+                orderNumber = `${month}${day}0001`;
+              }
+            } catch (error) {
+              console.error("Error generating order number:", error);
+              // Fallback to date-based number
+              const now = new Date();
+              const month = String(now.getMonth() + 1).padStart(2, "0");
+              const day = String(now.getDate()).padStart(2, "0");
+              orderNumber = `${month}${day}0001`;
+            }
+
+            // Print receipt
+            printReceipt(orderNumber, "qpay", formData.address);
+
             setCartItems([]);
             localStorage.removeItem("cart");
             clearInterval(interval); // Stop polling
@@ -315,8 +708,11 @@ export function CartDialog({
             clearInterval(interval); // Stop polling
           } else if (data.status === "Failed") {
             // Handle API-level errors
-            const errorMessage = data.error || 
-                                (data.msgList && Array.isArray(data.msgList) ? data.msgList.join(", ") : "Тодорхойгүй алдаа");
+            const errorMessage =
+              data.error ||
+              (data.msgList && Array.isArray(data.msgList)
+                ? data.msgList.join(", ")
+                : "Тодорхойгүй алдаа");
             console.error("❌ QPay API Error:", errorMessage);
             setPaymentStatus(`Алдаа: ${errorMessage}`);
             clearInterval(interval); // Stop polling
@@ -359,6 +755,33 @@ export function CartDialog({
           // Handle the response for StorePay based on the documentation
           if (data.data?.status === "Success" && data.data?.value === true) {
             setPaymentStatus("Төлбөр амжилттай!");
+
+            // Generate order number from API
+            let orderNumber = "";
+            try {
+              const orderRes = await fetch("/api/generate-order-number");
+              if (orderRes.ok) {
+                const orderData = await orderRes.json();
+                orderNumber = orderData.orderNumber;
+              } else {
+                // Fallback to date-based number if API fails
+                const now = new Date();
+                const month = String(now.getMonth() + 1).padStart(2, "0");
+                const day = String(now.getDate()).padStart(2, "0");
+                orderNumber = `${month}${day}0001`;
+              }
+            } catch (error) {
+              console.error("Error generating order number:", error);
+              // Fallback to date-based number
+              const now = new Date();
+              const month = String(now.getMonth() + 1).padStart(2, "0");
+              const day = String(now.getDate()).padStart(2, "0");
+              orderNumber = `${month}${day}0001`;
+            }
+
+            // Print receipt
+            printReceipt(orderNumber, "storepay", formData.address);
+
             setCartItems([]);
             localStorage.removeItem("cart");
             clearInterval(interval); // Stop polling
@@ -533,7 +956,7 @@ export function CartDialog({
     console.log("=== processPOSPayment called ===");
     setStep(3);
     setPosProcessing(true);
-    setPaymentStatus("Картаа оруулна уу...");
+    setPaymentStatus("Картаа уншуулна уу...");
 
     // Calculate final amount
     // According to spec: "1000" means 10.00 төгрөг displayed in POS
@@ -579,6 +1002,32 @@ export function CartDialog({
         // SUCCESS
         setPosProcessing(false);
         setPaymentStatus("Төлбөр амжилттай!");
+
+        // Generate order number from API
+        let orderNumber = "";
+        try {
+          const orderRes = await fetch("/api/generate-order-number");
+          if (orderRes.ok) {
+            const orderData = await orderRes.json();
+            orderNumber = orderData.orderNumber;
+          } else {
+            // Fallback to date-based number if API fails
+            const now = new Date();
+            const month = String(now.getMonth() + 1).padStart(2, "0");
+            const day = String(now.getDate()).padStart(2, "0");
+            orderNumber = `${month}${day}0001`;
+          }
+        } catch (error) {
+          console.error("Error generating order number:", error);
+          // Fallback to date-based number
+          const now = new Date();
+          const month = String(now.getMonth() + 1).padStart(2, "0");
+          const day = String(now.getDate()).padStart(2, "0");
+          orderNumber = `${month}${day}0001`;
+        }
+
+        // Print receipt
+        printReceipt(orderNumber, "pos", formData.address);
 
         // Send email notification
         await sendPOSOrderEmail(finalPrice);
@@ -932,9 +1381,9 @@ export function CartDialog({
                         <p className="text-2xl font-bold text-[#ab3030]">
                           {paymentStatus || "Гүйлгээ хүлээгдэж байна..."}
                         </p>
-                        {paymentStatus === "Картаа оруулна уу..." && (
+                        {paymentStatus === "Картаа уншуулна уу..." && (
                           <p className="text-lg text-gray-600 mt-4">
-                            Картаа POS терминалд оруулж, PIN кодоо оруулна уу.
+                            Картаа POS терминалд уншуулж, PIN кодоо оруулна уу.
                           </p>
                         )}
                       </div>
