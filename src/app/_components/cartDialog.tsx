@@ -66,6 +66,9 @@ export function CartDialog({
   const [posProcessing, setPosProcessing] = useState(false);
   const router = useRouter();
 
+  // Track active print operations to prevent duplicates (using ref to persist across renders)
+  const activePrintOperationRef = useRef<string | null>(null);
+
   const printReceipt = (
     orderNumber: string,
     paymentMethod: string,
@@ -401,28 +404,55 @@ export function CartDialog({
     iframeDoc.write(receiptHTML);
     iframeDoc.close();
 
-    // Wait for content to load, then trigger print
-    iframe.onload = () => {
-      setTimeout(() => {
-        iframe.contentWindow?.print();
-        // Remove iframe after printing
-        setTimeout(() => {
-          document.body.removeChild(iframe);
-        }, 1000);
-      }, 250);
-    };
+    // Create a unique ID for this print operation
+    const operationId = `order-print-${Date.now()}-${Math.random()}`;
+    
+    // If there's already an active print operation, skip this one
+    if (activePrintOperationRef.current) {
+      console.log("Print operation already in progress, skipping duplicate call");
+      return;
+    }
+    
+    activePrintOperationRef.current = operationId;
 
-    // Fallback: trigger print even if onload doesn't fire
-    setTimeout(() => {
+    // Flag to prevent double printing
+    let hasPrinted = false;
+
+    const triggerPrint = () => {
+      // Check if already printed or iframe was removed
+      if (hasPrinted || !iframe.parentNode) return;
+      
+      hasPrinted = true;
+      
       if (iframe.contentWindow) {
         iframe.contentWindow.print();
+        
+        // Remove iframe immediately after triggering print to prevent any subsequent events
         setTimeout(() => {
           if (iframe.parentNode) {
             document.body.removeChild(iframe);
           }
-        }, 1000);
+          // Clear the active print operation flag
+          if (activePrintOperationRef.current === operationId) {
+            activePrintOperationRef.current = null;
+          }
+        }, 100);
       }
-    }, 500);
+    };
+
+    // Wait for content to load, then trigger print
+    iframe.onload = () => {
+      // Use a small delay to ensure content is fully loaded
+      setTimeout(() => {
+        triggerPrint();
+      }, 100);
+    };
+
+    // Fallback: trigger print even if onload doesn't fire
+    // Use a longer timeout to give onload a chance first
+    setTimeout(() => {
+      triggerPrint();
+    }, 300);
   };
 
   const removeItem = (index: number) => {
@@ -952,10 +982,16 @@ export function CartDialog({
     }
   };
 
+  // Timeout ref to track payment timeout
+  const posPaymentTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  // Ref to track if payment is processing (to avoid stale state in timeout)
+  const isProcessingRef = useRef(false);
+
   const processPOSPayment = async () => {
     console.log("=== processPOSPayment called ===");
     setStep(3);
     setPosProcessing(true);
+    isProcessingRef.current = true;
     setPaymentStatus("Картаа уншуулна уу...");
 
     // Calculate final amount
@@ -967,6 +1003,17 @@ export function CartDialog({
 
     const requestId = `PAY-${Date.now()}`;
     setPosRequestId(requestId);
+
+    // Set a timeout to prevent indefinite waiting (9 minutes = 540000ms as per POS timeout)
+    // Add extra buffer for network delays
+    posPaymentTimeoutRef.current = setTimeout(() => {
+      if (isProcessingRef.current) {
+        console.error("⚠️ POS Payment timeout - no response received");
+        isProcessingRef.current = false;
+        setPosProcessing(false);
+        setPaymentStatus("Төлбөрийн хариу ирээгүй. Дахин оролдоно уу эсвэл кассын ажилтантай холбогдоно уу.");
+      }
+    }, 600000); // 10 minutes total timeout
 
     const purchaseRequest = {
       requestID: requestId,
@@ -996,10 +1043,17 @@ export function CartDialog({
       console.log("POS Response Code:", data.responseCode);
       console.log("POS Response Desc:", data.responseDesc);
 
+      // Clear timeout on response
+      if (posPaymentTimeoutRef.current) {
+        clearTimeout(posPaymentTimeoutRef.current);
+        posPaymentTimeoutRef.current = null;
+      }
+
       // Handle response codes - Golomt POS uses "00" for success
       if (data.responseCode === "00" || data.responseCode === "0") {
         console.log("POS Payment SUCCESS!");
         // SUCCESS
+        isProcessingRef.current = false;
         setPosProcessing(false);
         setPaymentStatus("Төлбөр амжилттай!");
 
@@ -1045,12 +1099,24 @@ export function CartDialog({
         }, 3000);
       } else {
         // Handle error - show response description from POS
+        isProcessingRef.current = false;
         setPosProcessing(false);
+        // Clear timeout on error
+        if (posPaymentTimeoutRef.current) {
+          clearTimeout(posPaymentTimeoutRef.current);
+          posPaymentTimeoutRef.current = null;
+        }
         const errorMsg = data.responseDesc || "Төлбөр амжилтгүй боллоо";
         setPaymentStatus(errorMsg); // Remove "Алдаа: " prefix, UI will show it
       }
     } catch (error) {
+      isProcessingRef.current = false;
       setPosProcessing(false);
+      // Clear timeout on error
+      if (posPaymentTimeoutRef.current) {
+        clearTimeout(posPaymentTimeoutRef.current);
+        posPaymentTimeoutRef.current = null;
+      }
       const errorMsg =
         error instanceof Error
           ? error.message
@@ -1058,6 +1124,15 @@ export function CartDialog({
       setPaymentStatus(errorMsg); // UI will show "Алдаа гарлаа" header
     }
   };
+
+  // Cleanup timeout on component unmount
+  useEffect(() => {
+    return () => {
+      if (posPaymentTimeoutRef.current) {
+        clearTimeout(posPaymentTimeoutRef.current);
+      }
+    };
+  }, []);
 
   const sendPOSOrderEmail = async (amount: number) => {
     try {
@@ -1135,16 +1210,60 @@ export function CartDialog({
   console.log(selected);
   console.log(paymentStatus);
   console.log(formData);
+  // Handle dialog close - prevent closing during active POS payment
+  const handleDialogClose = (isOpen: boolean) => {
+    // Prevent closing if POS payment is in progress
+    if (!isOpen && posProcessing) {
+      // Show alert to user
+      alert("Төлбөр боловсруулаж байна. Түр хүлээнэ үү. Модал хаах боломжгүй.");
+      // Force dialog to stay open
+      return;
+    }
+    
+    // Allow normal close if not processing
+    setOpen(false);
+    if (!isOpen) {
+      setStep(1); // Reset page to 1 when dialog closes
+      
+      // Cleanup: If POS was processing but user somehow closed, reset state
+      if (posProcessing || isProcessingRef.current) {
+        console.warn("⚠️ Dialog closed during active POS payment - resetting state");
+        isProcessingRef.current = false;
+        setPosProcessing(false);
+        setPaymentStatus("");
+        setPosRequestId("");
+        // Clear timeout
+        if (posPaymentTimeoutRef.current) {
+          clearTimeout(posPaymentTimeoutRef.current);
+          posPaymentTimeoutRef.current = null;
+        }
+      }
+    }
+  };
+
   return (
     <Dialog
-      onOpenChange={(isOpen) => {
-        setOpen(false);
-        if (!isOpen) setStep(1); // Reset page to 1 when dialog closes
-      }}
+      onOpenChange={handleDialogClose}
       open={open}
     >
       <IdleRedirect timeout={600000} redirectPath="/" />
-      <DialogContent className="p-6 ">
+      <DialogContent 
+        className="p-6"
+        onPointerDownOutside={(e) => {
+          // Prevent closing by clicking outside during POS payment
+          if (posProcessing) {
+            e.preventDefault();
+            alert("Төлбөр боловсруулаж байна. Түр хүлээнэ үү. Модал хаах боломжгүй.");
+          }
+        }}
+        onEscapeKeyDown={(e) => {
+          // Prevent closing by pressing ESC during POS payment
+          if (posProcessing) {
+            e.preventDefault();
+            alert("Төлбөр боловсруулаж байна. Түр хүлээнэ үү. Модал хаах боломжгүй.");
+          }
+        }}
+      >
         <DialogHeader>
           <DialogTitle className="text-3xl font-bold margin-auto">
             {step === 1 ? "Таны сагс" : "Төлбөр төлөх"}

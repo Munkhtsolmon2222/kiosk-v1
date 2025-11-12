@@ -1,7 +1,7 @@
 import { AiFillSetting } from "react-icons/ai";
 import { Dialog, DialogContent, DialogTitle } from "@radix-ui/react-dialog";
 import { Button } from "@/components/ui/button";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { DialogFooter } from "@/components/ui/dialog";
 import { useCategories } from "../../../providers/CategoriesContext";
 import {
@@ -253,7 +253,21 @@ export function Settings({
     }
   };
 
+  // Track active print operations to prevent duplicates (using ref to persist across renders)
+  const activePrintOperationRef = useRef<string | null>(null);
+
   const printSettlementReceipt = (receiptData: string) => {
+    // Create a unique ID for this print operation
+    const operationId = `settlement-print-${Date.now()}-${Math.random()}`;
+    
+    // If there's already an active print operation, skip this one
+    if (activePrintOperationRef.current) {
+      console.log("Print operation already in progress, skipping duplicate call");
+      return;
+    }
+    
+    activePrintOperationRef.current = operationId;
+    
     // Create a hidden iframe for printing (better for kiosk environment)
     const iframe = document.createElement("iframe");
     iframe.style.position = "fixed";
@@ -442,34 +456,45 @@ export function Settings({
     iframeDoc.write(receiptHTML);
     iframeDoc.close();
 
-    // Flag to prevent double printing
+    // Flag to prevent double printing - use a unique identifier
+    const printId = `print-${Date.now()}-${Math.random()}`;
     let hasPrinted = false;
 
     const triggerPrint = () => {
-      if (hasPrinted) return;
+      // Check if already printed or iframe was removed
+      if (hasPrinted || !iframe.parentNode) return;
+      
       hasPrinted = true;
+      
       if (iframe.contentWindow) {
         iframe.contentWindow.print();
-        // Remove iframe after printing
+        
+        // Remove iframe immediately after triggering print to prevent any subsequent events
         setTimeout(() => {
           if (iframe.parentNode) {
             document.body.removeChild(iframe);
           }
-        }, 1000);
+          // Clear the active print operation flag
+          if (activePrintOperationRef.current === operationId) {
+            activePrintOperationRef.current = null;
+          }
+        }, 100);
       }
     };
 
     // Wait for content to load, then trigger print
     iframe.onload = () => {
+      // Use a small delay to ensure content is fully loaded
       setTimeout(() => {
         triggerPrint();
-      }, 250);
+      }, 100);
     };
 
     // Fallback: trigger print even if onload doesn't fire
+    // Use a longer timeout to give onload a chance first
     setTimeout(() => {
       triggerPrint();
-    }, 500);
+    }, 300);
   };
 
   const performSettlement = async () => {
