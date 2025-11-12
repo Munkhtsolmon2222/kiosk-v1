@@ -62,6 +62,8 @@ export function CartDialog({
   const [phoneNumber, setPhoneNumber] = useState("");
   const [phoneError, setPhoneError] = useState<any>("");
   const [qrImageLoading, setQRImageLoading] = useState(false);
+  const [posRequestId, setPosRequestId] = useState("");
+  const [posProcessing, setPosProcessing] = useState(false);
   const router = useRouter();
 
   const removeItem = (index: number) => {
@@ -453,6 +455,234 @@ export function CartDialog({
     }
   };
 
+  // POS Payment Functions - Direct to POS service (matching Golomt POS integration)
+  const sendPOSRequest = async (requestData: any) => {
+    try {
+      // Convert to JSON string and then to Base64
+      const jsonString = JSON.stringify(requestData);
+      const base64Data = btoa(jsonString); // Browser's btoa for Base64 encoding
+      console.log("Request JSON:", jsonString);
+      console.log("Base64:", base64Data);
+
+      // Get POS service URL from environment or use default
+      const posServiceUrl =
+        process.env.NEXT_PUBLIC_POS_SERVICE_URL || "http://localhost:8500";
+      // Don't use encodeURIComponent - match Golomt POS integration
+      const requestUrl = `${posServiceUrl}/requestToPos/message?data=${base64Data}`;
+
+      console.log("Sending POS request to:", requestUrl);
+      console.log("Request data:", requestData);
+
+      // Make GET request directly to POS service
+      const response = await fetch(requestUrl, {
+        method: "GET",
+      });
+
+      console.log("Response status:", response.status);
+      console.log("Response ok:", response.ok);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error("POS Service Error:", errorText);
+        throw new Error("POS терминалтай холбогдож чадсангүй");
+      }
+
+      const data = await response.json();
+      console.log("POS Response:", data);
+
+      // Parse response similar to Golomt POS integration
+      // The response has a PosResult field that contains a JSON string
+      let responseCode = null;
+      let responseDesc = null;
+
+      if (data.PosResult) {
+        try {
+          const parsedResult = JSON.parse(data.PosResult);
+          responseCode = parsedResult.responseCode;
+          responseDesc = parsedResult.responseDesc;
+          console.log(
+            "Parsed PosResult - Code:",
+            responseCode,
+            "Desc:",
+            responseDesc
+          );
+        } catch (e) {
+          console.error("Error parsing PosResult:", e);
+          // Fallback to direct fields if PosResult parsing fails
+          responseCode = data.responseCode;
+          responseDesc = data.responseDesc;
+        }
+      } else {
+        // Fallback to direct fields
+        responseCode = data.responseCode;
+        responseDesc = data.responseDesc;
+      }
+
+      return {
+        responseCode,
+        responseDesc,
+        rawData: data,
+      };
+    } catch (error) {
+      console.error("POS Request Error:", error);
+      throw error;
+    }
+  };
+
+  const processPOSPayment = async () => {
+    console.log("=== processPOSPayment called ===");
+    setStep(3);
+    setPosProcessing(true);
+    setPaymentStatus("Картаа оруулна уу...");
+
+    // Calculate final amount
+    // According to spec: "1000" means 10.00 төгрөг displayed in POS
+    // So: amount field value / 100 = display amount
+    // To charge 1000 MNT, send "100000" (1000 * 100)
+    const finalPrice = includeVAT ? Math.floor(totalPrice * 0.9) : totalPrice;
+    const amountInSmallestUnit = Math.round(finalPrice * 100).toString();
+
+    const requestId = `PAY-${Date.now()}`;
+    setPosRequestId(requestId);
+
+    const purchaseRequest = {
+      requestID: requestId,
+      portNo: process.env.NEXT_PUBLIC_POS_PORT_NO || "9",
+      timeout: "540000",
+      terminalID: process.env.NEXT_PUBLIC_POS_TERMINAL_ID || "15168631",
+      amount: amountInSmallestUnit,
+      currencyCode: "496",
+      operationCode: "1", // Purchase
+      bandWidth: "115200",
+      cMode: "",
+      cMode2: "",
+      additionalData: "",
+      cardEntryMode: "",
+      fileData: "",
+    };
+
+    console.log("POS Purchase Request:", purchaseRequest);
+    console.log("Amount in smallest unit:", amountInSmallestUnit);
+    console.log("Final price:", finalPrice);
+
+    try {
+      // Send request directly to POS service
+      const data = await sendPOSRequest(purchaseRequest);
+
+      console.log("POS Purchase Response Data:", data);
+      console.log("POS Response Code:", data.responseCode);
+      console.log("POS Response Desc:", data.responseDesc);
+
+      // Handle response codes - Golomt POS uses "00" for success
+      if (data.responseCode === "00" || data.responseCode === "0") {
+        console.log("POS Payment SUCCESS!");
+        // SUCCESS
+        setPosProcessing(false);
+        setPaymentStatus("Төлбөр амжилттай!");
+
+        // Send email notification
+        await sendPOSOrderEmail(finalPrice);
+
+        // Clear cart
+        setCartItems([]);
+        localStorage.removeItem("cart");
+
+        // Redirect after delay
+        setTimeout(() => {
+          setOpen(false);
+          setStep(1);
+          setPaymentStatus("");
+          router.push("/");
+        }, 3000);
+      } else {
+        // Handle error - show response description from POS
+        setPosProcessing(false);
+        const errorMsg = data.responseDesc || "Төлбөр амжилтгүй боллоо";
+        setPaymentStatus(errorMsg); // Remove "Алдаа: " prefix, UI will show it
+      }
+    } catch (error) {
+      setPosProcessing(false);
+      const errorMsg =
+        error instanceof Error
+          ? error.message
+          : "Төлбөр боловсруулахад алдаа гарлаа. Дахин оролдоно уу.";
+      setPaymentStatus(errorMsg); // UI will show "Алдаа гарлаа" header
+    }
+  };
+
+  const sendPOSOrderEmail = async (amount: number) => {
+    try {
+      const emailCookie = document.cookie
+        .split("; ")
+        .find((row) => row.startsWith("clientEmail="))
+        ?.split("=")[1];
+
+      if (!emailCookie) {
+        console.error("Email cookie not found");
+        return;
+      }
+
+      const email = decodeURIComponent(emailCookie);
+
+      // Format email content (similar to QPay/StorePay)
+      const checkoutType = `<p><strong>Худалдан авалтын төрөл:</strong> ${
+        isDelivered ? "Хүргэлтээр" : "Бэлэнээр"
+      }</p>`;
+
+      const sortedCartItems = [
+        ...cartItems.filter((item: any) => item.stock_status === "instock"),
+        ...cartItems.filter((item: any) => item.stock_status === "onbackorder"),
+      ];
+
+      const cartItemsList = sortedCartItems
+        .map(
+          (item: any) =>
+            `<p><strong>${item.name}</strong> (Барааны код: ${item.id}) - ${
+              item.price
+            }₮, Ширхэг: ${item.quantity} <em>(${
+              item.stock_status === "onbackorder" ? "Захиалгаар" : "Бэлэн"
+            })</em></p>`
+        )
+        .join("");
+
+      const hasBackorderItems = cartItems.some(
+        (item: any) => item.stock_status === "onbackorder"
+      );
+
+      const formDataSection =
+        hasBackorderItems || isDelivered
+          ? `
+      <h4>Захиалгын мэдээлэл:</h4>
+      <p><strong>Хаяг:</strong> ${formData.address}</p>
+      <p><strong>Утас 1:</strong> ${formData.phone}</p>
+      <p><strong>Утас 2:</strong> ${formData.phone2}</p>
+      <p><strong>Имэйл:</strong> ${formData.email}</p>
+    `
+          : "";
+
+      // Send email via API
+      await fetch("/api/send-email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          to: email,
+          subject: "Шинэ худалдан авалт баталгаажлаа!",
+          html: `
+      <p>Үйлчлүүлэгчийн <strong>${amount}₮</strong>-ийн худалдан авалтын нэхэмжлэл амжилттай үүсгэгдлээ.</p>
+      ${checkoutType}
+      <h4>Сагсанд байгаа бүтээгдэхүүнүүд:</h4>
+      ${cartItemsList}
+      ${formDataSection}
+    `,
+        }),
+      });
+    } catch (error) {
+      console.error("Error sending POS order email:", error);
+    }
+  };
+
   console.log(selected);
   console.log(paymentStatus);
   console.log(formData);
@@ -638,8 +868,10 @@ export function CartDialog({
                     handleSubmitForMethod();
                     if (selected == "qpay") {
                       createQPayInvoice();
-                    } else {
+                    } else if (selected == "storepay") {
                       createStorePayInvoice();
+                    } else if (selected == "pos") {
+                      processPOSPayment();
                     }
                   }
                 }}
@@ -672,11 +904,6 @@ export function CartDialog({
                   <p className="text-[30px] font-extrabold">{paymentStatus}</p>
                 </div>
               )}
-              {paymentStatus && (
-                <div className="mt-4 m-auto">
-                  <p>{paymentStatus}</p>
-                </div>
-              )}
               {selected == "storepay" && (
                 <div className="w-[400px] h-[200px] mx-auto mb-[100px]">
                   <p className="text-[20px]">
@@ -693,13 +920,98 @@ export function CartDialog({
                     </p>
                   </div>
                 )}
-              <Button
-                variant="outline"
-                className="text-2xl  py-4 m-auto"
-                onClick={() => setStep(2)}
-              >
-                Буцах
-              </Button>
+              {selected == "pos" && (
+                <div className="w-full max-w-md mx-auto flex flex-col items-center justify-center min-h-[400px]">
+                  {posProcessing &&
+                  paymentStatus !== "Төлбөр амжилттай!" &&
+                  !paymentStatus.includes("Алдаа") &&
+                  !paymentStatus.includes("алдаа") ? (
+                    <div className="flex flex-col items-center justify-center space-y-6">
+                      <div className="animate-spin rounded-full h-20 w-20 border-4 border-[#ab3030] border-t-transparent"></div>
+                      <div className="text-center space-y-2">
+                        <p className="text-2xl font-bold text-[#ab3030]">
+                          {paymentStatus || "Гүйлгээ хүлээгдэж байна..."}
+                        </p>
+                        {paymentStatus === "Картаа оруулна уу..." && (
+                          <p className="text-lg text-gray-600 mt-4">
+                            Картаа POS терминалд оруулж, PIN кодоо оруулна уу.
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  ) : paymentStatus === "Төлбөр амжилттай!" ? (
+                    <div className="flex flex-col items-center justify-center space-y-6">
+                      <div className="w-20 h-20 rounded-full bg-green-500 flex items-center justify-center">
+                        <svg
+                          className="w-12 h-12 text-white"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={3}
+                            d="M5 13l4 4L19 7"
+                          />
+                        </svg>
+                      </div>
+                      <p className="text-3xl font-bold text-green-600">
+                        {paymentStatus}
+                      </p>
+                    </div>
+                  ) : paymentStatus ? (
+                    <div className="flex flex-col items-center justify-center space-y-6">
+                      <div className="w-20 h-20 rounded-full bg-red-500 flex items-center justify-center">
+                        <svg
+                          className="w-12 h-12 text-white"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={3}
+                            d="M6 18L18 6M6 6l12 12"
+                          />
+                        </svg>
+                      </div>
+                      <div className="text-center space-y-2">
+                        <p className="text-2xl font-bold text-red-600">
+                          Алдаа гарлаа
+                        </p>
+                        <p className="text-lg text-gray-700 max-w-sm">
+                          {paymentStatus
+                            .replace("Алдаа: ", "")
+                            .replace("алдаа: ", "")}
+                        </p>
+                      </div>
+                    </div>
+                  ) : null}
+                </div>
+              )}
+              {selected == "pos" && !posProcessing && (
+                <Button
+                  variant="outline"
+                  className="text-2xl px-8 py-4 m-auto mt-6"
+                  onClick={() => {
+                    setStep(2);
+                    setPaymentStatus("");
+                  }}
+                >
+                  Буцах
+                </Button>
+              )}
+              {selected !== "pos" && (
+                <Button
+                  variant="outline"
+                  className="text-2xl  py-4 m-auto"
+                  onClick={() => setStep(2)}
+                >
+                  Буцах
+                </Button>
+              )}
             </div>
           </>
         )}

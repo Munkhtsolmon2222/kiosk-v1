@@ -52,6 +52,16 @@ export function Settings({
   });
   const [departmentError, setDepartmentError] = useState(false);
   const [department, setDepartment] = useState<any>("kegel");
+  const [checkingConnection, setCheckingConnection] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState<{
+    type: "success" | "error" | null;
+    message: string;
+  }>({ type: null, message: "" });
+  const [settlementing, setSettlementing] = useState(false);
+  const [settlementStatus, setSettlementStatus] = useState<{
+    type: "success" | "error" | null;
+    message: string;
+  }>({ type: null, message: "" });
 
   const handleOpen = () => {
     setOpen(true);
@@ -89,9 +99,13 @@ export function Settings({
       valid = false;
       setCategoryError((prev) => ({ ...prev, subCategory: true }));
     }
-    if (selectedThirdCategory === "choose category" || !selectedThirdCategory) {
-      valid = false;
-      setCategoryError((prev) => ({ ...prev, thirdCategory: true }));
+    // Only validate third category if third categories exist (field is visible)
+    // thirdCategories is already calculated in component body based on selectedSubCategory
+    if (thirdCategories.length > 0) {
+      if (selectedThirdCategory === "choose category" || !selectedThirdCategory) {
+        valid = false;
+        setCategoryError((prev) => ({ ...prev, thirdCategory: true }));
+      }
     }
 
     // If any category is not selected correctly, show alert and return
@@ -152,6 +166,263 @@ export function Settings({
     setIsCodeVerified(false);
     setCode("");
     setOpen(false);
+    setConnectionStatus({ type: null, message: "" });
+    setSettlementStatus({ type: null, message: "" });
+  };
+
+  const checkPOSConnection = async () => {
+    setCheckingConnection(true);
+    setConnectionStatus({ type: null, message: "" });
+
+    try {
+      const requestJson = {
+        requestID: `CHECK-${Date.now()}`,
+        portNo: process.env.NEXT_PUBLIC_POS_PORT_NO || "9",
+        timeout: "540000",
+        terminalID: process.env.NEXT_PUBLIC_POS_TERMINAL_ID || "15168631",
+        amount: "",
+        currencyCode: "496",
+        operationCode: "26",
+        bandWidth: "115200",
+        cMode: "",
+        cMode2: "",
+        additionalData: "",
+        cardEntryMode: "",
+        fileData: "",
+      };
+
+      const jsonString = JSON.stringify(requestJson);
+      const base64Data = btoa(jsonString);
+
+      const posServiceUrl =
+        process.env.NEXT_PUBLIC_POS_SERVICE_URL || "http://localhost:8500";
+      const requestUrl = `${posServiceUrl}/requestToPos/message?data=${base64Data}`;
+
+      const response = await fetch(requestUrl, {
+        method: "GET",
+      });
+
+      if (!response.ok) {
+        setConnectionStatus({
+          type: "error",
+          message: "POS терминалтай холбогдож чадсангүй",
+        });
+        setCheckingConnection(false);
+        return;
+      }
+
+      const result = await response.json();
+
+      // Parse PosResult similar to the sample function
+      let responseCode = null;
+      let responseDesc = null;
+
+      if (result.PosResult) {
+        try {
+          const parsedResult = JSON.parse(result.PosResult);
+          responseCode = parsedResult.responseCode;
+          responseDesc = parsedResult.responseDesc;
+        } catch (e) {
+          // Fallback to direct fields if PosResult parsing fails
+          responseCode = result.responseCode;
+          responseDesc = result.responseDesc;
+        }
+      } else {
+        responseCode = result.responseCode;
+        responseDesc = result.responseDesc;
+      }
+
+      if (responseCode === "00" || responseCode === "0") {
+        setConnectionStatus({
+          type: "success",
+          message: "POS терминалтай холболт амжилттай",
+        });
+      } else {
+        setConnectionStatus({
+          type: "error",
+          message: responseDesc || "Алдаа гарлаа",
+        });
+      }
+    } catch (error) {
+      setConnectionStatus({
+        type: "error",
+        message: "POS терминалтай холбогдож чадсангүй",
+      });
+    } finally {
+      setCheckingConnection(false);
+    }
+  };
+
+  const performSettlement = async () => {
+    setSettlementing(true);
+    setSettlementStatus({ type: null, message: "" });
+
+    try {
+      // Step 1: Check connection first (operation code 26)
+      const checkRequestJson = {
+        requestID: `CHECK-${Date.now()}`,
+        portNo: process.env.NEXT_PUBLIC_POS_PORT_NO || "9",
+        timeout: "540000",
+        terminalID: process.env.NEXT_PUBLIC_POS_TERMINAL_ID || "15168631",
+        amount: "",
+        currencyCode: "496",
+        operationCode: "26",
+        bandWidth: "115200",
+        cMode: "",
+        cMode2: "",
+        additionalData: "",
+        cardEntryMode: "",
+        fileData: "",
+      };
+
+      const checkJsonString = JSON.stringify(checkRequestJson);
+      const checkBase64Data = btoa(checkJsonString);
+
+      const posServiceUrl =
+        process.env.NEXT_PUBLIC_POS_SERVICE_URL || "http://localhost:8500";
+      const checkRequestUrl = `${posServiceUrl}/requestToPos/message?data=${checkBase64Data}`;
+
+      // First, check connection
+      const checkResponse = await fetch(checkRequestUrl, {
+        method: "GET",
+      });
+
+      if (!checkResponse.ok) {
+        setSettlementStatus({
+          type: "error",
+          message: "Холболт шалгахад алдаа гарлаа",
+        });
+        setSettlementing(false);
+        return;
+      }
+
+      const checkResult = await checkResponse.json();
+
+      // Parse check connection response
+      let checkResponseCode = null;
+      if (checkResult.PosResult) {
+        try {
+          const parsedCheckResult = JSON.parse(checkResult.PosResult);
+          checkResponseCode = parsedCheckResult.responseCode;
+        } catch (e) {
+          checkResponseCode = checkResult.responseCode;
+        }
+      } else {
+        checkResponseCode = checkResult.responseCode;
+      }
+
+      // If connection check fails, stop here
+      if (checkResponseCode !== "00" && checkResponseCode !== "0") {
+        setSettlementStatus({
+          type: "error",
+          message: "Холболт шалгахад алдаа гарлаа. Өдөр өндөрлөх боломжгүй.",
+        });
+        setSettlementing(false);
+        return;
+      }
+
+      // Step 2: Perform settlement (operation code 59)
+      const settlementRequestJson = {
+        requestID: `SETTLE-${Date.now()}`,
+        portNo: process.env.NEXT_PUBLIC_POS_PORT_NO || "9",
+        timeout: "540000",
+        terminalID: process.env.NEXT_PUBLIC_POS_TERMINAL_ID || "15168631",
+        amount: "",
+        currencyCode: "496",
+        operationCode: "59",
+        bandWidth: "115200",
+        cMode: "",
+        cMode2: "",
+        additionalData: "",
+        cardEntryMode: "",
+        fileData: "",
+      };
+
+      const settlementJsonString = JSON.stringify(settlementRequestJson);
+      const settlementBase64Data = btoa(settlementJsonString);
+      const settlementRequestUrl = `${posServiceUrl}/requestToPos/message?data=${settlementBase64Data}`;
+
+      const settlementResponse = await fetch(settlementRequestUrl, {
+        method: "GET",
+      });
+
+      if (!settlementResponse.ok) {
+        setSettlementStatus({
+          type: "error",
+          message: "Өдөр өндөрлөхөд алдаа гарлаа",
+        });
+        setSettlementing(false);
+        return;
+      }
+
+      const settlementResult = await settlementResponse.json();
+
+      // Parse settlement response
+      let settlementResponseCode = null;
+      let settlementResponseDesc = null;
+      let settlementData = null;
+
+      if (settlementResult.PosResult) {
+        try {
+          const parsedSettlementResult = JSON.parse(settlementResult.PosResult);
+          settlementResponseCode = parsedSettlementResult.responseCode;
+          settlementResponseDesc = parsedSettlementResult.responseDesc;
+          settlementData = parsedSettlementResult.data;
+        } catch (e) {
+          settlementResponseCode = settlementResult.responseCode;
+          settlementResponseDesc = settlementResult.responseDesc;
+          settlementData = settlementResult.data;
+        }
+      } else {
+        settlementResponseCode = settlementResult.responseCode;
+        settlementResponseDesc = settlementResult.responseDesc;
+        settlementData = settlementResult.data;
+      }
+
+      if (settlementResponseCode === "00" || settlementResponseCode === "0") {
+        // If there's receipt data, decode it
+        if (settlementData) {
+          try {
+            const decodedData = JSON.parse(atob(settlementData));
+            if (decodedData.receiptData) {
+              setSettlementStatus({
+                type: "success",
+                message: "Өдөр өндөрлөлт амжилттай. Баримтны дата бэлэн байна.",
+              });
+              console.log("Receipt Data:", decodedData.receiptData);
+              // TODO: Handle receipt printing/storage here if needed
+            } else {
+              setSettlementStatus({
+                type: "success",
+                message: "Өдөр өндөрлөгөө хийгдсэн",
+              });
+            }
+          } catch (e) {
+            setSettlementStatus({
+              type: "success",
+              message: "Өдөр өндөрлөлт амжилттай",
+            });
+          }
+        } else {
+          setSettlementStatus({
+            type: "success",
+            message: "Өдөр өндөрлөлт амжилттай",
+          });
+        }
+      } else {
+        setSettlementStatus({
+          type: "error",
+          message: settlementResponseDesc || "Өдөр өндөрлөхөд алдаа гарлаа",
+        });
+      }
+    } catch (error) {
+      setSettlementStatus({
+        type: "error",
+        message: "Өдөр өндөрлөхөд алдаа гарлаа",
+      });
+    } finally {
+      setSettlementing(false);
+    }
   };
 
   useEffect(() => {
@@ -338,6 +609,72 @@ export function Settings({
                     <p className="text-red-500 text-sm mt-1">
                       Please select a department.
                     </p>
+                  )}
+                </div>
+
+                {/* POS Connection Check */}
+                <div className="mt-4 pt-4 border-t">
+                  <label className="block text-sm font-medium mb-2">
+                    POS Холболт Шалгах
+                  </label>
+                  <Button
+                    onClick={checkPOSConnection}
+                    disabled={checkingConnection}
+                    variant="outline"
+                    className="w-full"
+                  >
+                    {checkingConnection ? (
+                      <span className="flex items-center gap-2">
+                        <span className="animate-spin rounded-full h-4 w-4 border-2 border-gray-300 border-t-gray-600"></span>
+                        Шалгаж байна...
+                      </span>
+                    ) : (
+                      "Холболт шалгах"
+                    )}
+                  </Button>
+                  {connectionStatus.type && (
+                    <div
+                      className={`mt-2 p-2 rounded text-sm ${
+                        connectionStatus.type === "success"
+                          ? "bg-green-100 text-green-700"
+                          : "bg-red-100 text-red-700"
+                      }`}
+                    >
+                      {connectionStatus.message}
+                    </div>
+                  )}
+                </div>
+
+                {/* POS Settlement */}
+                <div className="mt-4">
+                  <label className="block text-sm font-medium mb-2">
+                    Өдөр Өндөрлөх
+                  </label>
+                  <Button
+                    onClick={performSettlement}
+                    disabled={settlementing || checkingConnection}
+                    variant="outline"
+                    className="w-full"
+                  >
+                    {settlementing ? (
+                      <span className="flex items-center gap-2">
+                        <span className="animate-spin rounded-full h-4 w-4 border-2 border-gray-300 border-t-gray-600"></span>
+                        Өдөр өндөрлөж байна...
+                      </span>
+                    ) : (
+                      "Өдөр өндөрлөх"
+                    )}
+                  </Button>
+                  {settlementStatus.type && (
+                    <div
+                      className={`mt-2 p-2 rounded text-sm ${
+                        settlementStatus.type === "success"
+                          ? "bg-green-100 text-green-700"
+                          : "bg-red-100 text-red-700"
+                      }`}
+                    >
+                      {settlementStatus.message}
+                    </div>
                   )}
                 </div>
               </div>
