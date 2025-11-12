@@ -1226,6 +1226,8 @@ export function CartDialog({
   console.log(paymentStatus);
   console.log(formData);
   // Handle dialog close - prevent closing during active POS payment
+  // Note: StorePay closing is prevented via onPointerDownOutside and onEscapeKeyDown
+  // to allow close button to work
   const handleDialogClose = (isOpen: boolean) => {
     // Prevent closing if POS payment is in progress
     if (!isOpen && posProcessing) {
@@ -1264,8 +1266,8 @@ export function CartDialog({
       <DialogContent
         className="p-6"
         onPointerDownOutside={(e) => {
-          // Prevent closing by clicking outside during POS payment
-          if (posProcessing) {
+          // Prevent closing by clicking outside during POS payment or StorePay payment
+          if (posProcessing || (selected === "storepay" && paymentStatus !== "Төлбөр амжилттай!")) {
             e.preventDefault();
             alert(
               "Төлбөр боловсруулж байна. Түр хүлээнэ үү. Модал хаах боломжгүй."
@@ -1273,8 +1275,8 @@ export function CartDialog({
           }
         }}
         onEscapeKeyDown={(e) => {
-          // Prevent closing by pressing ESC during POS payment
-          if (posProcessing) {
+          // Prevent closing by pressing ESC during POS payment or StorePay payment
+          if (posProcessing || (selected === "storepay" && paymentStatus !== "Төлбөр амжилттай!")) {
             e.preventDefault();
             alert(
               "Төлбөр боловсруулж байна. Түр хүлээнэ үү. Модал хаах боломжгүй."
