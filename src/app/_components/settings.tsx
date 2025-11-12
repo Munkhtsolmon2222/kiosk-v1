@@ -442,27 +442,33 @@ export function Settings({
     iframeDoc.write(receiptHTML);
     iframeDoc.close();
 
-    // Wait for content to load, then trigger print
-    iframe.onload = () => {
-      setTimeout(() => {
-        iframe.contentWindow?.print();
-        // Remove iframe after printing
-        setTimeout(() => {
-          document.body.removeChild(iframe);
-        }, 1000);
-      }, 250);
-    };
+    // Flag to prevent double printing
+    let hasPrinted = false;
 
-    // Fallback: trigger print even if onload doesn't fire
-    setTimeout(() => {
+    const triggerPrint = () => {
+      if (hasPrinted) return;
+      hasPrinted = true;
       if (iframe.contentWindow) {
         iframe.contentWindow.print();
+        // Remove iframe after printing
         setTimeout(() => {
           if (iframe.parentNode) {
             document.body.removeChild(iframe);
           }
         }, 1000);
       }
+    };
+
+    // Wait for content to load, then trigger print
+    iframe.onload = () => {
+      setTimeout(() => {
+        triggerPrint();
+      }, 250);
+    };
+
+    // Fallback: trigger print even if onload doesn't fire
+    setTimeout(() => {
+      triggerPrint();
     }, 500);
   };
 
