@@ -253,6 +253,219 @@ export function Settings({
     }
   };
 
+  const printSettlementReceipt = (receiptData: string) => {
+    // Create a hidden iframe for printing (better for kiosk environment)
+    const iframe = document.createElement("iframe");
+    iframe.style.position = "fixed";
+    iframe.style.right = "0";
+    iframe.style.bottom = "0";
+    iframe.style.width = "0";
+    iframe.style.height = "0";
+    iframe.style.border = "0";
+    document.body.appendChild(iframe);
+
+    // Extract key-value pairs from receipt data using regex (matching TotalReceipt component)
+    const regex = /(TOTALAMOUNT|TOTALTRANSACTION|BATCHNO|ТЕРМИНАЛ|0ОГНОО\/ЦАГ|ГјЙЛГЭЭSUM|ДјН|TERMINAL|DATE|AMOUNT):(.*?)(?=@|$)/gi;
+    const extractedValues: { [key: string]: string } = {};
+
+    let match;
+    while ((match = regex.exec(receiptData)) !== null) {
+      const key = match[1].toUpperCase();
+      const value = match[2].trim();
+      if (key && value) {
+        extractedValues[key] = value;
+      }
+    }
+
+    // Convert keys to Mongolian Cyrillic labels
+    const convertString = (key: string): string => {
+      const upperKey = key.toUpperCase();
+      switch (upperKey) {
+        case "TOTALAMOUNT":
+          return "Нийт дүн";
+        case "TOTALTRANSACTION":
+          return "Нийт гүйлгээ";
+        case "BATCHNO":
+          return "Багц дугаар";
+        case "ТЕРМИНАЛ":
+        case "TERMINAL":
+          return "Терминал";
+        case "0ОГНОО/ЦАГ":
+        case "DATE":
+          return "Огноо/Цаг";
+        case "ГјЙЛГЭЭSUM":
+          return "Гүйлгээ нийлбэр";
+        case "ДјН":
+        case "AMOUNT":
+          return "Нийт";
+        default:
+          return key;
+      }
+    };
+
+    // Escape HTML special characters
+    const escapeHtml = (text: string): string => {
+      const div = document.createElement("div");
+      div.textContent = text;
+      return div.innerHTML;
+    };
+
+    // Build table rows from extracted values
+    const receiptRows = Object.entries(extractedValues)
+      .map(
+        ([key, value]) => `
+      <tr>
+        <td width="66%" style="padding: 4px 0;">${escapeHtml(convertString(key))}:</td>
+        <td align="left" style="font-weight: bold; padding: 4px 0;">${escapeHtml(value)}</td>
+      </tr>`
+      )
+      .join("");
+
+    // Format the receipt data - it's typically plain text from POS
+    // Wrap it in a printable HTML structure
+    const receiptHTML = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="UTF-8">
+          <title>Өдөр өндөрлөлтийн баримт</title>
+          <style>
+            @media print {
+              @page {
+                size: 80mm auto;
+                margin: 0;
+              }
+              * {
+                font-size: inherit !important;
+                page-break-inside: avoid !important;
+              }
+              body {
+                margin: 0;
+                padding: 3mm;
+                font-family: 'Courier New', monospace;
+                font-size: 30px !important;
+                line-height: 1.3 !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+              }
+              .receipt-header {
+                font-size: 33px !important;
+                margin-bottom: 5px !important;
+                padding-bottom: 5px !important;
+                font-weight: bold !important;
+              }
+              .receipt-content {
+                font-size: 30px !important;
+                line-height: 1.4 !important;
+                margin: 5px 0 !important;
+              }
+              .receipt-content table {
+                width: 100%;
+                border-collapse: collapse;
+              }
+              .receipt-content td {
+                padding: 4px 0 !important;
+                font-size: 30px !important;
+              }
+              .receipt-footer {
+                font-size: 27px !important;
+                margin-top: 5px !important;
+                padding-top: 5px !important;
+              }
+            }
+            body {
+              font-family: 'Courier New', monospace;
+              font-size: 27px;
+              line-height: 1.6;
+              padding: 20px;
+              max-width: 80mm;
+              margin: 0 auto;
+              white-space: pre-wrap;
+              word-wrap: break-word;
+            }
+            .receipt-header {
+              text-align: center;
+              font-weight: bold;
+              margin-bottom: 5px;
+              border-bottom: 1px dashed #000;
+              padding-bottom: 5px;
+              font-size: 30px;
+            }
+            .receipt-content {
+              margin: 5px 0;
+              font-family: 'Courier New', monospace;
+              font-size: 27px;
+              line-height: 1.4;
+            }
+            .receipt-content table {
+              width: 100%;
+              border-collapse: collapse;
+            }
+            .receipt-content td {
+              padding: 4px 0;
+              font-size: 27px;
+            }
+            .receipt-footer {
+              margin-top: 5px;
+              border-top: 1px dashed #000;
+              padding-top: 5px;
+              text-align: center;
+              font-size: 24px;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="receipt-header">ӨДӨР ӨНДӨРЛӨЛТИЙН БАРИМТ</div>
+          <div class="receipt-content">
+            ${
+              receiptRows
+                ? `<table style="width: 100%; border-collapse: collapse;">
+                    ${receiptRows}
+                  </table>`
+                : "<p>Баримтын мэдээлэл олдсонгүй</p>"
+            }
+          </div>
+          <div class="receipt-footer">
+            ${new Date().toLocaleString("mn-MN")}
+          </div>
+        </body>
+      </html>
+    `;
+
+    const iframeDoc = iframe.contentDocument || iframe.contentWindow?.document;
+    if (!iframeDoc) {
+      document.body.removeChild(iframe);
+      return;
+    }
+
+    iframeDoc.open();
+    iframeDoc.write(receiptHTML);
+    iframeDoc.close();
+
+    // Wait for content to load, then trigger print
+    iframe.onload = () => {
+      setTimeout(() => {
+        iframe.contentWindow?.print();
+        // Remove iframe after printing
+        setTimeout(() => {
+          document.body.removeChild(iframe);
+        }, 1000);
+      }, 250);
+    };
+
+    // Fallback: trigger print even if onload doesn't fire
+    setTimeout(() => {
+      if (iframe.contentWindow) {
+        iframe.contentWindow.print();
+        setTimeout(() => {
+          if (iframe.parentNode) {
+            document.body.removeChild(iframe);
+          }
+        }, 1000);
+      }
+    }, 500);
+  };
+
   const performSettlement = async () => {
     setSettlementing(true);
     setSettlementStatus({ type: null, message: "" });
@@ -357,18 +570,21 @@ export function Settings({
 
       const settlementResult = await settlementResponse.json();
 
-      // Parse settlement response
+      // Parse settlement response - matching the working implementation
       let settlementResponseCode = null;
       let settlementResponseDesc = null;
       let settlementData = null;
 
       if (settlementResult.PosResult) {
         try {
+          // Parse PosResult JSON string to get data, responseCode, responseDesc
           const parsedSettlementResult = JSON.parse(settlementResult.PosResult);
           settlementResponseCode = parsedSettlementResult.responseCode;
           settlementResponseDesc = parsedSettlementResult.responseDesc;
           settlementData = parsedSettlementResult.data;
+          console.log("Parsed PosResult:", parsedSettlementResult);
         } catch (e) {
+          console.error("Error parsing PosResult:", e);
           settlementResponseCode = settlementResult.responseCode;
           settlementResponseDesc = settlementResult.responseDesc;
           settlementData = settlementResult.data;
@@ -380,24 +596,37 @@ export function Settings({
       }
 
       if (settlementResponseCode === "00" || settlementResponseCode === "0") {
-        // If there's receipt data, decode it
+        // If there's receipt data, decode it following the working implementation
         if (settlementData) {
           try {
-            const decodedData = JSON.parse(atob(settlementData));
-            if (decodedData.receiptData) {
+            console.log("Raw settlementData:", settlementData);
+            
+            // Decode Base64 data (matching the working code: decode(data))
+            const decodedString = atob(settlementData);
+            console.log("Decoded Base64 string:", decodedString);
+            
+            // Parse the decoded string as JSON (matching: JSON.parse(decode(data)))
+            const decodeData = JSON.parse(decodedString);
+            console.log("Parsed decodeData:", decodeData);
+            
+            // Check for receiptData field
+            if (decodeData.receiptData) {
+              console.log("Receipt Data found:", decodeData.receiptData);
               setSettlementStatus({
                 type: "success",
-                message: "Өдөр өндөрлөлт амжилттай. Баримтны дата бэлэн байна.",
+                message: "Өдөр өндөрлөлт амжилттай. Баримт хэвлэж байна...",
               });
-              console.log("Receipt Data:", decodedData.receiptData);
-              // TODO: Handle receipt printing/storage here if needed
+              // Print the receipt
+              printSettlementReceipt(decodeData.receiptData);
             } else {
+              console.log("No receiptData in decodeData:", decodeData);
               setSettlementStatus({
                 type: "success",
                 message: "Өдөр өндөрлөгөө хийгдсэн",
               });
             }
           } catch (e) {
+            console.error("Error decoding settlement data:", e);
             setSettlementStatus({
               type: "success",
               message: "Өдөр өндөрлөлт амжилттай",
