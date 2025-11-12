@@ -413,56 +413,84 @@ export function CartDialog({
     }
   };
 
-  // POS Payment Functions
-  const checkPOSConnection = async () => {
+  // POS Payment Functions - Direct to POS service (matching Golomt POS integration)
+  const sendPOSRequest = async (requestData: any) => {
     try {
-      const response = await fetch("/api/pos/request", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          requestID: `CONN-${Date.now()}`,
-          portNo: process.env.NEXT_PUBLIC_POS_PORT_NO || "1",
-          timeout: "540000",
-          terminalID: process.env.NEXT_PUBLIC_POS_TERMINAL_ID || "13133707",
-          amount: "",
-          currencyCode: "496",
-          operationCode: "26", // Check connection
-          bandWidth: "115200",
-          cMode: "",
-          cMode2: "",
-          additionalData: "",
-          cardEntryMode: "",
-          fileData: "",
-        }),
+      // Convert to JSON string and then to Base64
+      const jsonString = JSON.stringify(requestData);
+      const base64Data = btoa(jsonString); // Browser's btoa for Base64 encoding
+      console.log("Request JSON:", jsonString);
+      console.log("Base64:", base64Data);
+
+      // Get POS service URL from environment or use default
+      const posServiceUrl =
+        process.env.NEXT_PUBLIC_POS_SERVICE_URL || "http://localhost:8500";
+      // Don't use encodeURIComponent - match Golomt POS integration
+      const requestUrl = `${posServiceUrl}/requestToPos/message?data=${base64Data}`;
+
+      console.log("Sending POS request to:", requestUrl);
+      console.log("Request data:", requestData);
+
+      // Make GET request directly to POS service
+      const response = await fetch(requestUrl, {
+        method: "GET",
       });
 
+      console.log("Response status:", response.status);
+      console.log("Response ok:", response.ok);
+
       if (!response.ok) {
-        throw new Error("POS connection check failed");
+        const errorText = await response.text();
+        console.error("POS Service Error:", errorText);
+        throw new Error("POS терминалтай холбогдож чадсангүй");
       }
 
       const data = await response.json();
-      return data.responseCode === "0"; // 0 = SUCCESS
+      console.log("POS Response:", data);
+
+      // Parse response similar to Golomt POS integration
+      // The response has a PosResult field that contains a JSON string
+      let responseCode = null;
+      let responseDesc = null;
+
+      if (data.PosResult) {
+        try {
+          const parsedResult = JSON.parse(data.PosResult);
+          responseCode = parsedResult.responseCode;
+          responseDesc = parsedResult.responseDesc;
+          console.log(
+            "Parsed PosResult - Code:",
+            responseCode,
+            "Desc:",
+            responseDesc
+          );
+        } catch (e) {
+          console.error("Error parsing PosResult:", e);
+          // Fallback to direct fields if PosResult parsing fails
+          responseCode = data.responseCode;
+          responseDesc = data.responseDesc;
+        }
+      } else {
+        // Fallback to direct fields
+        responseCode = data.responseCode;
+        responseDesc = data.responseDesc;
+      }
+
+      return {
+        responseCode,
+        responseDesc,
+        rawData: data,
+      };
     } catch (error) {
-      console.error("POS Connection Error:", error);
-      return false;
+      console.error("POS Request Error:", error);
+      throw error;
     }
   };
 
   const processPOSPayment = async () => {
+    console.log("=== processPOSPayment called ===");
     setStep(3);
     setPosProcessing(true);
-    setPaymentStatus("POS терминалтай холбогдож байна...");
-
-    // First check connection
-    const isConnected = await checkPOSConnection();
-    if (!isConnected) {
-      setPaymentStatus("POS терминалтай холбогдож чадсангүй. Дахин оролдоно уу.");
-      setPosProcessing(false);
-      return;
-    }
-
     setPaymentStatus("Картаа оруулна уу...");
 
     // Calculate final amount
@@ -475,43 +503,41 @@ export function CartDialog({
     const requestId = `PAY-${Date.now()}`;
     setPosRequestId(requestId);
 
+    const purchaseRequest = {
+      requestID: requestId,
+      portNo: process.env.NEXT_PUBLIC_POS_PORT_NO || "9",
+      timeout: "540000",
+      terminalID: process.env.NEXT_PUBLIC_POS_TERMINAL_ID || "15168631",
+      amount: amountInSmallestUnit,
+      currencyCode: "496",
+      operationCode: "1", // Purchase
+      bandWidth: "115200",
+      cMode: "",
+      cMode2: "",
+      additionalData: "",
+      cardEntryMode: "",
+      fileData: "",
+    };
+
+    console.log("POS Purchase Request:", purchaseRequest);
+    console.log("Amount in smallest unit:", amountInSmallestUnit);
+    console.log("Final price:", finalPrice);
+
     try {
-      const response = await fetch("/api/pos/request", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          requestID: requestId,
-          portNo: process.env.NEXT_PUBLIC_POS_PORT_NO || "1",
-          timeout: "540000",
-          terminalID: process.env.NEXT_PUBLIC_POS_TERMINAL_ID || "13133707",
-          amount: amountInSmallestUnit,
-          currencyCode: "496",
-          operationCode: "1", // Purchase
-          bandWidth: "115200",
-          cMode: "",
-          cMode2: "",
-          additionalData: "",
-          cardEntryMode: "",
-          fileData: "",
-        }),
-      });
+      // Send request directly to POS service
+      const data = await sendPOSRequest(purchaseRequest);
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        setPaymentStatus(`Алдаа: ${errorData.error || "Төлбөр боловсруулахад алдаа гарлаа"}`);
-        setPosProcessing(false);
-        return;
-      }
+      console.log("POS Purchase Response Data:", data);
+      console.log("POS Response Code:", data.responseCode);
+      console.log("POS Response Desc:", data.responseDesc);
 
-      const data = await response.json();
-
-      // Handle response codes
-      if (data.responseCode === "0") {
+      // Handle response codes - Golomt POS uses "00" for success
+      if (data.responseCode === "00" || data.responseCode === "0") {
+        console.log("POS Payment SUCCESS!");
         // SUCCESS
+        setPosProcessing(false);
         setPaymentStatus("Төлбөр амжилттай!");
-        
+
         // Send email notification
         await sendPOSOrderEmail(finalPrice);
 
@@ -523,29 +549,22 @@ export function CartDialog({
         setTimeout(() => {
           setOpen(false);
           setStep(1);
+          setPaymentStatus("");
           router.push("/");
         }, 3000);
       } else {
-        // Handle error codes
-        const errorMessages: { [key: string]: string } = {
-          "1": "Command mode 201",
-          "10": "Dclink error",
-          "11": "Dclink error",
-          "A0": "Буруу хүсэлт",
-          "A1": "Буруу токен",
-          "91": "Банкны системийн алдаа",
-          "99": "Бусад алдаа",
-        };
-
-        const errorMsg = errorMessages[data.responseCode] || data.responseDesc || "Төлбөр амжилтгүй боллоо";
-        setPaymentStatus(`Алдаа: ${errorMsg}`);
+        // Handle error - show response description from POS
+        setPosProcessing(false);
+        const errorMsg = data.responseDesc || "Төлбөр амжилтгүй боллоо";
+        setPaymentStatus(errorMsg); // Remove "Алдаа: " prefix, UI will show it
       }
-
-      setPosProcessing(false);
     } catch (error) {
-      console.error("POS Payment Error:", error);
-      setPaymentStatus("Төлбөр боловсруулахад алдаа гарлаа. Дахин оролдоно уу.");
       setPosProcessing(false);
+      const errorMsg =
+        error instanceof Error
+          ? error.message
+          : "Төлбөр боловсруулахад алдаа гарлаа. Дахин оролдоно уу.";
+      setPaymentStatus(errorMsg); // UI will show "Алдаа гарлаа" header
     }
   };
 
@@ -843,11 +862,6 @@ export function CartDialog({
                   <p className="text-[30px] font-extrabold">{paymentStatus}</p>
                 </div>
               )}
-              {paymentStatus && (
-                <div className="mt-4 m-auto">
-                  <p>{paymentStatus}</p>
-                </div>
-              )}
               {selected == "storepay" && (
                 <div className="w-[400px] h-[200px] mx-auto mb-[100px]">
                   <p className="text-[20px]">
@@ -865,30 +879,97 @@ export function CartDialog({
                   </div>
                 )}
               {selected == "pos" && (
-                <div className="w-[400px] h-[300px] mx-auto mb-[100px]">
-                  {posProcessing ? (
-                    <div className="flex flex-col items-center justify-center">
-                      <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-[#ab3030] mb-4"></div>
-                      <p className="text-[20px] font-semibold">{paymentStatus}</p>
-                      <p className="text-[16px] text-gray-600 mt-4">
-                        Картаа POS терминалд оруулж, PIN кодоо оруулна уу.
+                <div className="w-full max-w-md mx-auto flex flex-col items-center justify-center min-h-[400px]">
+                  {posProcessing &&
+                  paymentStatus !== "Төлбөр амжилттай!" &&
+                  !paymentStatus.includes("Алдаа") &&
+                  !paymentStatus.includes("алдаа") ? (
+                    <div className="flex flex-col items-center justify-center space-y-6">
+                      <div className="animate-spin rounded-full h-20 w-20 border-4 border-[#ab3030] border-t-transparent"></div>
+                      <div className="text-center space-y-2">
+                        <p className="text-2xl font-bold text-[#ab3030]">
+                          {paymentStatus || "Гүйлгээ хүлээгдэж байна..."}
+                        </p>
+                        {paymentStatus === "Картаа оруулна уу..." && (
+                          <p className="text-lg text-gray-600 mt-4">
+                            Картаа POS терминалд оруулж, PIN кодоо оруулна уу.
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  ) : paymentStatus === "Төлбөр амжилттай!" ? (
+                    <div className="flex flex-col items-center justify-center space-y-6">
+                      <div className="w-20 h-20 rounded-full bg-green-500 flex items-center justify-center">
+                        <svg
+                          className="w-12 h-12 text-white"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={3}
+                            d="M5 13l4 4L19 7"
+                          />
+                        </svg>
+                      </div>
+                      <p className="text-3xl font-bold text-green-600">
+                        {paymentStatus}
                       </p>
                     </div>
-                  ) : (
-                    <div>
-                      <p className="text-[30px] font-extrabold">{paymentStatus}</p>
+                  ) : paymentStatus ? (
+                    <div className="flex flex-col items-center justify-center space-y-6">
+                      <div className="w-20 h-20 rounded-full bg-red-500 flex items-center justify-center">
+                        <svg
+                          className="w-12 h-12 text-white"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={3}
+                            d="M6 18L18 6M6 6l12 12"
+                          />
+                        </svg>
+                      </div>
+                      <div className="text-center space-y-2">
+                        <p className="text-2xl font-bold text-red-600">
+                          Алдаа гарлаа
+                        </p>
+                        <p className="text-lg text-gray-700 max-w-sm">
+                          {paymentStatus
+                            .replace("Алдаа: ", "")
+                            .replace("алдаа: ", "")}
+                        </p>
+                      </div>
                     </div>
-                  )}
+                  ) : null}
                 </div>
               )}
-              <Button
-                variant="outline"
-                className="text-2xl  py-4 m-auto"
-                onClick={() => setStep(2)}
-                disabled={posProcessing}
-              >
-                Буцах
-              </Button>
+              {selected == "pos" && !posProcessing && (
+                <Button
+                  variant="outline"
+                  className="text-2xl px-8 py-4 m-auto mt-6"
+                  onClick={() => {
+                    setStep(2);
+                    setPaymentStatus("");
+                  }}
+                >
+                  Буцах
+                </Button>
+              )}
+              {selected !== "pos" && (
+                <Button
+                  variant="outline"
+                  className="text-2xl  py-4 m-auto"
+                  onClick={() => setStep(2)}
+                >
+                  Буцах
+                </Button>
+              )}
             </div>
           </>
         )}
