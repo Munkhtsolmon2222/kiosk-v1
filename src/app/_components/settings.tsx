@@ -343,34 +343,34 @@ export function Settings({
                 margin: 0;
                 padding: 3mm;
                 font-family: 'Courier New', monospace;
-                font-size: 30px !important;
-                line-height: 1.3 !important;
+                font-size: 27px !important;
+                line-height: 1.2 !important;
                 -webkit-print-color-adjust: exact;
                 print-color-adjust: exact;
               }
               .receipt-header {
-                font-size: 33px !important;
-                margin-bottom: 5px !important;
-                padding-bottom: 5px !important;
+                font-size: 22px !important;
+                margin-bottom: 3px !important;
+                padding-bottom: 3px !important;
                 font-weight: bold !important;
               }
               .receipt-content {
-                font-size: 30px !important;
-                line-height: 1.4 !important;
-                margin: 5px 0 !important;
+                font-size: 25.5px !important;
+                line-height: 1.3 !important;
+                margin: 3px 0 !important;
               }
               .receipt-content table {
                 width: 100%;
                 border-collapse: collapse;
               }
               .receipt-content td {
-                padding: 4px 0 !important;
-                font-size: 30px !important;
+                padding: 6px 0 !important;
+                font-size: 25.5px !important;
               }
               .receipt-footer {
-                font-size: 27px !important;
-                margin-top: 5px !important;
-                padding-top: 5px !important;
+                font-size: 25.5px !important;
+                margin-top: 3px !important;
+                padding-top: 3px !important;
               }
             }
             body {
@@ -386,31 +386,31 @@ export function Settings({
             .receipt-header {
               text-align: center;
               font-weight: bold;
-              margin-bottom: 5px;
+              margin-bottom: 3px;
               border-bottom: 1px dashed #000;
-              padding-bottom: 5px;
-              font-size: 30px;
+              padding-bottom: 3px;
+              font-size: 22px;
             }
             .receipt-content {
-              margin: 5px 0;
+              margin: 3px 0;
               font-family: 'Courier New', monospace;
-              font-size: 27px;
-              line-height: 1.4;
+              font-size: 25.5px;
+              line-height: 1.3;
             }
             .receipt-content table {
               width: 100%;
               border-collapse: collapse;
             }
             .receipt-content td {
-              padding: 4px 0;
-              font-size: 27px;
+              padding: 6px 0;
+              font-size: 25.5px;
             }
             .receipt-footer {
-              margin-top: 5px;
+              margin-top: 3px;
               border-top: 1px dashed #000;
-              padding-top: 5px;
+              padding-top: 3px;
               text-align: center;
-              font-size: 24px;
+              font-size: 25.5px;
             }
           </style>
         </head>
@@ -442,27 +442,33 @@ export function Settings({
     iframeDoc.write(receiptHTML);
     iframeDoc.close();
 
-    // Wait for content to load, then trigger print
-    iframe.onload = () => {
-      setTimeout(() => {
-        iframe.contentWindow?.print();
-        // Remove iframe after printing
-        setTimeout(() => {
-          document.body.removeChild(iframe);
-        }, 1000);
-      }, 250);
-    };
+    // Flag to prevent double printing
+    let hasPrinted = false;
 
-    // Fallback: trigger print even if onload doesn't fire
-    setTimeout(() => {
+    const triggerPrint = () => {
+      if (hasPrinted) return;
+      hasPrinted = true;
       if (iframe.contentWindow) {
         iframe.contentWindow.print();
+        // Remove iframe after printing
         setTimeout(() => {
           if (iframe.parentNode) {
             document.body.removeChild(iframe);
           }
         }, 1000);
       }
+    };
+
+    // Wait for content to load, then trigger print
+    iframe.onload = () => {
+      setTimeout(() => {
+        triggerPrint();
+      }, 250);
+    };
+
+    // Fallback: trigger print even if onload doesn't fire
+    setTimeout(() => {
+      triggerPrint();
     }, 500);
   };
 
