@@ -406,13 +406,15 @@ export function CartDialog({
 
     // Create a unique ID for this print operation
     const operationId = `order-print-${Date.now()}-${Math.random()}`;
-    
+
     // If there's already an active print operation, skip this one
     if (activePrintOperationRef.current) {
-      console.log("Print operation already in progress, skipping duplicate call");
+      console.log(
+        "Print operation already in progress, skipping duplicate call"
+      );
       return;
     }
-    
+
     activePrintOperationRef.current = operationId;
 
     // Flag to prevent double printing
@@ -421,12 +423,12 @@ export function CartDialog({
     const triggerPrint = () => {
       // Check if already printed or iframe was removed
       if (hasPrinted || !iframe.parentNode) return;
-      
+
       hasPrinted = true;
-      
+
       if (iframe.contentWindow) {
         iframe.contentWindow.print();
-        
+
         // Remove iframe immediately after triggering print to prevent any subsequent events
         setTimeout(() => {
           if (iframe.parentNode) {
@@ -1021,7 +1023,9 @@ export function CartDialog({
         console.error("⚠️ POS Payment timeout - no response received");
         isProcessingRef.current = false;
         setPosProcessing(false);
-        setPaymentStatus("Төлбөрийн хариу ирээгүй. Дахин оролдоно уу эсвэл кассын ажилтантай холбогдоно уу.");
+        setPaymentStatus(
+          "Төлбөрийн хариу ирээгүй. Дахин оролдоно уу эсвэл кассын ажилтантай холбогдоно уу."
+        );
       }
     }, 600000); // 10 minutes total timeout
 
@@ -1100,13 +1104,13 @@ export function CartDialog({
         setCartItems([]);
         localStorage.removeItem("cart");
 
-        // Redirect after delay
+        // Redirect after delay (increased to give users time to read the message)
         setTimeout(() => {
           setOpen(false);
           setStep(1);
           setPaymentStatus("");
           router.push("/");
-        }, 3000);
+        }, 6000); // 6 seconds delay
       } else {
         // Handle error - show response description from POS
         isProcessingRef.current = false;
@@ -1230,15 +1234,17 @@ export function CartDialog({
       // Force dialog to stay open
       return;
     }
-    
+
     // Allow normal close if not processing
     setOpen(false);
     if (!isOpen) {
       setStep(1); // Reset page to 1 when dialog closes
-      
+
       // Cleanup: If POS was processing but user somehow closed, reset state
       if (posProcessing || isProcessingRef.current) {
-        console.warn("⚠️ Dialog closed during active POS payment - resetting state");
+        console.warn(
+          "⚠️ Dialog closed during active POS payment - resetting state"
+        );
         isProcessingRef.current = false;
         setPosProcessing(false);
         setPaymentStatus("");
@@ -1253,25 +1259,26 @@ export function CartDialog({
   };
 
   return (
-    <Dialog
-      onOpenChange={handleDialogClose}
-      open={open}
-    >
+    <Dialog onOpenChange={handleDialogClose} open={open}>
       <IdleRedirect timeout={600000} redirectPath="/" />
-      <DialogContent 
+      <DialogContent
         className="p-6"
         onPointerDownOutside={(e) => {
           // Prevent closing by clicking outside during POS payment
           if (posProcessing) {
             e.preventDefault();
-            alert("Төлбөр боловсруулаж байна. Түр хүлээнэ үү. Модал хаах боломжгүй.");
+            alert(
+              "Төлбөр боловсруулж байна. Түр хүлээнэ үү. Модал хаах боломжгүй."
+            );
           }
         }}
         onEscapeKeyDown={(e) => {
           // Prevent closing by pressing ESC during POS payment
           if (posProcessing) {
             e.preventDefault();
-            alert("Төлбөр боловсруулаж байна. Түр хүлээнэ үү. Модал хаах боломжгүй.");
+            alert(
+              "Төлбөр боловсруулж байна. Түр хүлээнэ үү. Модал хаах боломжгүй."
+            );
           }
         }}
       >
@@ -1464,10 +1471,13 @@ export function CartDialog({
             <div className="w-[450px] h-[854px] text-center">
               {" "}
               {selected == "qpay" && paymentStatus !== "Төлбөр амжилттай!" ? (
-                <div className=" w-full flex flex-col p-20 text-center "
-                 style={{
-                 fontFamily: 'Oswald, sans-serif', 
-                 fontWeight: 600,}} >
+                <div
+                  className=" w-full flex flex-col p-20 text-center "
+                  style={{
+                    fontFamily: "Oswald, sans-serif",
+                    fontWeight: 600,
+                  }}
+                >
                   {" "}
                   <p className="mt-4">QPay-аар төлөх</p>
                   {qrImageLoading ? (
@@ -1497,10 +1507,13 @@ export function CartDialog({
               {selected == "storepay" &&
                 paymentStatus == "Төлбөр амжилттай!" && (
                   <div className="w-[200px] h-[200px] m-auto">
-                    <p className="text-[30px] font-extrabold" 
-                    style={{
-                    fontFamily: 'Oswald, sans-serif', 
-                    fontWeight: 600,}} >
+                    <p
+                      className="text-[30px] font-extrabold"
+                      style={{
+                        fontFamily: "Oswald, sans-serif",
+                        fontWeight: 600,
+                      }}
+                    >
                       {paymentStatus}
                     </p>
                   </div>
@@ -1541,11 +1554,25 @@ export function CartDialog({
                           />
                         </svg>
                       </div>
-                      <p className="text-3xl font-bold text-green-600" 
-                      style={{
-                      fontFamily: 'Oswald, sans-serif', 
-                      fontWeight: 600,}} >
+                      <p
+                        className="text-3xl font-bold text-green-600"
+                        style={{
+                          fontFamily: "Oswald, sans-serif",
+                          fontWeight: 600,
+                        }}
+                      >
                         {paymentStatus}
+                      </p>
+                      <p
+                        className="text-xl text-center text-gray-700 max-w-md px-4"
+                        style={{
+                          fontFamily: "Oswald, sans-serif",
+                          fontWeight: 500,
+                        }}
+                      >
+                        ТА БАРИМТАА КАССЫН АЖИЛТАНД
+                        <br />
+                        ӨГЧ БАРААГАА АВНА УУ БАЯРЛАЛАА
                       </p>
                     </div>
                   ) : paymentStatus ? (
