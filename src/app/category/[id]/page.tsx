@@ -51,7 +51,11 @@ export default function Page() {
         .map((category, i) => (
           <div
             key={i}
-            className="text-[#ab3030] bg-[#f1f1f1] text-center p-3 rounded-2xl font-bold mx-auto w-fit text-[24px]"
+            className="text-[#ab3030] bg-[#f1f1f1] text-center p-3 rounded-2xl mx-auto w-fit text-[24px]"
+             style={{
+    fontFamily: 'Oswald, sans-serif', 
+    fontWeight: 600, 
+  }}
           >
             {category.name}
           </div>
