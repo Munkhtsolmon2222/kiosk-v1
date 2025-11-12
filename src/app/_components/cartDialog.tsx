@@ -885,7 +885,10 @@ export function CartDialog({
             <div className="w-[450px] h-[854px] text-center">
               {" "}
               {selected == "qpay" && paymentStatus !== "Төлбөр амжилттай!" ? (
-                <div className=" w-full flex flex-col p-20 text-center ">
+                <div className=" w-full flex flex-col p-20 text-center "
+                 style={{
+                 fontFamily: 'Oswald, sans-serif', 
+                 fontWeight: 600,}} >
                   {" "}
                   <p className="mt-4">QPay-аар төлөх</p>
                   {qrImageLoading ? (
@@ -915,7 +918,10 @@ export function CartDialog({
               {selected == "storepay" &&
                 paymentStatus == "Төлбөр амжилттай!" && (
                   <div className="w-[200px] h-[200px] m-auto">
-                    <p className="text-[30px] font-extrabold">
+                    <p className="text-[30px] font-extrabold" 
+                    style={{
+                    fontFamily: 'Oswald, sans-serif', 
+                    fontWeight: 600,}} >
                       {paymentStatus}
                     </p>
                   </div>
@@ -956,7 +962,10 @@ export function CartDialog({
                           />
                         </svg>
                       </div>
-                      <p className="text-3xl font-bold text-green-600">
+                      <p className="text-3xl font-bold text-green-600" 
+                      style={{
+                      fontFamily: 'Oswald, sans-serif', 
+                      fontWeight: 600,}} >
                         {paymentStatus}
                       </p>
                     </div>
