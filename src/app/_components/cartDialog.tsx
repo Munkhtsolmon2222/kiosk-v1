@@ -699,27 +699,32 @@ export function CartDialog({
           if (paymentStatus === "PAID") {
             setPaymentStatus("Төлбөр амжилттай!");
 
-            // Generate order number from API
-            let orderNumber = "";
-            try {
-              const orderRes = await fetch("/api/generate-order-number");
-              if (orderRes.ok) {
-                const orderData = await orderRes.json();
-                orderNumber = orderData.orderNumber;
-              } else {
-                // Fallback to date-based number if API fails
+            // Get order number from API response (generated on server side)
+            let orderNumber = data.orderNumber || "";
+            if (!orderNumber) {
+              // Fallback: Generate order number from API if not in response
+              try {
+                const orderRes = await fetch("/api/generate-order-number");
+                if (orderRes.ok) {
+                  const orderData = await orderRes.json();
+                  orderNumber = orderData.orderNumber;
+                } else {
+                  // Fallback to date-based number if API fails
+                  const now = new Date();
+                  const month = String(now.getMonth() + 1).padStart(2, "0");
+                  const day = String(now.getDate()).padStart(2, "0");
+                  const timestamp = Date.now().toString().slice(-4);
+                  orderNumber = `${month}${day}${timestamp}`;
+                }
+              } catch (error) {
+                console.error("Error generating order number:", error);
+                // Fallback to date-based number
                 const now = new Date();
                 const month = String(now.getMonth() + 1).padStart(2, "0");
                 const day = String(now.getDate()).padStart(2, "0");
-                orderNumber = `${month}${day}0001`;
+                const timestamp = Date.now().toString().slice(-4);
+                orderNumber = `${month}${day}${timestamp}`;
               }
-            } catch (error) {
-              console.error("Error generating order number:", error);
-              // Fallback to date-based number
-              const now = new Date();
-              const month = String(now.getMonth() + 1).padStart(2, "0");
-              const day = String(now.getDate()).padStart(2, "0");
-              orderNumber = `${month}${day}0001`;
             }
 
             // Print receipt
@@ -786,27 +791,32 @@ export function CartDialog({
           if (data.data?.status === "Success" && data.data?.value === true) {
             setPaymentStatus("Төлбөр амжилттай!");
 
-            // Generate order number from API
-            let orderNumber = "";
-            try {
-              const orderRes = await fetch("/api/generate-order-number");
-              if (orderRes.ok) {
-                const orderData = await orderRes.json();
-                orderNumber = orderData.orderNumber;
-              } else {
-                // Fallback to date-based number if API fails
+            // Get order number from API response (generated on server side)
+            let orderNumber = data.data?.orderNumber || "";
+            if (!orderNumber) {
+              // Fallback: Generate order number from API if not in response
+              try {
+                const orderRes = await fetch("/api/generate-order-number");
+                if (orderRes.ok) {
+                  const orderData = await orderRes.json();
+                  orderNumber = orderData.orderNumber;
+                } else {
+                  // Fallback to date-based number if API fails
+                  const now = new Date();
+                  const month = String(now.getMonth() + 1).padStart(2, "0");
+                  const day = String(now.getDate()).padStart(2, "0");
+                  const timestamp = Date.now().toString().slice(-4);
+                  orderNumber = `${month}${day}${timestamp}`;
+                }
+              } catch (error) {
+                console.error("Error generating order number:", error);
+                // Fallback to date-based number
                 const now = new Date();
                 const month = String(now.getMonth() + 1).padStart(2, "0");
                 const day = String(now.getDate()).padStart(2, "0");
-                orderNumber = `${month}${day}0001`;
+                const timestamp = Date.now().toString().slice(-4);
+                orderNumber = `${month}${day}${timestamp}`;
               }
-            } catch (error) {
-              console.error("Error generating order number:", error);
-              // Fallback to date-based number
-              const now = new Date();
-              const month = String(now.getMonth() + 1).padStart(2, "0");
-              const day = String(now.getDate()).padStart(2, "0");
-              orderNumber = `${month}${day}0001`;
             }
 
             // Print receipt
@@ -1084,7 +1094,7 @@ export function CartDialog({
         printReceipt(orderNumber, "pos", formData.address);
 
         // Send email notification
-        await sendPOSOrderEmail(finalPrice);
+        await sendPOSOrderEmail(finalPrice, orderNumber);
 
         // Clear cart
         setCartItems([]);
@@ -1134,7 +1144,7 @@ export function CartDialog({
     };
   }, []);
 
-  const sendPOSOrderEmail = async (amount: number) => {
+  const sendPOSOrderEmail = async (amount: number, orderNumber: string) => {
     try {
       const emailCookie = document.cookie
         .split("; ")
@@ -1195,6 +1205,7 @@ export function CartDialog({
           subject: "Шинэ худалдан авалт баталгаажлаа!",
           html: `
       <p>Үйлчлүүлэгчийн <strong>${amount}₮</strong>-ийн худалдан авалтын нэхэмжлэл амжилттай үүсгэгдлээ.</p>
+      <p><strong>Захиалгын дугаар:</strong> ${orderNumber}</p>
       ${checkoutType}
       <h4>Сагсанд байгаа бүтээгдэхүүнүүд:</h4>
       ${cartItemsList}

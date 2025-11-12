@@ -109,12 +109,41 @@ export async function POST(req: NextRequest) {
    `
             : "";
 
+        // Generate order number
+        let orderNumber = "";
+        try {
+          // Get the base URL from the request
+          const url = new URL(req.url);
+          const baseUrl = `${url.protocol}//${url.host}`;
+          const orderRes = await fetch(`${baseUrl}/api/generate-order-number`);
+          if (orderRes.ok) {
+            const orderData = await orderRes.json();
+            orderNumber = orderData.orderNumber;
+          } else {
+            // Fallback to date-based number if API fails
+            const now = new Date();
+            const month = String(now.getMonth() + 1).padStart(2, "0");
+            const day = String(now.getDate()).padStart(2, "0");
+            const timestamp = Date.now().toString().slice(-4);
+            orderNumber = `${month}${day}${timestamp}`;
+          }
+        } catch (error) {
+          console.error("Error generating order number:", error);
+          // Fallback to date-based number
+          const now = new Date();
+          const month = String(now.getMonth() + 1).padStart(2, "0");
+          const day = String(now.getDate()).padStart(2, "0");
+          const timestamp = Date.now().toString().slice(-4);
+          orderNumber = `${month}${day}${timestamp}`;
+        }
+
         // Send email
         await sendEmail({
           to: email,
           subject: "Шинэ худалдан авалт баталгаажлаа!",
           html: `
      <p>Үйлчлүүлэгчийн <strong>${amount}₮</strong>-ийн худалдан авалтын нэхэмжлэл амжилттай үүсгэгдлээ.</p>
+     <p><strong>Захиалгын дугаар:</strong> ${orderNumber}</p>
      ${checkoutType}
      <h4>Сагсанд байгаа бүтээгдэхүүнүүд:</h4>
      ${cartItemsList}
@@ -122,7 +151,7 @@ export async function POST(req: NextRequest) {
    `,
         });
 
-        return NextResponse.json({ data }, { status: 200 });
+        return NextResponse.json({ data: { ...data, orderNumber } }, { status: 200 });
       } else {
         console.log("❌ Payment not verified:", data);
         return NextResponse.json(
