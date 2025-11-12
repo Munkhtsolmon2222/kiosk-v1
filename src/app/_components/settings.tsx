@@ -44,7 +44,6 @@ export function Settings({
     useState<any>(thirdCategory);
   const [email, setEmail] = useState(getCookie("clientEmail") || "");
   const [emailError, setEmailError] = useState("");
-  const [portNo, setPortNo] = useState(getCookie("posPortNo") || process.env.NEXT_PUBLIC_POS_PORT_NO || "9");
   // Error state for category selection
   const [categoryError, setCategoryError] = useState({
     mainCategory: false,
@@ -136,29 +135,27 @@ export function Settings({
       setCookie("department", department, {
         maxAge: 3650 * 24 * 60 * 60,
       });
-            setCookie("clientEmail", email, { maxAge: 3650 * 24 * 60 * 60 });
-            setCookie("posPortNo", portNo, { maxAge: 3650 * 24 * 60 * 60 });
-            console.log("setting", selectedThirdCategory);
-          } else {
-            setCookie("defaultCategory", selectedSubCategory, {
-              maxAge: 3650 * 24 * 60 * 60,
-            });
-            setCookie("defaultCategoryMain", selectedCategory, {
-              maxAge: 3650 * 24 * 60 * 60,
-            });
-            setCookie("defaultCategorySub", selectedSubCategory, {
-              maxAge: 3650 * 24 * 60 * 60,
-            });
-            setCookie("defaultCategoryThird", selectedThirdCategory, {
-              maxAge: 3650 * 24 * 60 * 60,
-            });
-            setCookie("department", department, {
-              maxAge: 3650 * 24 * 60 * 60,
-            });
-            setCookie("clientEmail", email, { maxAge: 3650 * 24 * 60 * 60 });
-            setCookie("posPortNo", portNo, { maxAge: 3650 * 24 * 60 * 60 });
-            console.log("setting", selectedSubCategory);
-          }
+      setCookie("clientEmail", email, { maxAge: 3650 * 24 * 60 * 60 });
+      console.log("setting", selectedThirdCategory);
+    } else {
+      setCookie("defaultCategory", selectedSubCategory, {
+        maxAge: 3650 * 24 * 60 * 60,
+      });
+      setCookie("defaultCategoryMain", selectedCategory, {
+        maxAge: 3650 * 24 * 60 * 60,
+      });
+      setCookie("defaultCategorySub", selectedSubCategory, {
+        maxAge: 3650 * 24 * 60 * 60,
+      });
+      setCookie("defaultCategoryThird", selectedThirdCategory, {
+        maxAge: 3650 * 24 * 60 * 60,
+      });
+      setCookie("department", department, {
+        maxAge: 3650 * 24 * 60 * 60,
+      });
+      setCookie("clientEmail", email, { maxAge: 3650 * 24 * 60 * 60 });
+      console.log("setting", selectedSubCategory);
+    }
 
     // Reset the state and close the dialog
     setIsCodeVerified(false);
@@ -180,7 +177,7 @@ export function Settings({
     try {
       const requestJson = {
         requestID: `CHECK-${Date.now()}`,
-        portNo: portNo,
+        portNo: process.env.NEXT_PUBLIC_POS_PORT_NO || "9",
         timeout: "540000",
         terminalID: process.env.NEXT_PUBLIC_POS_TERMINAL_ID || "15168631",
         amount: "",
@@ -508,7 +505,7 @@ export function Settings({
       // Step 1: Check connection first (operation code 26)
       const checkRequestJson = {
         requestID: `CHECK-${Date.now()}`,
-        portNo: portNo,
+        portNo: process.env.NEXT_PUBLIC_POS_PORT_NO || "9",
         timeout: "540000",
         terminalID: process.env.NEXT_PUBLIC_POS_TERMINAL_ID || "15168631",
         amount: "",
@@ -571,7 +568,7 @@ export function Settings({
       // Step 2: Perform settlement (operation code 59)
       const settlementRequestJson = {
         requestID: `SETTLE-${Date.now()}`,
-        portNo: portNo,
+        portNo: process.env.NEXT_PUBLIC_POS_PORT_NO || "9",
         timeout: "540000",
         terminalID: process.env.NEXT_PUBLIC_POS_TERMINAL_ID || "15168631",
         amount: "",
@@ -762,17 +759,6 @@ export function Settings({
                   {emailError && (
                     <p className="text-red-500 text-sm mt-1">{emailError}</p>
                   )}
-                </div>
-                {/* POS Port Number Input */}
-                <div className="grid gap-4 py-4">
-                  <label className="block text-sm font-medium">POS Порт дугаар</label>
-                  <input
-                    type="text"
-                    placeholder="Порт дугаараа оруулна уу (жишээ: 9)"
-                    value={portNo}
-                    onChange={(e) => setPortNo(e.target.value)}
-                    className="border p-2 w-full"
-                  />
                 </div>
                 {/* Main Category Selection */}
                 <label className="block text-sm font-medium">
