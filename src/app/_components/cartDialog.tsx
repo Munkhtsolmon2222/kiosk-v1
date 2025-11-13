@@ -102,9 +102,16 @@ export function CartDialog({
     // When includeVAT is true: VAT is removed (subtracted), so finalPrice = totalPrice * 0.9
     // When includeVAT is false: VAT is included, so finalPrice = totalPrice
     // totalPrice always represents the price WITH VAT included
-    const finalTotal = includeVAT ? Math.floor(totalPrice * 0.9) : totalPrice;
+    // StorePay always uses totalPrice without VAT discount
+    const finalTotal =
+      paymentMethod === "storepay"
+        ? totalPrice
+        : includeVAT
+        ? Math.floor(totalPrice * 0.9)
+        : totalPrice;
     // VAT amount is always 10% of the original totalPrice (before removal)
-    const vat = Math.floor(finalTotal * 0.1);
+    // For StorePay, VAT is not shown separately (no discount applied)
+    const vat = paymentMethod === "storepay" ? 0 : Math.floor(finalTotal * 0.1);
 
     // Format payment method
     const paymentMethodText =
@@ -364,7 +371,7 @@ export function CartDialog({
                 <span>${finalTotal.toLocaleString()}</span>
               </div>
               ${
-                !includeVAT
+                !includeVAT && paymentMethod !== "storepay"
                   ? `
               <div class="summary-row">
                 <span class="summary-label">НӨАТ</span>
@@ -1148,6 +1155,20 @@ export function CartDialog({
     };
   }, []);
 
+  // Clear method error when payment method changes
+  useEffect(() => {
+    if (methodError) {
+      setMethodError("");
+    }
+  }, [selected]);
+
+  // Disable VAT discount for StorePay - automatically uncheck if StorePay is selected
+  useEffect(() => {
+    if (selected === "storepay" && includeVAT) {
+      setIncludeVAT(false);
+    }
+  }, [selected]);
+
   const sendPOSOrderEmail = async (amount: number, orderNumber: string) => {
     try {
       const emailCookie = document.cookie
@@ -1267,7 +1288,10 @@ export function CartDialog({
         className="p-6"
         onPointerDownOutside={(e) => {
           // Prevent closing by clicking outside during POS payment or StorePay payment
-          if (posProcessing || (selected === "storepay" && paymentStatus !== "Төлбөр амжилттай!")) {
+          if (
+            posProcessing ||
+            (selected === "storepay" && paymentStatus !== "Төлбөр амжилттай!")
+          ) {
             e.preventDefault();
             alert(
               "Төлбөр боловсруулж байна. Түр хүлээнэ үү. Модал хаах боломжгүй."
@@ -1276,7 +1300,10 @@ export function CartDialog({
         }}
         onEscapeKeyDown={(e) => {
           // Prevent closing by pressing ESC during POS payment or StorePay payment
-          if (posProcessing || (selected === "storepay" && paymentStatus !== "Төлбөр амжилттай!")) {
+          if (
+            posProcessing ||
+            (selected === "storepay" && paymentStatus !== "Төлбөр амжилттай!")
+          ) {
             e.preventDefault();
             alert(
               "Төлбөр боловсруулж байна. Түр хүлээнэ үү. Модал хаах боломжгүй."
@@ -1442,7 +1469,10 @@ export function CartDialog({
               <Button
                 variant="outline"
                 className="text-2xl  py-4"
-                onClick={() => setStep(1)}
+                onClick={() => {
+                  setStep(1);
+                  setSelected("");
+                }}
               >
                 Буцах
               </Button>
@@ -1457,6 +1487,14 @@ export function CartDialog({
                     if (selected == "qpay") {
                       createQPayInvoice();
                     } else if (selected == "storepay") {
+                      // Check if StorePay total is over 100,000 MNT
+                      // StorePay always uses totalPrice without VAT discount
+                      if (totalPrice <= 100000) {
+                        setMethodError(
+                          "StorePay нь 100,000₮-аас дээш дүнд ашиглах боломжтой"
+                        );
+                        return;
+                      }
                       createStorePayInvoice();
                     } else if (selected == "pos") {
                       processPOSPayment();
@@ -1624,7 +1662,10 @@ export function CartDialog({
                 <Button
                   variant="outline"
                   className="text-2xl  py-4 m-auto"
-                  onClick={() => setStep(2)}
+                  onClick={() => {
+                    setStep(2);
+                    setSelected("");
+                  }}
                 >
                   Буцах
                 </Button>
