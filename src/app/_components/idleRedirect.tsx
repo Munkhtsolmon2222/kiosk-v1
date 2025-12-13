@@ -7,24 +7,24 @@ import { useProducts } from "../../../providers/productContext";
 import { useScannedProduct } from "../../../providers/scannedProductContext";
 
 interface IdleRedirectProps {
-  timeout?: number; // Timeout duration in milliseconds
+  timeout?: number;
   redirectPath?: string;
   excludePaths?: string[];
-  dialogOpen?: boolean; // Added dialogOpen prop
+  dialogOpen?: boolean;
 }
 
 const IdleRedirect = ({
-  timeout = 30000, // Default to 30000 if not provided
+  timeout = 30000,
   redirectPath = "/",
   excludePaths = [],
-  dialogOpen = false, // Default to false if not provided
+  dialogOpen = false,
 }: IdleRedirectProps) => {
   const router = useRouter();
   const pathname = usePathname();
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const barcodeInputRef = useRef<HTMLInputElement>(null);
-  const { cartItems, setCartItems } = useCart();
-  const { data, isLoading, error } = useProducts();
+  const { setCartItems } = useCart();
+  const { data, isLoading } = useProducts();
   const {
     setScannedProduct,
     setIsModalOpen,
@@ -33,345 +33,165 @@ const IdleRedirect = ({
     setNotificationType,
   } = useScannedProduct();
 
-  // Reset idle timer function
+  // Idle timer
   const resetTimer = useCallback(() => {
-    // Clear any existing timer
     if (timerRef.current) clearTimeout(timerRef.current);
-
-    // Set the new timeout based on the passed timeout prop
     timerRef.current = setTimeout(() => {
       if (pathname !== redirectPath && !excludePaths.includes(pathname)) {
-        setCartItems([]); // Clear the cart
-        localStorage.removeItem("cart"); // Clear cart in localStorage
-        router.push(redirectPath); // Redirect to the provided path
+        setCartItems([]);
+        localStorage.removeItem("cart");
+        router.push(redirectPath);
       }
     }, timeout);
   }, [timeout, pathname, redirectPath, excludePaths, router, setCartItems]);
 
-  // Find product by barcode/SKU
+  // Find product or variation by barcode
   const findProductByBarcode = useCallback(
     (barcodeValue: string) => {
-      if (!data || isLoading || !barcodeValue) {
-        console.log("🔍 Бар код хайлт: Өгөгдөл байхгүй эсвэл ачааллаж байна", {
-          hasData: !!data,
-          isLoading,
-          barcodeValue,
-        });
-        return null;
-      }
+      if (!data || isLoading || !barcodeValue) return null;
 
-      const bigData = data.pages.flatMap((page) => page.data) || [];
-      const dataSpread = [...bigData];
-      console.log(`🔍 ${dataSpread.length} бүтээгдэхүүн дундаас хайж байна...`);
-
-      // Search for product by SKU (case-insensitive, trimmed)
       const normalizedBarcode = barcodeValue.trim().toLowerCase();
-      const product = dataSpread.find((product: any) => {
-        const productSku = product?.sku?.toString().trim().toLowerCase();
-        const matches = productSku === normalizedBarcode;
-        if (matches) {
-          console.log("✅ Тайлбар олдлоо!", {
-            productId: product.id,
-            productName: product.name,
-            sku: product.sku,
-          });
-        }
-        return matches;
-      });
+      const dataSpread = data.pages.flatMap((page) => page.data) || [];
+      console.log(`🔍 Нийт бүтээгдэхүүн: ${dataSpread.length}`);
 
-      if (!product) {
-        // Log first few products' SKUs for debugging
-        const sampleSkus = dataSpread
-          .slice(0, 5)
-          .map((p: any) => p?.sku)
-          .filter(Boolean);
-        console.log("❌ Бүтээгдэхүүн олдсонгүй. Жишээ SKU-ууд:", sampleSkus);
+      for (const product of dataSpread) {
+        // Product SKU
+        const productSku = product?.sku?.toString().trim().toLowerCase();
+        if (productSku === normalizedBarcode) {
+          console.log("✅ Product олдлоо:", product.name, product.sku);
+          return { product, variation: null };
+        }
+
+        // Variations
+        if (Array.isArray(product.variations) && product.variations.length) {
+          const matchedVariation = product.variations.find((v: any) => {
+            const sku = v?.sku?.toString().trim().toLowerCase();
+            const barcode = v?.barcode?.toString().trim().toLowerCase();
+            return sku === normalizedBarcode || barcode === normalizedBarcode;
+          });
+
+          if (matchedVariation) {
+            console.log(
+              "✅ Variation олдлоо:",
+              matchedVariation.sku,
+              matchedVariation.barcode
+            );
+            return { product, variation: matchedVariation };
+          }
+        }
       }
 
-      return product || null;
+      console.warn("❌ Бүтээгдэхүүн олдсонгүй:", barcodeValue);
+      return null;
     },
     [data, isLoading]
   );
 
-  // Open product modal with scanned product
+  // Open modal
   const openProductModal = useCallback(
-    (product: any) => {
-      if (!product) {
-        console.warn("⚠️ Бүтээгдэхүүн байхгүй байна");
-        return false;
-      }
+    (result: { product: any; variation: any | null }) => {
+      if (!result?.product) return false;
 
-      console.log("📝 Бүтээгдэхүүнийг context-д хадгалж байна:", product.name);
-      // Set the scanned product first
-      setScannedProduct(product);
-      // Use a small timeout to ensure state is updated before opening modal
-      setTimeout(() => {
-        setIsModalOpen(true);
-        console.log("✅ Бүтээгдэхүүний модал нээгдлээ:", product.name);
-      }, 10);
+      console.log("📝 Modal-д дамжуулж байна:", {
+        product: result.product.name,
+        variation: result.variation?.sku || null,
+      });
+
+      setScannedProduct({
+        ...result.product,
+        selectedVariation: result.variation,
+      });
+
+      setTimeout(() => setIsModalOpen(true), 10);
       return true;
     },
     [setScannedProduct, setIsModalOpen]
   );
 
-  // Handle barcode scanning
+  // Barcode input listener
   useEffect(() => {
+    barcodeInputRef.current?.focus();
     const barcodeInput = barcodeInputRef.current;
-    console.log("🎯 Barcode input ref:", barcodeInput);
-    if (!barcodeInput) {
-      console.error("❌ Barcode input element not found!");
-      return;
-    }
+    if (!barcodeInput) return;
 
-    console.log("✅ Barcode input element found, setting up listeners...");
-
-    // Don't focus the input to prevent virtual keyboard on touchscreen kiosks
-    // The global keyboard listener will handle barcode scanner input
-    console.log("🔍 Barcode scanner ready (using global keyboard listener)");
-
-    // Handle barcode input
     const handleBarcodeInput = (event: KeyboardEvent) => {
-      console.log("⌨️ Key pressed:", event.key, "Value:", barcodeInput.value);
-      // Reset timer on any keyboard activity
       resetTimer();
-
-      // Handle Enter key (barcode scanners typically send Enter after scanning)
       if (event.key === "Enter" && barcodeInput.value.trim()) {
         event.preventDefault();
         const barcodeValue = barcodeInput.value.trim();
+        console.log("🔑 Scanner-н barcode:", barcodeValue);
 
-        console.log("Уншсан бар код:", barcodeValue);
-
-        // Find product by barcode
-        const product = findProductByBarcode(barcodeValue);
-        console.log("🔍 Бар код хайлт:", barcodeValue);
-        console.log("📦 Олдсон бүтээгдэхүүн:", product);
-
-        if (product) {
-          // Open product modal to show product details
-          console.log("🚀 Модал нээх гэж байна...");
-          openProductModal(product);
-          console.log("✅ Модал нээх функц дуудагдав");
-          // Clear input and refocus for next scan
-          barcodeInput.value = "";
-          setTimeout(() => barcodeInput.focus(), 50);
+        const result = findProductByBarcode(barcodeValue);
+        if (result) {
+          openProductModal(result);
         } else {
-          // Product not found
-          console.warn("❌ Бүтээгдэхүүн олдсонгүй. Бар код:", barcodeValue);
-          // Show error notification
-          setNotificationMessage(`Бүтээгдэхүүн олдсонгүй`);
+          setNotificationMessage("Бүтээгдэхүүн олдсонгүй");
           setNotificationType("error");
-          barcodeInput.value = "";
-          setTimeout(() => barcodeInput.focus(), 50);
         }
+
+        barcodeInput.value = "";
+        setTimeout(() => barcodeInput.focus(), 50);
       }
     };
 
-    // Add event listener
     barcodeInput.addEventListener("keydown", handleBarcodeInput);
-    console.log("✅ Event listeners attached to barcode input");
 
-    // Also handle input event for scanners that don't send Enter
-    // Some scanners append data very quickly, so we'll use a debounce
-    let inputTimeout: NodeJS.Timeout;
-    const handleInput = () => {
-      clearTimeout(inputTimeout);
-      inputTimeout = setTimeout(() => {
-        // If input has value and no Enter was pressed, check if it's a complete barcode
-        // Most scanners send data very quickly, so if we have a value after a short delay,
-        // we can assume it's complete
-        if (barcodeInput.value.trim().length >= 3) {
-          // Trigger search after a short delay (scanner might still be inputting)
-          const checkValue = barcodeInput.value.trim();
-          setTimeout(() => {
-            if (barcodeInput.value.trim() === checkValue) {
-              // Value hasn't changed, likely complete
-              const product = findProductByBarcode(checkValue);
-              if (product) {
-                openProductModal(product);
-                barcodeInput.value = "";
-                barcodeInput.focus();
-              }
-            }
-          }, 200);
-        }
-      }, 300);
-    };
-
-    barcodeInput.addEventListener("input", handleInput);
-    barcodeInput.addEventListener("keydown", (e) => {
-      console.log(
-        "🔑 Keydown event on input:",
-        e.key,
-        "Value:",
-        barcodeInput.value
-      );
-    });
-    barcodeInput.addEventListener("keyup", (e) => {
-      console.log(
-        "🔑 Keyup event on input:",
-        e.key,
-        "Value:",
-        barcodeInput.value
-      );
-    });
-
-    // Note: Removed click-to-focus to prevent virtual keyboard on touchscreen kiosks
-    // The input will still receive barcode scanner input via the global keyboard listener
-
-    // Global keyboard listener for barcode scanners (primary method for kiosks)
-    // This prevents virtual keyboard from appearing while still capturing barcode input
-    let globalBarcodeBuffer = "";
-    let globalBarcodeTimeout: NodeJS.Timeout;
+    // Global keyboard listener
+    let buffer = "";
+    let timeout: NodeJS.Timeout;
     const handleGlobalKeydown = (event: KeyboardEvent) => {
-      // Only handle if no text input/textarea is actively being used by user
       const activeElement = document.activeElement;
-      const isTextInput =
-        activeElement?.tagName === "INPUT" ||
-        activeElement?.tagName === "TEXTAREA";
-
-      // Allow barcode scanning even if our hidden input is focused
-      const isOurBarcodeInput = activeElement?.id === "barcodeInput";
-
-      if (!isTextInput || isOurBarcodeInput) {
-        // If Enter is pressed, process the barcode
-        if (event.key === "Enter" && globalBarcodeBuffer.trim()) {
-          event.preventDefault();
-          const barcodeValue = globalBarcodeBuffer.trim();
-          console.log("🌐 Global: Уншсан бар код:", barcodeValue);
-
-          const product = findProductByBarcode(barcodeValue);
-          if (product) {
-            openProductModal(product);
-          } else {
-            console.warn(
-              "❌ Global: Бүтээгдэхүүн олдсонгүй. Бар код:",
-              barcodeValue
-            );
-            // Show error notification
-            setNotificationMessage(`Бүтээгдэхүүн олдсонгүй`);
+      const isOurInput = activeElement?.id === "barcodeInput";
+      if (!activeElement || isOurInput) {
+        if (event.key === "Enter" && buffer.trim()) {
+          const barcodeValue = buffer.trim();
+          buffer = "";
+          const result = findProductByBarcode(barcodeValue);
+          if (result) openProductModal(result);
+          else {
+            setNotificationMessage("Бүтээгдэхүүн олдсонгүй");
             setNotificationType("error");
           }
-
-          globalBarcodeBuffer = "";
-          clearTimeout(globalBarcodeTimeout);
-          return;
-        }
-
-        // If it's a printable character, add to buffer
-        if (
-          event.key.length === 1 &&
-          !event.ctrlKey &&
-          !event.metaKey &&
-          !event.altKey
-        ) {
-          globalBarcodeBuffer += event.key;
-          clearTimeout(globalBarcodeTimeout);
-
-          // Clear buffer after a delay (barcode scanners send data quickly)
-          globalBarcodeTimeout = setTimeout(() => {
-            if (globalBarcodeBuffer.length >= 3) {
-              const barcodeValue = globalBarcodeBuffer.trim();
-              console.log("🌐 Global (timeout): Уншсан бар код:", barcodeValue);
-
-              const product = findProductByBarcode(barcodeValue);
-              if (product) {
-                openProductModal(product);
-              } else {
-                console.warn(
-                  "❌ Global (timeout): Бүтээгдэхүүн олдсонгүй. Бар код:",
-                  barcodeValue
-                );
-                // Show error notification
-                setNotificationMessage(`Бүтээгдэхүүн олдсонгүй`);
-                setNotificationType("error");
-              }
-            }
-            globalBarcodeBuffer = "";
-          }, 100);
+          clearTimeout(timeout);
+        } else if (event.key.length === 1) {
+          buffer += event.key;
+          clearTimeout(timeout);
+          timeout = setTimeout(() => (buffer = ""), 100);
         }
       }
     };
 
     window.addEventListener("keydown", handleGlobalKeydown);
 
-    // Cleanup
     return () => {
       barcodeInput.removeEventListener("keydown", handleBarcodeInput);
-      barcodeInput.removeEventListener("input", handleInput);
       window.removeEventListener("keydown", handleGlobalKeydown);
-      clearTimeout(inputTimeout);
-      clearTimeout(globalBarcodeTimeout);
+      clearTimeout(timeout);
     };
-  }, [
-    data,
-    isLoading,
-    dialogOpen,
-    isModalOpen,
-    findProductByBarcode,
-    openProductModal,
-    resetTimer,
-    setNotificationMessage,
-    setNotificationType,
-  ]);
+  }, [findProductByBarcode, openProductModal, resetTimer, setNotificationMessage, setNotificationType]);
 
-  // Idle redirect timer effect
+  // Idle redirect
   useEffect(() => {
-    // Don't trigger timeout if dialog or product modal is open
-    if (dialogOpen || isModalOpen) {
-      return; // Do not reset the timer when the dialog or modal is open
-    }
-
-    // Add event listeners to reset the timer on activity
+    if (dialogOpen || isModalOpen) return;
     const events = ["click", "mousemove", "keydown", "touchstart"];
     const handleActivity = () => resetTimer();
-
-    events.forEach((event) => window.addEventListener(event, handleActivity));
-
-    // Reset the timer when the component mounts or when the timeout changes
+    events.forEach((e) => window.addEventListener(e, handleActivity));
     resetTimer();
-
     return () => {
-      // Cleanup event listeners when the component unmounts or re-renders
       if (timerRef.current) clearTimeout(timerRef.current);
-      events.forEach((event) =>
-        window.removeEventListener(event, handleActivity)
-      );
+      events.forEach((e) => window.removeEventListener(e, handleActivity));
     };
-  }, [
-    timeout,
-    dialogOpen,
-    isModalOpen,
-    pathname,
-    excludePaths,
-    router,
-    setCartItems,
-  ]);
+  }, [timeout, dialogOpen, isModalOpen, pathname, excludePaths, router, setCartItems, resetTimer]);
 
   return (
     <input
-      ref={barcodeInputRef}
-      id="barcodeInput"
-      type="text"
-      autoComplete="off"
-      inputMode="none"
-      readOnly
-      tabIndex={-1}
-      placeholder="Кодоо оруулна уу"
-      style={{
-        position: "fixed",
-        top: "-9999px",
-        left: "-9999px",
-        width: "1px",
-        height: "1px",
-        opacity: 0,
-        pointerEvents: "none",
-        border: "none",
-        outline: "none",
-        padding: 0,
-        margin: 0,
-      }}
-    />
+  ref={barcodeInputRef}
+  id="barcodeInput"
+  type="text"
+  autoComplete="off"
+  placeholder="Кодоо оруулна уу"
+  style={{ position: "absolute", top: "-9999px", left: "-9999px" }}
+/>
   );
 };
 

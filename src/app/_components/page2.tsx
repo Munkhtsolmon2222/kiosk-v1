@@ -92,6 +92,7 @@ export function Page2({ product, setPage }: any) {
   // Ensure bigData is always an array
   const bigData = data?.pages.flatMap((page) => page.data) || []; // ✅ Fix applied
   const dataSpread = [...bigData];
+  console.log(variationsProduct)
 
   const handleAddToCart = () => {
     let cart = JSON.parse(localStorage.getItem("cart") || "[]");
