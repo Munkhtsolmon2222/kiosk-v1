@@ -59,17 +59,16 @@ export function Page2({ product, setPage }: any) {
     const fetchVariations = async () => {
       try {
         setLoading(true); // Start loading
-        const consumerKey = process.env.NEXT_PUBLIC_WC_CONSUMER_KEY;
-        const consumerSecret = process.env.NEXT_PUBLIC_WC_CONSUMER_SECRET;
-        const authHeader = btoa(`${consumerKey}:${consumerSecret}`);
 
-        const res = await fetch(
-          `https://erchuudiindelguur.mn/wp-json/wc/v3/products/${product.id}/variations`,
-          {
-            headers: { Authorization: `Basic ${authHeader}` },
-          }
-        );
-        if (!res.ok) throw new Error("Failed to fetch variations");
+        // Use Next.js API route to avoid CORS issues
+        const res = await fetch(`/api/products/${product.id}/variations`);
+        
+        if (!res.ok) {
+          const errorData = await res.json().catch(() => ({}));
+          throw new Error(
+            errorData.error || `Failed to fetch variations: ${res.status}`
+          );
+        }
 
         const resJson = await res.json();
         setVariationsProduct(resJson);
