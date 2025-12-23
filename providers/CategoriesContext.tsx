@@ -48,30 +48,18 @@ export const CategoryProvider = ({ children }: { children: ReactNode }) => {
 
   // Fetch categories with react-query
   const fetchCategories = async ({ pageParam = 1 }) => {
-    const consumerKey = process.env.NEXT_PUBLIC_WC_CONSUMER_KEY;
-    const consumerSecret = process.env.NEXT_PUBLIC_WC_CONSUMER_SECRET;
-
-    if (!consumerKey || !consumerSecret) {
-      throw new Error("WooCommerce API keys are missing");
-    }
-
     const perPage = 100;
-    const authHeader =
-      typeof window === "undefined"
-        ? Buffer.from(`${consumerKey}:${consumerSecret}`).toString("base64")
-        : btoa(`${consumerKey}:${consumerSecret}`);
 
+    // Use Next.js API route to avoid CORS issues
     const response = await fetch(
-      `https://erchuudiindelguur.mn/wp-json/wc/v3/products/categories?per_page=${perPage}&page=${pageParam}`,
-      {
-        headers: {
-          Authorization: `Basic ${authHeader}`,
-        },
-      }
+      `/api/categories?per_page=${perPage}&page=${pageParam}`
     );
 
     if (!response.ok) {
-      throw new Error(`Error ${response.status}: ${response.statusText}`);
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(
+        errorData.error || `Error ${response.status}: ${response.statusText}`
+      );
     }
 
     return response.json();

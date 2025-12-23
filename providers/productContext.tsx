@@ -44,37 +44,23 @@ export const ProductProvider = ({
   const [setting, setSetting] = useState(false);
 
   const fetchProduct = async ({ pageParam = 1 }) => {
-    const consumerKey = process.env.NEXT_PUBLIC_WC_CONSUMER_KEY;
-    const consumerSecret = process.env.NEXT_PUBLIC_WC_CONSUMER_SECRET;
-
-    if (!consumerKey || !consumerSecret) {
-      throw new Error("WooCommerce API keys are missing");
-    }
-
     const perPage = 100;
-    const authHeader =
-      typeof window === "undefined"
-        ? Buffer.from(`${consumerKey}:${consumerSecret}`).toString("base64")
-        : btoa(`${consumerKey}:${consumerSecret}`);
 
+    // Use Next.js API route to avoid CORS issues
     const response = await fetch(
-      `https://erchuudiindelguur.mn/wp-json/wc/v3/products?per_page=${perPage}&page=${pageParam}`,
-      {
-        headers: {
-          Authorization: `Basic ${authHeader}`,
-        },
-      }
+      `/api/products?per_page=${perPage}&page=${pageParam}`
     );
 
     if (!response.ok) {
-      throw new Error(`Error ${response.status}: ${response.statusText}`);
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(
+        errorData.error || `Error ${response.status}: ${response.statusText}`
+      );
     }
 
-    const data = await response.json();
-    const totalPagesHeader = response.headers.get("X-WP-TotalPages");
-    const totalPages = totalPagesHeader
-      ? Number(totalPagesHeader)
-      : Math.ceil(data.length / perPage);
+    const result = await response.json();
+    const data = result.data;
+    const totalPages = result.totalPages || Math.ceil(data.length / perPage);
 
     return { data, totalPages };
   };
