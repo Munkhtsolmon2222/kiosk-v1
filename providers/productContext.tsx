@@ -44,7 +44,8 @@ export const ProductProvider = ({
   const [setting, setSetting] = useState(false);
 
   const fetchProduct = async ({ pageParam = 1 }) => {
-    const perPage = 100;
+    // Reduced from 100 to 50 to prevent timeout issues with WooCommerce API
+    const perPage = 50;
 
     // Use Next.js API route to avoid CORS issues
     const response = await fetch(
