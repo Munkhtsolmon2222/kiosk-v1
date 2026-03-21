@@ -13,6 +13,18 @@ interface IdleRedirectProps {
   dialogOpen?: boolean;
 }
 
+/** Min length for substring match inside global_unique_id (avoids tiny codes matching everywhere). */
+const MIN_GLOBAL_UNIQUE_SUBSTRING_LEN = 4;
+
+function scanContainedInGlobalUniqueId(
+  globalUniqueId: unknown,
+  normalizedBarcode: string
+): boolean {
+  if (normalizedBarcode.length < MIN_GLOBAL_UNIQUE_SUBSTRING_LEN) return false;
+  const haystack = globalUniqueId?.toString().trim().toLowerCase() ?? "";
+  return haystack.length > 0 && haystack.includes(normalizedBarcode);
+}
+
 const IdleRedirect = ({
   timeout = 30000,
   redirectPath = "/",
@@ -54,10 +66,20 @@ const IdleRedirect = ({
       const dataSpread = data.pages.flatMap((page) => page.data) || [];
       console.log(`🔍 Нийт бүтээгдэхүүн: ${dataSpread.length}`);
 
+      const matchesScan = (value: unknown) =>
+        value != null &&
+        value.toString().trim().toLowerCase() === normalizedBarcode;
+
       for (const product of dataSpread) {
-        // Product SKU
-        const productSku = product?.sku?.toString().trim().toLowerCase();
-        if (productSku === normalizedBarcode) {
+        // Product: SKU, global_unique_id (exact), or scan as substring of global_unique_id
+        if (
+          matchesScan(product?.sku) ||
+          matchesScan(product?.global_unique_id) ||
+          scanContainedInGlobalUniqueId(
+            product?.global_unique_id,
+            normalizedBarcode
+          )
+        ) {
           console.log("✅ Product олдлоо:", product.name, product.sku);
           return { product, variation: null };
         }
@@ -65,9 +87,15 @@ const IdleRedirect = ({
         // Variations
         if (Array.isArray(product.variations) && product.variations.length) {
           const matchedVariation = product.variations.find((v: any) => {
-            const sku = v?.sku?.toString().trim().toLowerCase();
-            const barcode = v?.barcode?.toString().trim().toLowerCase();
-            return sku === normalizedBarcode || barcode === normalizedBarcode;
+            return (
+              matchesScan(v?.sku) ||
+              matchesScan(v?.barcode) ||
+              matchesScan(v?.global_unique_id) ||
+              scanContainedInGlobalUniqueId(
+                v?.global_unique_id,
+                normalizedBarcode
+              )
+            );
           });
 
           if (matchedVariation) {
