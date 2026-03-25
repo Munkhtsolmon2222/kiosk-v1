@@ -9,8 +9,9 @@ import {
 } from "@/components/ui/dialog";
 import { DeliveryAddress } from "./deliveryAddress";
 import PaymentMethods from "./paymentMethods";
-import IdleRedirect from "./idleRedirect";
 import { useRouter } from "next/navigation";
+import { useCart } from "../../../providers/cartContext";
+import { getCartItemKey } from "@/lib/cartReducer";
 import {
   getCookie,
   getCookies,
@@ -28,19 +29,17 @@ export function CartDialog({
   setOpen,
   step,
   setStep,
-  setCartItems,
-  cartItems,
   totalPrice,
 }: {
   open: any;
   setOpen: any;
   step: any;
   setStep: any;
-  setCartItems: any;
-  cartItems: any;
   setTotalPrice: any;
   totalPrice: any;
 }) {
+  const { cartItems, clearCart, removeFromCartByKey, updateQuantity } =
+    useCart();
   const [isConfirmed, setIsConfirmed] = useState(false);
   const [includeVAT, setIncludeVAT] = useState(false);
   const [isDelivered, setIsDelivered] = useState(false);
@@ -72,7 +71,7 @@ export function CartDialog({
   const printReceipt = (
     orderNumber: string,
     paymentMethod: string,
-    deliveryAddress?: string
+    deliveryAddress?: string,
   ) => {
     // Create a hidden iframe for printing (better for kiosk environment)
     const iframe = document.createElement("iframe");
@@ -107,8 +106,8 @@ export function CartDialog({
       paymentMethod === "storepay"
         ? totalPrice
         : includeVAT
-        ? Math.floor(totalPrice * 0.9)
-        : totalPrice;
+          ? Math.floor(totalPrice * 0.9)
+          : totalPrice;
     // VAT amount is always 10% of the original totalPrice (before removal)
     // For StorePay, VAT is not shown separately (no discount applied)
     const vat = paymentMethod === "storepay" ? 0 : Math.floor(finalTotal * 0.1);
@@ -118,10 +117,10 @@ export function CartDialog({
       paymentMethod === "qpay"
         ? "QPAY"
         : paymentMethod === "storepay"
-        ? "STOREPAY"
-        : paymentMethod === "pos"
-        ? "КАРТ"
-        : paymentMethod.toUpperCase();
+          ? "STOREPAY"
+          : paymentMethod === "pos"
+            ? "КАРТ"
+            : paymentMethod.toUpperCase();
 
     // Build items table rows
     const itemsRows = cartItems
@@ -134,7 +133,7 @@ export function CartDialog({
         <td style="text-align: right; padding: 4px 0;">${(
           item.price * item.quantity
         ).toLocaleString()}</td>
-      </tr>`
+      </tr>`,
       )
       .join("");
 
@@ -417,7 +416,7 @@ export function CartDialog({
     // If there's already an active print operation, skip this one
     if (activePrintOperationRef.current) {
       console.log(
-        "Print operation already in progress, skipping duplicate call"
+        "Print operation already in progress, skipping duplicate call",
       );
       return;
     }
@@ -464,21 +463,18 @@ export function CartDialog({
     }, 300);
   };
 
-  const removeItem = (index: number) => {
-    const updatedItems = [...cartItems];
-    updatedItems.splice(index, 1); // Remove item from the array
-    setCartItems(updatedItems);
-    localStorage.setItem("cart", JSON.stringify(updatedItems));
+  const removeItem = (item: any) => {
+    if (!item) return;
+    removeFromCartByKey(getCartItemKey(item));
   };
 
   const changeQuantity = (index: number, amount: number) => {
-    const updatedItems = [...cartItems];
-    updatedItems[index].quantity = Math.max(
-      updatedItems[index].quantity + amount,
-      1
-    ); // Prevent negative quantities
-    setCartItems(updatedItems);
-    localStorage.setItem("cart", JSON.stringify(updatedItems));
+    const current = cartItems?.[index];
+    if (!current) return;
+    updateQuantity(
+      getCartItemKey(current),
+      Math.max(current.quantity + amount, 1),
+    );
   };
 
   const validate = () => {
@@ -545,7 +541,7 @@ export function CartDialog({
     }
   };
   const hasBackorderItem = cartItems?.some(
-    (item: any) => item.stock_status === "onbackorder"
+    (item: any) => item.stock_status === "onbackorder",
   );
   const handleSubmitForMethod = () => {
     if (!selected) {
@@ -557,22 +553,19 @@ export function CartDialog({
   };
 
   const getQPayToken = async () => {
-    const username = process.env.NEXT_PUBLIC_QPAY_USERNAME;
-    const password = process.env.NEXT_PUBLIC_QPAY_PASSWORD;
-    const authString = btoa(`${username}:${password}`); // Encode credentials
     setPaymentStatus("");
     try {
-      const response = await fetch("https://merchant.qpay.mn/v2/auth/token", {
+      const response = await fetch("/api/qpay-token", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Basic ${authString}`, // Use Basic Auth
-        },
       });
 
+      if (!response.ok) {
+        const errorText = await response.text().catch(() => "");
+        throw new Error(errorText || "Failed to retrieve QPay token");
+      }
+
       const data = await response.json();
-      console.log("QPay Auth Response:", data); // Debugging
-      return data.access_token;
+      return data.access_token as string;
     } catch (error) {
       console.error("Error fetching QPay token:", error);
     }
@@ -685,7 +678,7 @@ export function CartDialog({
                   errorData.error ||
                   errorData.message ||
                   "Төлбөрийн статус шалгахад алдаа гарлаа"
-                }`
+                }`,
               );
               // Don't clear interval immediately - might be temporary
             }
@@ -739,8 +732,7 @@ export function CartDialog({
             // Print receipt
             printReceipt(orderNumber, "qpay", formData.address);
 
-            setCartItems([]);
-            localStorage.removeItem("cart");
+            clearCart();
             clearInterval(interval); // Stop polling
             setTimeout(() => {
               closeDialog();
@@ -831,8 +823,7 @@ export function CartDialog({
             // Print receipt
             printReceipt(orderNumber, "storepay", formData.address);
 
-            setCartItems([]);
-            localStorage.removeItem("cart");
+            clearCart();
             clearInterval(interval); // Stop polling
             setTimeout(() => {
               closeDialog();
@@ -841,7 +832,7 @@ export function CartDialog({
           } else if (data.status === "Failed" && data.msgList) {
             console.error("Error: ", data.msgList);
             setPaymentStatus(
-              "Нэхэмжлэх үүсгэгдээгүй: " + data.msgList.join(", ")
+              "Нэхэмжлэх үүсгэгдээгүй: " + data.msgList.join(", "),
             );
             clearInterval(interval); // Stop polling
           }
@@ -976,7 +967,7 @@ export function CartDialog({
             "Parsed PosResult - Code:",
             responseCode,
             "Desc:",
-            responseDesc
+            responseDesc,
           );
         } catch (e) {
           console.error("Error parsing PosResult:", e);
@@ -1031,7 +1022,7 @@ export function CartDialog({
         isProcessingRef.current = false;
         setPosProcessing(false);
         setPaymentStatus(
-          "Төлбөрийн хариу ирээгүй. Дахин оролдоно уу эсвэл кассын ажилтантай холбогдоно уу."
+          "Төлбөрийн хариу ирээгүй. Дахин оролдоно уу эсвэл кассын ажилтантай холбогдоно уу.",
         );
       }
     }, 600000); // 10 minutes total timeout
@@ -1108,8 +1099,7 @@ export function CartDialog({
         await sendPOSOrderEmail(finalPrice, orderNumber);
 
         // Clear cart
-        setCartItems([]);
-        localStorage.removeItem("cart");
+        clearCart();
 
         // Redirect after delay (increased to give users time to read the message)
         setTimeout(() => {
@@ -1200,12 +1190,12 @@ export function CartDialog({
               item.price
             }₮, Ширхэг: ${item.quantity} <em>(${
               item.stock_status === "onbackorder" ? "Захиалгаар" : "Бэлэн"
-            })</em></p>`
+            })</em></p>`,
         )
         .join("");
 
       const hasBackorderItems = cartItems.some(
-        (item: any) => item.stock_status === "onbackorder"
+        (item: any) => item.stock_status === "onbackorder",
       );
 
       const formDataSection =
@@ -1266,7 +1256,7 @@ export function CartDialog({
       // Cleanup: If POS was processing but user somehow closed, reset state
       if (posProcessing || isProcessingRef.current) {
         console.warn(
-          "⚠️ Dialog closed during active POS payment - resetting state"
+          "⚠️ Dialog closed during active POS payment - resetting state",
         );
         isProcessingRef.current = false;
         setPosProcessing(false);
@@ -1283,7 +1273,6 @@ export function CartDialog({
 
   return (
     <Dialog onOpenChange={handleDialogClose} open={open}>
-      <IdleRedirect timeout={600000} redirectPath="/" />
       <DialogContent
         className="p-6"
         onPointerDownOutside={(e) => {
@@ -1294,7 +1283,7 @@ export function CartDialog({
           ) {
             e.preventDefault();
             alert(
-              "Төлбөр боловсруулж байна. Түр хүлээнэ үү. Модал хаах боломжгүй."
+              "Төлбөр боловсруулж байна. Түр хүлээнэ үү. Модал хаах боломжгүй.",
             );
           }
         }}
@@ -1306,7 +1295,7 @@ export function CartDialog({
           ) {
             e.preventDefault();
             alert(
-              "Төлбөр боловсруулж байна. Түр хүлээнэ үү. Модал хаах боломжгүй."
+              "Төлбөр боловсруулж байна. Түр хүлээнэ үү. Модал хаах боломжгүй.",
             );
           }
         }}
@@ -1335,15 +1324,15 @@ export function CartDialog({
                             item?.stock_status == "instock"
                               ? "text-[#5dc477]"
                               : item?.stock_status == "onbackorder"
-                              ? "text-[#35629c]"
-                              : "text-[#ab3030]"
+                                ? "text-[#35629c]"
+                                : "text-[#ab3030]"
                           } text-center items-center w-4 mt-1`}
                         >
                           {item?.stock_status == "instock"
                             ? "Бэлэн"
                             : item?.stock_status == "onbackorder"
-                            ? "Захиалгаар"
-                            : "Дууссан"}
+                              ? "Захиалгаар"
+                              : "Дууссан"}
                         </h5>
                       </div>
 
@@ -1357,7 +1346,7 @@ export function CartDialog({
                       <Button
                         variant="outline"
                         className="text-white p-2 bg-[#ab3030] w-10 h-10 rounded-xl flex items-center justify-center"
-                        onClick={() => removeItem(index)}
+                        onClick={() => removeItem(item)}
                       >
                         <span className="text-xl">X</span>
                       </Button>
@@ -1405,7 +1394,7 @@ export function CartDialog({
               )}
               <span className="font-bold block">
                 {new Intl.NumberFormat("mn-MN").format(
-                  includeVAT ? Math.floor(totalPrice * 0.9) : totalPrice
+                  includeVAT ? Math.floor(totalPrice * 0.9) : totalPrice,
                 )}
                 ₮
               </span>
@@ -1491,7 +1480,7 @@ export function CartDialog({
                       // StorePay always uses totalPrice without VAT discount
                       if (totalPrice <= 100000) {
                         setMethodError(
-                          "StorePay нь 100,000₮-аас дээш дүнд ашиглах боломжтой"
+                          "StorePay нь 100,000₮-аас дээш дүнд ашиглах боломжтой",
                         );
                         return;
                       }
@@ -1519,7 +1508,7 @@ export function CartDialog({
                   }}
                 >
                   {" "}
-                  <p className="mt-4">QPay-аар төлөх</p>
+                  <p className="mt-4">QPay-ээр төлөх</p>
                   {qrImageLoading ? (
                     <div className="w-[200px] mx-auto my-[100px]">
                       QR Зураг ачааллаж байна...

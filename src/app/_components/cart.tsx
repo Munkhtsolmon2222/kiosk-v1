@@ -9,10 +9,9 @@ import { useIsOpen } from "../../../providers/isOpenContext";
 export function Cart() {
   const { open, setOpen } = useIsOpen(); // Use context values
   const [step, setStep] = useState(1);
-  const [items, setItems] = useState<number>(0);
   const prevOpenRef = useRef(open); // Store the previous value of `open`
   const [totalPrice, setTotalPrice] = useState(0);
-  const { cartItems, setCartItems } = useCart();
+  const { cartItems, totalQuantity } = useCart();
 
   // useEffect(() => {
   //   if (open !== prevOpenRef.current) {
@@ -40,26 +39,6 @@ export function Cart() {
     );
     setTotalPrice(total);
   }, [cartItems, open]); // Dependency on cartItems to track changes
-  useEffect(() => {
-    const storedItems = localStorage.getItem("cart");
-
-    // Шалгах: storedItems байвал
-    if (storedItems) {
-      console.log("Stored items:", storedItems);
-      const parsedItems = JSON.parse(storedItems);
-
-      // Бараануудын тоог тооцоолох
-      const totalItems = parsedItems.reduce(
-        (acc: number, item: { quantity: number }) => acc + item.quantity,
-        0
-      );
-      setItems(totalItems);
-    } else {
-      console.log("No items found in localStorage.");
-    }
-  }, [cartItems]);
-
-  console.log(items);
 
   return (
     <div className="fixed bottom-80 right-4">
@@ -68,9 +47,9 @@ export function Cart() {
         onClick={() => setOpen(true)}
         className="px-5 py-10 rounded-xl shadow-lg bg-white border border-gray-600 "
       >
-        {items > 0 ? (
+        {totalQuantity > 0 ? (
           <div className="fixed right-4 bottom-96 rounded-full h-5 w-5 bg-[#ab3030] text-white pt-1 text-[10px] ">
-            {items}
+            {totalQuantity}
           </div>
         ) : (
           ""
@@ -82,8 +61,6 @@ export function Cart() {
         setOpen={setOpen}
         step={step}
         setStep={setStep}
-        setCartItems={setCartItems}
-        cartItems={cartItems}
         setTotalPrice={setTotalPrice}
         totalPrice={totalPrice}
       />

@@ -35,7 +35,7 @@ const IdleRedirect = ({
   const pathname = usePathname();
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const barcodeInputRef = useRef<HTMLInputElement>(null);
-  const { setCartItems } = useCart();
+  const { clearCart } = useCart();
   const { data, isLoading } = useProducts();
   const {
     setScannedProduct,
@@ -50,12 +50,11 @@ const IdleRedirect = ({
     if (timerRef.current) clearTimeout(timerRef.current);
     timerRef.current = setTimeout(() => {
       if (pathname !== redirectPath && !excludePaths.includes(pathname)) {
-        setCartItems([]);
-        localStorage.removeItem("cart");
+        clearCart();
         router.push(redirectPath);
       }
     }, timeout);
-  }, [timeout, pathname, redirectPath, excludePaths, router, setCartItems]);
+  }, [timeout, pathname, redirectPath, excludePaths, router, clearCart]);
 
   // Find product or variation by barcode
   const findProductByBarcode = useCallback(
@@ -209,7 +208,7 @@ const IdleRedirect = ({
       if (timerRef.current) clearTimeout(timerRef.current);
       events.forEach((e) => window.removeEventListener(e, handleActivity));
     };
-  }, [timeout, dialogOpen, isModalOpen, pathname, excludePaths, router, setCartItems, resetTimer]);
+  }, [timeout, dialogOpen, isModalOpen, pathname, excludePaths, router, clearCart, resetTimer]);
 
   return (
     <input

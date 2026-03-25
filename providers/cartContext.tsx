@@ -1,24 +1,22 @@
 "use client";
-import React, { createContext, useContext, useState, useEffect } from "react";
-
-// Define a cart item type
-type CartItem = {
-  id: number;
-  name: string;
-  price: number;
-  quantity: number;
-  image: string;
-  stock_status: string;
-};
+import React, { createContext, useContext, useEffect, useReducer } from "react";
+import {
+  cartReducer,
+  CartAction,
+  CartItem,
+  calcTotalQuantity,
+  getCartStorageKey,
+  normalizeCartItems,
+} from "@/lib/cartReducer";
 
 // Define context value type
 type CartContextType = {
   cartItems: CartItem[];
-  totalItems: number;
+  totalQuantity: number;
   addToCart: (item: CartItem) => void;
-  removeFromCart: (id: number) => void;
+  removeFromCartByKey: (key: string) => void;
   clearCart: () => void;
-  setCartItems: React.Dispatch<React.SetStateAction<CartItem[]>>;
+  updateQuantity: (key: string, quantity: number) => void;
 };
 
 // Create the context
@@ -37,47 +35,66 @@ export const useCart = () => {
 export const CartProvider: React.FC<{ children: React.ReactNode }> = ({
   children,
 }) => {
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [cartItems, dispatch] = useReducer(cartReducer, []);
 
-  // Load cart items from localStorage once the component is mounted
   useEffect(() => {
-    const savedCart = localStorage.getItem("cart");
-    if (savedCart) {
-      setCartItems(JSON.parse(savedCart));
+    const key = getCartStorageKey();
+    try {
+      const savedCart = localStorage.getItem(key);
+      if (!savedCart) return;
+      const parsed = JSON.parse(savedCart);
+      if (!Array.isArray(parsed)) return;
+      dispatch({ type: "replaceAll", items: normalizeCartItems(parsed as CartItem[]) } as CartAction);
+    } catch (e) {
+      // If storage is corrupted, fall back to empty cart.
+      console.warn("Failed to load cart from localStorage", e);
+      dispatch({ type: "clear" } as CartAction);
     }
   }, []);
 
-  // Calculate total number of items in the cart
-  const totalItems = cartItems?.length;
-  // Add item to cart
-  const addToCart = (item: any) => {
-    const updatedCart = [...cartItems, ...item];
-    setCartItems([...updatedCart]);
-    localStorage.setItem("cart", JSON.stringify(updatedCart)); // Save to localStorage
-  };
+  useEffect(() => {
+    const key = getCartStorageKey();
+    try {
+      if (!cartItems || cartItems.length === 0) {
+        localStorage.removeItem(key);
+        return;
+      }
+      localStorage.setItem(key, JSON.stringify(cartItems));
+    } catch (e) {
+      console.warn("Failed to persist cart to localStorage", e);
+    }
+  }, [cartItems]);
 
-  // Remove item from cart
-  const removeFromCart = (id: number) => {
-    const updatedCart = cartItems.filter((item) => item.id !== id);
-    setCartItems(updatedCart);
-    localStorage.setItem("cart", JSON.stringify(updatedCart)); // Save to localStorage
-  };
+  const totalQuantity = calcTotalQuantity(cartItems);
 
-  // Clear the cart
-  const clearCart = () => {
-    setCartItems([]);
-    localStorage.setItem("cart", JSON.stringify([])); // Save to localStorage
-  };
+  const addToCart = (item: CartItem) =>
+    dispatch({
+      type: "add",
+      item: {
+        ...item,
+        quantity: Math.max(1, Number(item.quantity) || 1),
+        price: Number(item.price) || 0,
+        stock_status: String(item.stock_status ?? ""),
+      },
+    } as CartAction);
+
+  const removeFromCartByKey = (key: string) =>
+    dispatch({ type: "removeByKey", key } as CartAction);
+
+  const updateQuantity = (key: string, quantity: number) =>
+    dispatch({ type: "updateQuantity", key, quantity } as CartAction);
+
+  const clearCart = () => dispatch({ type: "clear" } as CartAction);
 
   return (
     <CartContext.Provider
       value={{
         cartItems,
-        totalItems,
         addToCart,
-        removeFromCart,
+        removeFromCartByKey,
         clearCart,
-        setCartItems,
+        updateQuantity,
+        totalQuantity,
       }}
     >
       {children}

@@ -22,7 +22,7 @@ export function Page2({ product, setPage }: any) {
   const [open, setOpen] = useState(false);
   const [step, setStep] = useState(1);
   const [lubVariationPrice, setLubVariationPrice] = useState<any>();
-  const { setCartItems } = useCart();
+  const { addToCart } = useCart();
   const minusCount = () => {
     setOrderProducts((prev) => (prev > 1 ? prev - 1 : 1));
   };
@@ -94,7 +94,6 @@ export function Page2({ product, setPage }: any) {
   console.log(variationsProduct)
 
   const handleAddToCart = () => {
-    let cart = JSON.parse(localStorage.getItem("cart") || "[]");
     // Check if the selected variation or product is out of stock
     if (
       selectedVariation?.stock_status === "outofstock" ||
@@ -148,10 +147,10 @@ export function Page2({ product, setPage }: any) {
       })
       .filter(Boolean); // Remove null values
 
-    cart.push(cartItem, ...upsellItems);
-    localStorage.setItem("cart", JSON.stringify(cart));
-    setCartItems(cart);
-    console.log("Cart Updated:", cart);
+    addToCart(cartItem);
+    for (const item of upsellItems) {
+      addToCart(item as any);
+    }
     setPage(3);
   };
   const lubricators = dataSpread.filter((product: any) =>
