@@ -140,9 +140,20 @@ export async function POST(req: NextRequest) {
 
         // Create WooCommerce order (reduces stock); idempotent per StorePay request
         let wooOrderId: number | undefined;
+        let wooOrderCreated: boolean | undefined;
+        const wcPaymentRef = `storepay:${requestId}`;
+        console.log(
+          `[Kiosk WC] StorePay success — creating order`,
+          JSON.stringify({
+            requestId,
+            paymentRef: wcPaymentRef,
+            orderNumber,
+            cartItemCount: cartItems?.length ?? 0,
+          })
+        );
         try {
           const wcResult = await createKioskOrder({
-            paymentRef: `storepay:${requestId}`,
+            paymentRef: wcPaymentRef,
             paymentMethod: "storepay",
             cartItems,
             amount,
@@ -152,8 +163,25 @@ export async function POST(req: NextRequest) {
             customerEmail: email,
           });
           wooOrderId = wcResult.wooOrderId;
+          wooOrderCreated = wcResult.created;
+          console.log(
+            `[Kiosk WC] StorePay order result`,
+            JSON.stringify({
+              paymentRef: wcPaymentRef,
+              wooOrderId: wcResult.wooOrderId,
+              wooOrderNumber: wcResult.wooOrderNumber,
+              created: wcResult.created,
+            })
+          );
         } catch (wcError) {
-          console.error("❌ Failed to create WooCommerce order:", wcError);
+          console.error(
+            `[Kiosk WC] StorePay order failed`,
+            JSON.stringify({
+              paymentRef: wcPaymentRef,
+              error:
+                wcError instanceof Error ? wcError.message : String(wcError),
+            })
+          );
         }
 
         // Send email
@@ -171,7 +199,14 @@ export async function POST(req: NextRequest) {
         });
 
         return NextResponse.json(
-          { data: { ...data, orderNumber, wooOrderId } },
+          {
+            data: {
+              ...data,
+              orderNumber,
+              wooOrderId,
+              wooOrderCreated,
+            },
+          },
           { status: 200 }
         );
       } else {

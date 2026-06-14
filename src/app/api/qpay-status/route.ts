@@ -221,9 +221,20 @@ export async function POST(req: NextRequest) {
 
       // Create WooCommerce order (reduces stock); idempotent per QPay invoice
       let wooOrderId: number | undefined;
+      let wooOrderCreated: boolean | undefined;
+      const wcPaymentRef = `qpay:${invoice_id}`;
+      console.log(
+        `[Kiosk WC] QPay PAID — creating order`,
+        JSON.stringify({
+          invoice_id,
+          paymentRef: wcPaymentRef,
+          orderNumber,
+          cartItemCount: cartItems?.length ?? 0,
+        })
+      );
       try {
         const wcResult = await createKioskOrder({
-          paymentRef: `qpay:${invoice_id}`,
+          paymentRef: wcPaymentRef,
           paymentMethod: "qpay",
           cartItems,
           amount,
@@ -233,8 +244,25 @@ export async function POST(req: NextRequest) {
           customerEmail: email,
         });
         wooOrderId = wcResult.wooOrderId;
+        wooOrderCreated = wcResult.created;
+        console.log(
+          `[Kiosk WC] QPay order result`,
+          JSON.stringify({
+            paymentRef: wcPaymentRef,
+            wooOrderId: wcResult.wooOrderId,
+            wooOrderNumber: wcResult.wooOrderNumber,
+            created: wcResult.created,
+          })
+        );
       } catch (wcError) {
-        console.error("❌ Failed to create WooCommerce order:", wcError);
+        console.error(
+          `[Kiosk WC] QPay order failed`,
+          JSON.stringify({
+            paymentRef: wcPaymentRef,
+            error:
+              wcError instanceof Error ? wcError.message : String(wcError),
+          })
+        );
       }
 
       // Send email
@@ -263,6 +291,9 @@ export async function POST(req: NextRequest) {
       }
       if (wooOrderId) {
         responseData.wooOrderId = wooOrderId;
+      }
+      if (wooOrderCreated !== undefined) {
+        responseData.wooOrderCreated = wooOrderCreated;
       }
       return new Response(JSON.stringify(responseData), {
         status: 200,

@@ -1189,12 +1189,26 @@ export function CartDialog({
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        console.error("WooCommerce order failed:", err);
+        console.error(
+          `[Kiosk WC] POS order failed`,
+          JSON.stringify({ paymentRef, status: res.status, error: err })
+        );
         return null;
       }
-      return res.json();
+      const result = await res.json();
+      console.log(
+        `[Kiosk WC] POS order result`,
+        JSON.stringify({ paymentRef, ...result })
+      );
+      return result;
     } catch (error) {
-      console.error("WooCommerce order error:", error);
+      console.error(
+        `[Kiosk WC] POS order error`,
+        JSON.stringify({
+          paymentRef,
+          error: error instanceof Error ? error.message : String(error),
+        })
+      );
       return null;
     }
   };

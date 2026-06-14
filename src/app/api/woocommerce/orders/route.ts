@@ -33,6 +33,16 @@ export async function POST(req: NextRequest) {
       ? decodeURIComponent(emailCookie)
       : undefined;
 
+    console.log(
+      `[Kiosk WC] API /woocommerce/orders`,
+      JSON.stringify({
+        paymentRef,
+        paymentMethod,
+        kioskOrderNumber,
+        cartItemCount: cartItems.length,
+      })
+    );
+
     const result = await createKioskOrder({
       paymentRef,
       paymentMethod,
@@ -44,9 +54,19 @@ export async function POST(req: NextRequest) {
       customerEmail,
     });
 
+    console.log(
+      `[Kiosk WC] API order result`,
+      JSON.stringify({ paymentRef, ...result })
+    );
+
     return NextResponse.json(result, { status: 200 });
   } catch (error) {
-    console.error("WooCommerce order API error:", error);
+    console.error(
+      `[Kiosk WC] API order error`,
+      JSON.stringify({
+        error: error instanceof Error ? error.message : String(error),
+      })
+    );
     return NextResponse.json(
       {
         error:

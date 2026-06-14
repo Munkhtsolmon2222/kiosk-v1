@@ -72,6 +72,22 @@ const paymentMethodTitles: Record<CreateKioskOrderParams["paymentMethod"], strin
   pos: "POS Terminal",
 };
 
+/** Consistent prefix so Vercel log search can use query: [Kiosk WC] */
+function logKioskWc(
+  message: string,
+  data?: Record<string, unknown>,
+  level: "info" | "error" = "info"
+) {
+  const line = data
+    ? `[Kiosk WC] ${message} ${JSON.stringify(data)}`
+    : `[Kiosk WC] ${message}`;
+  if (level === "error") {
+    console.error(line);
+  } else {
+    console.log(line);
+  }
+}
+
 async function findOrderByPaymentRef(paymentRef: string) {
   const auth = getWcAuthHeader();
   const url = `${getWcBaseUrl()}/wp-json/wc/v3/orders?meta_key=kiosk_payment_ref&meta_value=${encodeURIComponent(paymentRef)}&per_page=1`;
@@ -81,7 +97,12 @@ async function findOrderByPaymentRef(paymentRef: string) {
   });
 
   if (!response.ok) {
-    console.error("WooCommerce order lookup failed:", await response.text());
+    const errorText = await response.text();
+    logKioskWc(
+      "Order lookup failed",
+      { paymentRef, status: response.status, error: errorText.slice(0, 500) },
+      "error"
+    );
     return null;
   }
 
@@ -92,8 +113,23 @@ async function findOrderByPaymentRef(paymentRef: string) {
 export async function createKioskOrder(
   params: CreateKioskOrderParams
 ): Promise<CreateKioskOrderResult> {
+  const lineItems = cartItemsToLineItems(params.cartItems);
+
+  logKioskWc("createKioskOrder start", {
+    paymentRef: params.paymentRef,
+    paymentMethod: params.paymentMethod,
+    kioskOrderNumber: params.kioskOrderNumber,
+    cartItemCount: params.cartItems?.length ?? 0,
+    lineItems,
+  });
+
   const existing = await findOrderByPaymentRef(params.paymentRef);
   if (existing) {
+    logKioskWc("Order already exists (idempotent skip)", {
+      paymentRef: params.paymentRef,
+      wooOrderId: existing.id,
+      wooOrderNumber: existing.number ?? existing.id,
+    });
     return {
       wooOrderId: existing.id,
       wooOrderNumber: String(existing.number ?? existing.id),
@@ -101,8 +137,12 @@ export async function createKioskOrder(
     };
   }
 
-  const lineItems = cartItemsToLineItems(params.cartItems);
   if (lineItems.length === 0) {
+    logKioskWc(
+      "Cannot create order: no line items",
+      { paymentRef: params.paymentRef, cartItems: params.cartItems },
+      "error"
+    );
     throw new Error("Cannot create WooCommerce order with no line items");
   }
 
@@ -154,6 +194,12 @@ export async function createKioskOrder(
     ],
   };
 
+  logKioskWc("Posting order to WooCommerce", {
+    paymentRef: params.paymentRef,
+    lineItemCount: lineItems.length,
+    amount: params.amount,
+  });
+
   const auth = getWcAuthHeader();
   const response = await fetch(`${getWcBaseUrl()}/wp-json/wc/v3/orders`, {
     method: "POST",
@@ -166,15 +212,25 @@ export async function createKioskOrder(
 
   if (!response.ok) {
     const errorText = await response.text();
-    console.error("WooCommerce order creation failed:", errorText);
+    logKioskWc(
+      "Order creation failed",
+      {
+        paymentRef: params.paymentRef,
+        status: response.status,
+        error: errorText.slice(0, 1000),
+        lineItems,
+      },
+      "error"
+    );
     throw new Error(`WooCommerce order creation failed: ${response.status}`);
   }
 
   const order = await response.json();
-  console.log("✅ WooCommerce order created:", {
-    id: order.id,
-    number: order.number,
+  logKioskWc("Order created successfully", {
     paymentRef: params.paymentRef,
+    wooOrderId: order.id,
+    wooOrderNumber: order.number ?? order.id,
+    lineItems,
   });
 
   return {
