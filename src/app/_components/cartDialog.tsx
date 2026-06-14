@@ -1095,6 +1095,14 @@ export function CartDialog({
         // Print receipt
         printReceipt(orderNumber, "pos", formData.address);
 
+        // Create WooCommerce order (reduces stock)
+        await createWooCommerceOrder(
+          `pos:${requestId}`,
+          "pos",
+          orderNumber,
+          finalPrice,
+        );
+
         // Send email notification
         await sendPOSOrderEmail(finalPrice, orderNumber);
 
@@ -1158,6 +1166,38 @@ export function CartDialog({
       setIncludeVAT(false);
     }
   }, [selected]);
+
+  const createWooCommerceOrder = async (
+    paymentRef: string,
+    paymentMethod: "qpay" | "storepay" | "pos",
+    orderNumber: string,
+    amount: number,
+  ) => {
+    try {
+      const res = await fetch("/api/woocommerce/orders", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          paymentRef,
+          paymentMethod,
+          cartItems,
+          amount,
+          formData,
+          isDelivered,
+          kioskOrderNumber: orderNumber,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        console.error("WooCommerce order failed:", err);
+        return null;
+      }
+      return res.json();
+    } catch (error) {
+      console.error("WooCommerce order error:", error);
+      return null;
+    }
+  };
 
   const sendPOSOrderEmail = async (amount: number, orderNumber: string) => {
     try {

@@ -105,6 +105,8 @@ export function Page2({ product, setPage }: any) {
 
     const cartItem = {
       id: selectedVariation ? selectedVariation.id : product.id,
+      product_id: product.id,
+      variation_id: selectedVariation ? selectedVariation.id : undefined,
       name: selectedVariation ? selectedVariation.name : product.name,
       price: selectedVariation ? selectedVariation.price : product.price,
       quantity: orderProducts,
@@ -127,6 +129,7 @@ export function Page2({ product, setPage }: any) {
           if (lubricator.type == "variable") {
             return {
               id: lubricator.id,
+              product_id: lubricator.id,
               name: lubricator.name,
               price: lubricator.price,
               quantity: count,
@@ -136,6 +139,7 @@ export function Page2({ product, setPage }: any) {
           }
           return {
             id: lubricator.id,
+            product_id: lubricator.id,
             name: lubricator.name,
             price: lubricator.regular_price,
             quantity: count,

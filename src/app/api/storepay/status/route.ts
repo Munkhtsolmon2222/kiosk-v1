@@ -1,4 +1,5 @@
 import { sendEmail } from "@/lib/sendEmail";
+import { createKioskOrder } from "@/lib/woocommerce";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(req: NextRequest) {
@@ -137,6 +138,24 @@ export async function POST(req: NextRequest) {
           orderNumber = `${month}${day}${timestamp}`;
         }
 
+        // Create WooCommerce order (reduces stock); idempotent per StorePay request
+        let wooOrderId: number | undefined;
+        try {
+          const wcResult = await createKioskOrder({
+            paymentRef: `storepay:${requestId}`,
+            paymentMethod: "storepay",
+            cartItems,
+            amount,
+            formData,
+            isDelivered,
+            kioskOrderNumber: orderNumber,
+            customerEmail: email,
+          });
+          wooOrderId = wcResult.wooOrderId;
+        } catch (wcError) {
+          console.error("❌ Failed to create WooCommerce order:", wcError);
+        }
+
         // Send email
         await sendEmail({
           to: email,
@@ -151,7 +170,10 @@ export async function POST(req: NextRequest) {
    `,
         });
 
-        return NextResponse.json({ data: { ...data, orderNumber } }, { status: 200 });
+        return NextResponse.json(
+          { data: { ...data, orderNumber, wooOrderId } },
+          { status: 200 }
+        );
       } else {
         console.log("❌ Payment not verified:", data);
         return NextResponse.json(
