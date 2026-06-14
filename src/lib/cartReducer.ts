@@ -5,6 +5,10 @@ export type CartItem = {
   quantity: number;
   image: string;
   stock_status: string;
+  /** WooCommerce parent product ID (required for order creation) */
+  product_id?: number;
+  /** WooCommerce variation ID when a variable product variant is selected */
+  variation_id?: number;
 };
 
 const cartStorageKey = "cart";
