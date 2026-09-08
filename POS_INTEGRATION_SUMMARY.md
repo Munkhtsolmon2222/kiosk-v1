@@ -202,6 +202,7 @@ POS payments send order confirmation emails similar to QPay/StorePay:
 - Amount is converted to smallest currency unit (multiply by 100)
 - All requests are Base64 encoded before sending to POS service
 - Responses are Base64 decoded on the server side
+- Just for redeploy
 
 ---
 
