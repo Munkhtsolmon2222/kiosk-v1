@@ -66,7 +66,10 @@ export function cartItemsToLineItems(cartItems: CartItem[]) {
   });
 }
 
-const paymentMethodTitles: Record<CreateKioskOrderParams["paymentMethod"], string> = {
+const paymentMethodTitles: Record<
+  CreateKioskOrderParams["paymentMethod"],
+  string
+> = {
   qpay: "QPay",
   storepay: "StorePay",
   pos: "POS Terminal",
@@ -76,7 +79,7 @@ const paymentMethodTitles: Record<CreateKioskOrderParams["paymentMethod"], strin
 function logKioskWc(
   message: string,
   data?: Record<string, unknown>,
-  level: "info" | "error" = "info"
+  level: "info" | "error" = "info",
 ) {
   const line = data
     ? `[Kiosk WC] ${message} ${JSON.stringify(data)}`
@@ -88,7 +91,7 @@ function logKioskWc(
   }
 }
 
-async function findOrderByPaymentRef(paymentRef: string) {
+/*async function findOrderByPaymentRef(paymentRef: string) {
   const auth = getWcAuthHeader();
   const url = `${getWcBaseUrl()}/wp-json/wc/v3/orders?meta_key=kiosk_payment_ref&meta_value=${encodeURIComponent(paymentRef)}&per_page=1`;
 
@@ -101,17 +104,66 @@ async function findOrderByPaymentRef(paymentRef: string) {
     logKioskWc(
       "Order lookup failed",
       { paymentRef, status: response.status, error: errorText.slice(0, 500) },
-      "error"
+      "error",
     );
     return null;
   }
 
   const orders = await response.json();
   return Array.isArray(orders) && orders.length > 0 ? orders[0] : null;
-}
+}*/
+async function findOrderByPaymentRef(paymentRef: string) {
+  const auth = getWcAuthHeader();
 
+  const url =
+    `${getWcBaseUrl()}/wp-json/wc/v3/orders` +
+    `?per_page=100&orderby=date&order=desc`;
+
+  const response = await fetch(url, {
+    headers: {
+      Authorization: `Basic ${auth}`,
+    },
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+
+    logKioskWc(
+      "Order lookup failed",
+      {
+        paymentRef,
+        status: response.status,
+        error: errorText.slice(0, 500),
+      },
+      "error",
+    );
+
+    return null;
+  }
+
+  const orders = await response.json();
+
+  if (!Array.isArray(orders)) {
+    return null;
+  }
+
+  const existingOrder = orders.find((order: any) => {
+    if (!Array.isArray(order.meta_data)) {
+      return false;
+    }
+
+    return order.meta_data.some(
+      (meta: any) =>
+        meta.key === "kiosk_payment_ref" &&
+        String(meta.value) === String(paymentRef),
+    );
+  });
+
+  return existingOrder ?? null;
+}
 export async function createKioskOrder(
-  params: CreateKioskOrderParams
+  params: CreateKioskOrderParams,
 ): Promise<CreateKioskOrderResult> {
   const lineItems = cartItemsToLineItems(params.cartItems);
 
@@ -141,7 +193,7 @@ export async function createKioskOrder(
     logKioskWc(
       "Cannot create order: no line items",
       { paymentRef: params.paymentRef, cartItems: params.cartItems },
-      "error"
+      "error",
     );
     throw new Error("Cannot create WooCommerce order with no line items");
   }
@@ -220,7 +272,7 @@ export async function createKioskOrder(
         error: errorText.slice(0, 1000),
         lineItems,
       },
-      "error"
+      "error",
     );
     throw new Error(`WooCommerce order creation failed: ${response.status}`);
   }
